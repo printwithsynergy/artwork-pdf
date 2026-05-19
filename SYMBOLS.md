@@ -2,9 +2,13 @@
 
 > Auto-generated from package exports. Re-run `pnpm run symbols` to update.
 
-## @artworkpdf/document-model
+## @printwithsynergy/artwork-pdf
 
 _placeholder — run `pnpm run symbols` after first build_
+
+## @artworkpdf/document-model
+
+_placeholder_
 
 ## @artworkpdf/pdf-writer
 
@@ -15,9 +19,5 @@ _placeholder_
 _placeholder_
 
 ## @artworkpdf/flexo-distortion
-
-_placeholder_
-
-## @artworkpdf/synergy-client
 
 _placeholder_
