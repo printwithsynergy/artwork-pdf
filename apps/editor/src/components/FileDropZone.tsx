@@ -24,12 +24,8 @@ export function FileDropZone({ onFile }: Props) {
   );
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
-      }}
+    <button
+      type="button"
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => {
@@ -49,6 +45,8 @@ export function FileDropZone({ onFile }: Props) {
         transition: "border-color 0.15s, background 0.15s",
         maxWidth: 480,
         width: "100%",
+        fontFamily: "inherit",
+        display: "block",
       }}
     >
       <input
@@ -61,12 +59,12 @@ export function FileDropZone({ onFile }: Props) {
           if (file) handle(file);
         }}
       />
-      <p style={{ color: "#e8a87c", fontWeight: 600, margin: "0 0 0.5rem", fontSize: "1rem" }}>
+      <span style={{ display: "block", color: "#e8a87c", fontWeight: 600, marginBottom: "0.5rem", fontSize: "1rem" }}>
         Drop artwork file here
-      </p>
-      <p style={{ color: "#666", margin: 0, fontSize: "0.82rem" }}>
-        PDF or raster image &mdash; preflight checks run before the canvas opens
-      </p>
-    </div>
+      </span>
+      <span style={{ display: "block", color: "#666", fontSize: "0.82rem" }}>
+        PDF or raster image — preflight checks run before the canvas opens
+      </span>
+    </button>
   );
 }
