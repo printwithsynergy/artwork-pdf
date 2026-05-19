@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { pgTable, uuid, text, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -8,4 +8,22 @@ export const jobs = pgTable("jobs", {
   result: jsonb("result"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Preflight rules are scoped by tenant + label class + label type.
+// Null in any scope column means "applies to all" at that level.
+// Resolution order: global defaults < labelClass < labelType < tenantId.
+// Platform stores tenant overrides and passes the effective config to Synergy
+// when enqueuing a job; the service exposes /preflight-rules for client-side fetch.
+export const preflightRules = pgTable("preflight_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: text("tenant_id"),
+  labelClass: text("label_class"),
+  labelType: text("label_type"),
+  checkName: text("check_name").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  severity: text("severity").notNull().default("block"),
+  clientSide: boolean("client_side").notNull().default(false),
+  params: jsonb("params").notNull().default({}),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
