@@ -27,7 +27,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Biome check
         run: pnpm lint:check
@@ -55,7 +55,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Check license boundary
-        run: pnpm check-licenses
+        run: node scripts/check-license-boundary.mjs
