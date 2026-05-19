@@ -9,13 +9,7 @@ export type Separation = {
   isTechnical?: boolean;
 };
 
-export type LayerType =
-  | "artwork"
-  | "dieline"
-  | "white"
-  | "varnish"
-  | "technical"
-  | "variable-data";
+export type LayerType = "artwork" | "dieline" | "white" | "varnish" | "technical" | "variable-data";
 
 export type Layer = {
   id: string;

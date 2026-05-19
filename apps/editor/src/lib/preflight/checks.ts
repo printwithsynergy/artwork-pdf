@@ -6,10 +6,7 @@ const KNOWN_SPOT_PREFIXES = ["PANTONE", "HKS ", "TOYO", "DIC ", "Reflex Blue", "
 
 type CheckResult = { issues: PreflightIssue[]; skippedChecks: string[] };
 
-export async function runClientChecks(
-  file: File,
-  rules: PreflightRule[],
-): Promise<CheckResult> {
+export async function runClientChecks(file: File, rules: PreflightRule[]): Promise<CheckResult> {
   const issues: PreflightIssue[] = [];
   const skippedChecks: string[] = [];
 
@@ -27,11 +24,13 @@ export async function runClientChecks(
       doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
     } catch {
       return {
-        issues: [{
-          checkName: "parse",
-          severity: "block",
-          message: "Could not parse the PDF — it may be corrupt or password-protected.",
-        }],
+        issues: [
+          {
+            checkName: "parse",
+            severity: "block",
+            message: "Could not parse the PDF — it may be corrupt or password-protected.",
+          },
+        ],
         skippedChecks,
       };
     }
@@ -69,17 +68,22 @@ async function checkRasterDpi(file: File, rule: PreflightRule): Promise<Prefligh
       // flag images that are too small for 300 DPI on a 100 mm wide label.
       const minPxFor100mm = Math.round((100 / 25.4) * minDpi);
       if (img.naturalWidth < minPxFor100mm && img.naturalHeight < minPxFor100mm) {
-        resolve([{
-          checkName: rule.checkName,
-          severity: rule.severity,
-          message: `Image (${img.naturalWidth}×${img.naturalHeight} px) may be below ${minDpi} DPI for a standard label size.`,
-          detail: { naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, minDpi },
-        }]);
+        resolve([
+          {
+            checkName: rule.checkName,
+            severity: rule.severity,
+            message: `Image (${img.naturalWidth}×${img.naturalHeight} px) may be below ${minDpi} DPI for a standard label size.`,
+            detail: { naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, minDpi },
+          },
+        ]);
       } else {
         resolve([]);
       }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve([]); };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve([]);
+    };
     img.src = url;
   });
 }
@@ -91,17 +95,19 @@ function checkPdfImageDpi(doc: PDFDocument, rule: PreflightRule): PreflightIssue
 
   // pdf-lib doesn't expose image physical dimensions directly;
   // detect embedded XObjects so the user knows DPI will be verified by the lint node.
-  for (let i = 0; i < pages.length; i++) {
-    const resources = pages[i].node.Resources();
+  for (const page of pages) {
+    const resources = page.node.Resources();
     if (!resources) continue;
     const xoRef = resources.get(PDFName.of("XObject"));
     if (xoRef) {
-      return [{
-        checkName: rule.checkName,
-        severity: "warn",
-        message: `Embedded image(s) found — DPI (target: ${minDpi}) will be confirmed by the lint node.`,
-        detail: { delegated: true },
-      }];
+      return [
+        {
+          checkName: rule.checkName,
+          severity: "warn",
+          message: `Embedded image(s) found — DPI (target: ${minDpi}) will be confirmed by the lint node.`,
+          detail: { delegated: true },
+        },
+      ];
     }
   }
   return [];
@@ -121,12 +127,12 @@ function checkPdfBleed(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
 
     const left = ref.x - bleedBox.x;
     const bottom = ref.y - bleedBox.y;
-    const right = (bleedBox.x + bleedBox.width) - (ref.x + ref.width);
-    const top = (bleedBox.y + bleedBox.height) - (ref.y + ref.height);
+    const right = bleedBox.x + bleedBox.width - (ref.x + ref.width);
+    const top = bleedBox.y + bleedBox.height - (ref.y + ref.height);
     const minBleedPt = Math.min(left, bottom, right, top);
 
     if (minBleedPt < bleedPt - 0.5) {
-      const actualMm = +(minBleedPt * 25.4 / 72).toFixed(1);
+      const actualMm = +((minBleedPt * 25.4) / 72).toFixed(1);
       issues.push({
         checkName: rule.checkName,
         severity: rule.severity,
@@ -152,8 +158,13 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
 
     let fontDict: PDFDict | undefined;
     try {
-      fontDict = doc.context.lookup(fontDictRef as Parameters<typeof doc.context.lookup>[0], PDFDict);
-    } catch { continue; }
+      fontDict = doc.context.lookup(
+        fontDictRef as Parameters<typeof doc.context.lookup>[0],
+        PDFDict,
+      );
+    } catch {
+      continue;
+    }
     if (!fontDict) continue;
 
     for (const key of fontDict.keys()) {
@@ -163,7 +174,9 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
       let font: PDFDict | undefined;
       try {
         font = doc.context.lookup(fontRef as Parameters<typeof doc.context.lookup>[0], PDFDict);
-      } catch { continue; }
+      } catch {
+        continue;
+      }
       if (!font) continue;
 
       const baseFont = font.get(PDFName.of("BaseFont"));
@@ -178,7 +191,9 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
       let desc: PDFDict | undefined;
       try {
         desc = doc.context.lookup(descRef as Parameters<typeof doc.context.lookup>[0], PDFDict);
-      } catch { continue; }
+      } catch {
+        continue;
+      }
       if (!desc) continue;
 
       const embedded =
@@ -194,12 +209,14 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
 
   const unique = [...new Set(unembedded)];
   if (unique.length === 0) return [];
-  return [{
-    checkName: rule.checkName,
-    severity: rule.severity,
-    message: `Unembedded font(s): ${unique.slice(0, 5).join(", ")}${unique.length > 5 ? ` +${unique.length - 5} more` : ""}.`,
-    detail: { fonts: unique },
-  }];
+  return [
+    {
+      checkName: rule.checkName,
+      severity: rule.severity,
+      message: `Unembedded font(s): ${unique.slice(0, 5).join(", ")}${unique.length > 5 ? ` +${unique.length - 5} more` : ""}.`,
+      detail: { fonts: unique },
+    },
+  ];
 }
 
 function checkPdfSpotColors(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] {
@@ -215,7 +232,9 @@ function checkPdfSpotColors(doc: PDFDocument, rule: PreflightRule): PreflightIss
     let csDict: PDFDict | undefined;
     try {
       csDict = doc.context.lookup(csDictRef as Parameters<typeof doc.context.lookup>[0], PDFDict);
-    } catch { continue; }
+    } catch {
+      continue;
+    }
     if (!csDict) continue;
 
     for (const key of csDict.keys()) {
@@ -226,7 +245,9 @@ function checkPdfSpotColors(doc: PDFDocument, rule: PreflightRule): PreflightIss
       try {
         const resolved = doc.context.lookup(csRef as Parameters<typeof doc.context.lookup>[0]);
         if (resolved instanceof PDFArray) csArr = resolved;
-      } catch { continue; }
+      } catch {
+        continue;
+      }
       if (!csArr || csArr.size() < 2) continue;
 
       const type = String(csArr.get(0)).replace(/^\//, "");
@@ -247,17 +268,21 @@ function checkPdfSpotColors(doc: PDFDocument, rule: PreflightRule): PreflightIss
 
       for (const name of names) {
         if (name === "All" || name === "None") continue;
-        const known = KNOWN_SPOT_PREFIXES.some((p) => name.toUpperCase().startsWith(p.toUpperCase()));
+        const known = KNOWN_SPOT_PREFIXES.some((p) =>
+          name.toUpperCase().startsWith(p.toUpperCase()),
+        );
         if (!known && !unknown.includes(name)) unknown.push(name);
       }
     }
   }
 
   if (unknown.length === 0) return [];
-  return [{
-    checkName: rule.checkName,
-    severity: rule.severity,
-    message: `Unknown spot color(s): ${unknown.join(", ")} — verify against your press specification.`,
-    detail: { colors: unknown },
-  }];
+  return [
+    {
+      checkName: rule.checkName,
+      severity: rule.severity,
+      message: `Unknown spot color(s): ${unknown.join(", ")} — verify against your press specification.`,
+      detail: { colors: unknown },
+    },
+  ];
 }

@@ -13,6 +13,17 @@
   --color-brand-950: #430800;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
-body { font-family: system-ui, sans-serif; background: #0f0a05; color: #fff; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: system-ui, sans-serif;
+  background: #0f0a05;
+  color: #fff;
+}

@@ -10,7 +10,10 @@ export async function startWorker(): Promise<void> {
     console.warn("DATABASE_URL not set — worker disabled");
     return;
   }
-  boss = new PgBoss({ connectionString: databaseUrl, schema: process.env.PG_BOSS_SCHEMA ?? "pgboss" });
+  boss = new PgBoss({
+    connectionString: databaseUrl,
+    schema: process.env.PG_BOSS_SCHEMA ?? "pgboss",
+  });
   await boss.start();
   await boss.work<Record<string, unknown>>("artwork.render", renderJob);
   await boss.work<Record<string, unknown>>("artwork.thumbnail", renderJob);

@@ -6,10 +6,7 @@ export type DistortionParams = {
   repeatLengthMm?: number;
 };
 
-export function applyFlexoDistortion(
-  pathData: string,
-  params: DistortionParams,
-): string {
+export function applyFlexoDistortion(pathData: string, params: DistortionParams): string {
   // TODO: apply flexo distortion compensation transform to SVG path data
   void params;
   return pathData;
