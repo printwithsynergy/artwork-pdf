@@ -1,0 +1,15 @@
+{
+  "name": "artwork-pdf",
+  "description": "artworkPDF — WYSIWYG label & packaging artwork editor, synergy node",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "repository": "https://github.com/printwithsynergy/artwork-pdf",
+  "node_type": "artwork",
+  "capabilities": ["artwork.render", "artwork.thumbnail", "artwork.preview-separations"],
+  "http": {
+    "healthz": "/healthz",
+    "jobs": "/jobs",
+    "source": "/source",
+    "well_known": "/.well-known/synergy-node.json"
+  }
+}

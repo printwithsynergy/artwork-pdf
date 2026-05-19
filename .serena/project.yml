@@ -1,0 +1,15 @@
+name: artwork-pdf
+description: WYSIWYG label & packaging artwork editor — synergy node
+language: typescript
+framework: hono+nextjs
+license: AGPL-3.0-or-later
+repo: https://github.com/printwithsynergy/artwork-pdf
+entrypoints:
+  service: apps/service/src/index.ts
+  editor: apps/editor/src/app/page.tsx
+key_packages:
+  - packages/document-model
+  - packages/pdf-writer
+  - packages/dieline-parser
+  - packages/flexo-distortion
+  - packages/synergy-client

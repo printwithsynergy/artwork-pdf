@@ -1,0 +1,24 @@
+{
+  "name": "artwork-pdf",
+  "private": true,
+  "description": "WYSIWYG label & packaging artwork editor — synergy node, AGPL-3.0-or-later",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": { "node": ">=22", "pnpm": ">=10" },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "test": "turbo test",
+    "lint": "biome check --write . && turbo lint",
+    "lint:check": "biome check . && turbo lint",
+    "typecheck": "turbo typecheck",
+    "check-licenses": "node scripts/check-license-boundary.js",
+    "symbols": "node scripts/gen-symbols.js"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
