@@ -3,7 +3,12 @@
   "organizeImports": { "enabled": true },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noConsole": "off"
+      }
+    }
   },
   "formatter": {
     "enabled": true,
@@ -11,7 +16,13 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all"
+    }
+  },
   "files": {
-    "ignore": ["dist", ".next", "node_modules", "*.tsbuildinfo"]
+    "ignore": ["dist", ".next", "node_modules", "*.tsbuildinfo", "pnpm-lock.yaml"]
   }
 }
