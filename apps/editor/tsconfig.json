@@ -8,6 +8,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "rootDir": ".",
     "plugins": [{ "name": "next" }]
   },
   "include": ["src", "next.config.ts", ".next/types/**/*.ts"]
