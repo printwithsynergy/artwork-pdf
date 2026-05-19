@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0f0a05"/>
+  <ellipse cx="600" cy="315" rx="500" ry="200" fill="#fc5102" opacity="0.08"/>
+  <rect x="180" y="215" width="200" height="200" rx="34" fill="#fc5102"/>
+  <path d="M200 255 C200 249 205 244 211 244 L229 244 C235 244 240 249 240 255 C240 261 235 266 229 266 L221 266 L221 354 L229 354 C235 354 240 359 240 365 C240 371 235 376 229 376 L211 376 C205 376 200 371 200 365 Z" fill="white"/>
+  <path d="M360 255 C360 249 355 244 349 244 L331 244 C325 244 320 249 320 255 C320 261 325 266 331 266 L339 266 L339 354 L331 354 C325 354 320 359 320 365 C320 371 325 376 331 376 L349 376 C355 376 360 371 360 365 Z" fill="white"/>
+  <rect x="240" y="296" width="80" height="28" rx="5" fill="white"/>
+  <text x="420" y="295" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white" letter-spacing="-1">artwork<tspan fill="#fc5102">PDF</tspan></text>
+  <text x="420" y="355" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#888" letter-spacing="0">WYSIWYG label &amp; packaging artwork editor</text>
+  <text x="420" y="395" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#555">Flexo · Spot/Pantone · PDF/X-4 · AGPL-3.0</text>
+</svg>
