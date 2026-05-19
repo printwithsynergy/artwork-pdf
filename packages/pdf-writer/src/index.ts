@@ -18,10 +18,8 @@ export async function composeToPdfX4(model: DocumentModel): Promise<Buffer> {
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([model.width, model.height]);
 
-  // Spot/Separation colorspace stubs for each named separation
   for (const sep of model.separations) {
     if (sep.colorSpace === "Spot" || sep.colorSpace === "DeviceN") {
-      // pdf-lib Separation colorspace wiring (simplified)
       const cs = PDFArray.withContext(pdfDoc.context);
       cs.push(PDFName.of("Separation"));
       cs.push(PDFName.of(sep.name.replace(/\s/g, "_")));
@@ -31,7 +29,6 @@ export async function composeToPdfX4(model: DocumentModel): Promise<Buffer> {
     }
   }
 
-  // Overprint flag (required for flexo/packaging)
   page.node.set(PDFName.of("Group"), pdfDoc.context.obj({
     Type: "Group",
     S: "Transparency",
@@ -40,15 +37,14 @@ export async function composeToPdfX4(model: DocumentModel): Promise<Buffer> {
 
   const pdfBytes = await pdfDoc.save();
 
-  // Ghostscript pass for PDF/X-4 conformance + ICC profile
   return ghostscriptPdfX4(Buffer.from(pdfBytes));
 }
 
 export async function ghostscriptPdfX4(inputPdf: Buffer): Promise<Buffer> {
-  const gsBin = process.env["GHOSTSCRIPT_BIN"] ?? "gs";
+  const gsBin = process.env.GHOSTSCRIPT_BIN ?? "gs";
   const inPath = join(tmpdir(), `artworkpdf-in-${Date.now()}.pdf`);
   const outPath = join(tmpdir(), `artworkpdf-out-${Date.now()}.pdf`);
-  
+
   try {
     await writeFile(inPath, inputPdf);
     await execFileAsync(gsBin, [
