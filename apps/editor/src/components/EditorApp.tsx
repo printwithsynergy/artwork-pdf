@@ -33,25 +33,31 @@ export function EditorApp() {
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#120a04" }}>
-      <header style={{
-        padding: "0.75rem 1rem",
-        background: "#1a0f08",
-        borderBottom: "1px solid #3d1a00",
-        display: "flex",
-        alignItems: "center",
-        flexShrink: 0,
-      }}>
+    <main
+      style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#120a04" }}
+    >
+      <header
+        style={{
+          padding: "0.75rem 1rem",
+          background: "#1a0f08",
+          borderBottom: "1px solid #3d1a00",
+          display: "flex",
+          alignItems: "center",
+          flexShrink: 0,
+        }}
+      >
         <span style={{ fontWeight: 600, color: "#fc5102" }}>artworkPDF</span>
         {file && (
-          <span style={{ marginLeft: "1rem", fontSize: "0.8rem", color: "#888" }}>
-            {file.name}
-          </span>
+          <span style={{ marginLeft: "1rem", fontSize: "0.8rem", color: "#888" }}>{file.name}</span>
         )}
         {phase !== "upload" && (
           <button
             type="button"
-            onClick={() => { setPhase("upload"); setFile(null); setReport(null); }}
+            onClick={() => {
+              setPhase("upload");
+              setFile(null);
+              setReport(null);
+            }}
             style={{
               marginLeft: "auto",
               background: "transparent",
@@ -67,7 +73,7 @@ export function EditorApp() {
         {phase === "editor" && (
           <a
             href="/source"
-            style={{ marginLeft: phase !== "upload" ? "1rem" : "auto", fontSize: "0.75rem", color: "#555" }}
+            style={{ marginLeft: "1rem", fontSize: "0.75rem", color: "#555" }}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -76,7 +82,15 @@ export function EditorApp() {
         )}
       </header>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
         {phase === "upload" && <FileDropZone onFile={handleFile} />}
 
         {phase === "checking" && (
@@ -95,11 +109,19 @@ export function EditorApp() {
       </div>
 
       {preflightState.phase === "error" && (
-        <div style={{
-          position: "fixed", bottom: "1rem", left: "50%", transform: "translateX(-50%)",
-          background: "#f44336", color: "#fff", padding: "0.5rem 1rem", borderRadius: 4,
-          fontSize: "0.82rem",
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "1rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#f44336",
+            color: "#fff",
+            padding: "0.5rem 1rem",
+            borderRadius: 4,
+            fontSize: "0.82rem",
+          }}
+        >
           {preflightState.message}
         </div>
       )}

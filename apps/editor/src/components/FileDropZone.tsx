@@ -26,7 +26,10 @@ export function FileDropZone({ onFile }: Props) {
   return (
     <button
       type="button"
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => {
         e.preventDefault();
@@ -59,7 +62,15 @@ export function FileDropZone({ onFile }: Props) {
           if (file) handle(file);
         }}
       />
-      <span style={{ display: "block", color: "#e8a87c", fontWeight: 600, marginBottom: "0.5rem", fontSize: "1rem" }}>
+      <span
+        style={{
+          display: "block",
+          color: "#e8a87c",
+          fontWeight: 600,
+          marginBottom: "0.5rem",
+          fontSize: "1rem",
+        }}
+      >
         Drop artwork file here
       </span>
       <span style={{ display: "block", color: "#666", fontSize: "0.82rem" }}>
