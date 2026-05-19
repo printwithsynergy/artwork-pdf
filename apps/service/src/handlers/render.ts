@@ -2,6 +2,8 @@
 import { renderDocument } from "@artworkpdf/pdf-writer";
 import type { Job } from "pg-boss";
 
-export async function renderJob(job: Job<Record<string, unknown>>): Promise<void> {
-  await renderDocument(job.data);
+export async function renderJob(jobs: Job<Record<string, unknown>>[]): Promise<void> {
+  for (const job of jobs) {
+    await renderDocument(job.data);
+  }
 }

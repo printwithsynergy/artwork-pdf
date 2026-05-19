@@ -12,7 +12,7 @@ export async function startWorker(): Promise<void> {
   }
   boss = new PgBoss({ connectionString: databaseUrl, schema: process.env.PG_BOSS_SCHEMA ?? "pgboss" });
   await boss.start();
-  await boss.work("artwork.render", renderJob);
-  await boss.work("artwork.thumbnail", renderJob);
-  await boss.work("artwork.preview-separations", renderJob);
+  await boss.work<Record<string, unknown>>("artwork.render", renderJob);
+  await boss.work<Record<string, unknown>>("artwork.thumbnail", renderJob);
+  await boss.work<Record<string, unknown>>("artwork.preview-separations", renderJob);
 }

@@ -11,7 +11,7 @@
     "test": "turbo test",
     "lint": "biome check --write .",
     "lint:check": "biome lint .",
-    "format:check": "biome format --check .",
+    "format:check": "biome format .",
     "typecheck": "turbo typecheck",
     "check-licenses": "node scripts/check-license-boundary.mjs",
     "symbols": "node scripts/gen-symbols.mjs"
