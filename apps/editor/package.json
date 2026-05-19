@@ -1,0 +1,29 @@
+{
+  "name": "@artworkpdf/editor",
+  "version": "0.1.0",
+  "description": "artworkPDF WYSIWYG editor — Next.js 15 + react-konva",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --turbopack",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-konva": "^19.0.0",
+    "konva": "^9.3.0",
+    "@artworkpdf/document-model": "workspace:*",
+    "@artworkpdf/synergy-client": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

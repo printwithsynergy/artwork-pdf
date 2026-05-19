@@ -1,0 +1,18 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+:root {
+  --color-brand-50: #fff5ef;
+  --color-brand-100: #ffe6d4;
+  --color-brand-200: #ffc9a3;
+  --color-brand-300: #ffa46a;
+  --color-brand-400: #ff7a35;
+  --color-brand-500: #fc5102;
+  --color-brand-600: #e03d00;
+  --color-brand-700: #b82e00;
+  --color-brand-800: #921f00;
+  --color-brand-900: #6a1200;
+  --color-brand-950: #430800;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: system-ui, sans-serif; background: #0f0a05; color: #fff; }
