@@ -10,16 +10,16 @@ type PreflightState =
   | { phase: "done"; report: PreflightReport }
   | { phase: "error"; message: string };
 
-const SERVICE_URL = (process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:3001").replace(
-  /\/$/,
-  "",
-);
+const SERVICE_URL = (process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:3001").replace(/\/$/, "");
 
 export function usePreflight() {
   const [state, setState] = useState<PreflightState>({ phase: "idle" });
 
   const run = useCallback(
-    async (file: File, opts?: { labelClass?: string; labelType?: string; tenantId?: string }) => {
+    async (
+      file: File,
+      opts?: { labelClass?: string; labelType?: string; tenantId?: string },
+    ) => {
       setState({ phase: "loading" });
       try {
         const params = new URLSearchParams();
