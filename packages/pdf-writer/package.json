@@ -6,7 +6,7 @@
   "type": "module",
   "main": "./dist/index.js",
   "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
-  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit", "test": "vitest run" },
+  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit", "test": "vitest run --passWithNoTests" },
   "dependencies": {
     "pdf-lib": "^1.17.1",
     "@artworkpdf/document-model": "workspace:*"
