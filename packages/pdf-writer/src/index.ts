@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { PDFDocument, PDFName, PDFArray, PDFNumber } from "pdf-lib";
+import { PDFDocument, PDFName, PDFArray } from "pdf-lib";
 import type { DocumentModel } from "@artworkpdf/document-model";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
