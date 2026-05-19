@@ -19,7 +19,7 @@
     "konva": "^9.3.0",
     "pdf-lib": "^1.17.1",
     "@artworkpdf/document-model": "workspace:*",
-    "@artworkpdf/synergy-client": "workspace:*"
+    "@printwithsynergy/artwork-pdf": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
