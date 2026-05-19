@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+services:
+  service:
+    build:
+      context: .
+      dockerfile: apps/service/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://artworkpdf:artworkpdf@db:5432/artworkpdf
+      NODE_ENV: development
+      GIT_SHA: dev
+      SOURCE_URL: https://github.com/printwithsynergy/artwork-pdf
+      GHOSTSCRIPT_BIN: /usr/bin/gs
+      PG_BOSS_SCHEMA: pgboss
+      SSE_HEARTBEAT_MS: "15000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  editor:
+    build:
+      context: .
+      dockerfile: apps/editor/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SERVICE_URL: http://localhost:3001
+    depends_on:
+      - service
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: artworkpdf
+      POSTGRES_USER: artworkpdf
+      POSTGRES_PASSWORD: artworkpdf
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artworkpdf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

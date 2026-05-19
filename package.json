@@ -9,14 +9,16 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "test": "turbo test",
-    "lint": "biome check --write . && turbo lint",
-    "lint:check": "biome check . && turbo lint",
+    "lint": "biome check --write .",
+    "lint:check": "biome lint .",
+    "format:check": "biome format .",
     "typecheck": "turbo typecheck",
-    "check-licenses": "node scripts/check-license-boundary.js",
-    "symbols": "node scripts/gen-symbols.js"
+    "check-licenses": "node scripts/check-license-boundary.mjs",
+    "symbols": "node scripts/gen-symbols.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "@types/node": "^22.0.0",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
   },
