@@ -30,14 +30,14 @@ export function PreflightPanel({ report, onProceed, onSendToLint }: Props) {
       {blocking.length > 0 && (
         <section style={{ marginBottom: "1rem" }}>
           <SectionHeader color="#f44336" label={`${blocking.length} blocking issue${blocking.length !== 1 ? "s" : ""}`} />
-          {blocking.map((i, idx) => <IssueRow key={idx} issue={i} />)}
+          {blocking.map((i) => <IssueRow key={`${i.checkName}-${i.message}`} issue={i} />)}
         </section>
       )}
 
       {warnings.length > 0 && (
         <section style={{ marginBottom: "1rem" }}>
           <SectionHeader color="#ff9800" label={`${warnings.length} warning${warnings.length !== 1 ? "s" : ""}`} />
-          {warnings.map((i, idx) => <IssueRow key={idx} issue={i} />)}
+          {warnings.map((i) => <IssueRow key={`${i.checkName}-${i.message}`} issue={i} />)}
         </section>
       )}
 
@@ -50,6 +50,7 @@ export function PreflightPanel({ report, onProceed, onSendToLint }: Props) {
 
       <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
         <button
+          type="button"
           onClick={onProceed}
           disabled={report.hasBlockingIssues}
           style={{
@@ -65,6 +66,7 @@ export function PreflightPanel({ report, onProceed, onSendToLint }: Props) {
           Open in Editor
         </button>
         <button
+          type="button"
           onClick={onSendToLint}
           style={{
             padding: "0.5rem 1.25rem",

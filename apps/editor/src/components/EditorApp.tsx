@@ -50,6 +50,7 @@ export function EditorApp() {
         )}
         {phase !== "upload" && (
           <button
+            type="button"
             onClick={() => { setPhase("upload"); setFile(null); setReport(null); }}
             style={{
               marginLeft: "auto",
