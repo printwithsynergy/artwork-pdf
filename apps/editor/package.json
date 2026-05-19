@@ -17,6 +17,7 @@
     "react-dom": "^19.0.0",
     "react-konva": "^19.0.0",
     "konva": "^9.3.0",
+    "pdf-lib": "^1.17.1",
     "@artworkpdf/document-model": "workspace:*",
     "@artworkpdf/synergy-client": "workspace:*"
   },

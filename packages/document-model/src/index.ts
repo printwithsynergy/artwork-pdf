@@ -9,13 +9,7 @@ export type Separation = {
   isTechnical?: boolean;
 };
 
-export type LayerType =
-  | "artwork"
-  | "dieline"
-  | "white"
-  | "varnish"
-  | "technical"
-  | "variable-data";
+export type LayerType = "artwork" | "dieline" | "white" | "varnish" | "technical" | "variable-data";
 
 export type Layer = {
   id: string;
@@ -53,4 +47,12 @@ export type JobOutputFormat = "pdf-x4" | "thumbnail" | "preview-separations";
 export type JobSubmitRequest = {
   document: DocumentModel;
   output: { format: JobOutputFormat; colorProfile?: string };
+  preflightReport?: import("./preflight.js").PreflightReport;
+  preflightConfig?: {
+    labelClass?: string;
+    labelType?: string;
+    tenantId?: string;
+  };
 };
+
+export * from "./preflight.js";
