@@ -1,11 +1,12 @@
 {
-  "name": "@artworkpdf/synergy-client",
+  "name": "@printwithsynergy/artwork-pdf",
   "version": "0.1.0",
-  "description": "Typed HTTP client for the synergy orchestration engine",
+  "description": "Typed client for the artworkPDF synergy node",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./dist/index.js",
   "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
