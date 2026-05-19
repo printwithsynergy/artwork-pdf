@@ -28,8 +28,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Biome check
+      - name: Biome lint
         run: pnpm lint:check
+
+      - name: Biome format (informational)
+        run: pnpm format:check
+        continue-on-error: true
 
       - name: Typecheck
         run: pnpm typecheck
