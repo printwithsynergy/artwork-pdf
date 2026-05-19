@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import type { JobSubmitRequest } from "@artworkpdf/document-model";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import type { JobSubmitRequest } from "@artworkpdf/document-model";
 
 export const jobsRouter = new Hono();
 

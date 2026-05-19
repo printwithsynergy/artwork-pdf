@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { jobsRouter } from "./routes/jobs.js";
 import { healthzRouter } from "./routes/healthz.js";
+import { jobsRouter } from "./routes/jobs.js";
 import { sourceRouter } from "./routes/source.js";
 import { synergyNodeRouter } from "./routes/synergy-node.js";
 import { startWorker } from "./worker.js";

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { PDFDocument, PDFName, PDFArray } from "pdf-lib";
-import type { DocumentModel } from "@artworkpdf/document-model";
 import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import { writeFile, readFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
+import type { DocumentModel } from "@artworkpdf/document-model";
+import { PDFArray, PDFDocument, PDFName } from "pdf-lib";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,11 +29,14 @@ export async function composeToPdfX4(model: DocumentModel): Promise<Buffer> {
     }
   }
 
-  page.node.set(PDFName.of("Group"), pdfDoc.context.obj({
-    Type: "Group",
-    S: "Transparency",
-    CS: "DeviceCMYK",
-  }));
+  page.node.set(
+    PDFName.of("Group"),
+    pdfDoc.context.obj({
+      Type: "Group",
+      S: "Transparency",
+      CS: "DeviceCMYK",
+    }),
+  );
 
   const pdfBytes = await pdfDoc.save();
 
@@ -48,7 +51,9 @@ export async function ghostscriptPdfX4(inputPdf: Buffer): Promise<Buffer> {
   try {
     await writeFile(inPath, inputPdf);
     await execFileAsync(gsBin, [
-      "-dBATCH", "-dNOPAUSE", "-dQUIET",
+      "-dBATCH",
+      "-dNOPAUSE",
+      "-dQUIET",
       "-sDEVICE=pdfwrite",
       "-dCompatibilityLevel=1.6",
       "-dPDFSETTINGS=/prepress",

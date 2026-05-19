@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import { Stage, Layer, Rect, Text } from "react-konva";
 import { useState } from "react";
+import { Layer, Rect, Stage, Text } from "react-konva";
 
 export function EditorCanvas() {
   const [dimensions] = useState({ width: 800, height: 600 });
