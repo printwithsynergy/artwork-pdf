@@ -1,0 +1,29 @@
+{
+  "name": "@artworkpdf/service",
+  "version": "0.1.0",
+  "description": "artworkPDF Hono API service",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "node --watch dist/index.js",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "@hono/node-server": "^1.13.0",
+    "drizzle-orm": "^0.36.0",
+    "pg-boss": "^10.1.0",
+    "postgres": "^3.4.5",
+    "@artworkpdf/document-model": "workspace:*",
+    "@artworkpdf/pdf-writer": "workspace:*"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
