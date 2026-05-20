@@ -1,7 +1,7 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && pnpm turbo build --filter=@artworkpdf/editor..."
+    "buildCommand": "cd ../.. && pnpm turbo build --filter=@artworkpdf/editor..."
   },
   "deploy": {
     "startCommand": "cd ../.. && pnpm --filter @artworkpdf/editor start",
