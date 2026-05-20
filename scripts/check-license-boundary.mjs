@@ -21,6 +21,7 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (entry === "node_modules" || entry === "dist" || entry === ".next") continue;
+    if (entry === "next-env.d.ts") continue;
     if (statSync(full).isDirectory()) {
       files.push(...walk(full));
     } else if (SOURCE_EXTS.has(extname(full))) {

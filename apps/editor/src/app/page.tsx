@@ -7,6 +7,6 @@ export default async function HomePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const demo = params["demo"] === "true";
+  const demo = params.demo === "true";
   return <EditorApp demo={demo} />;
 }
