@@ -2,7 +2,6 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
-  output: "standalone",
   env: {
     NEXT_PUBLIC_SERVICE_URL: process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:3001",
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
@@ -13,7 +12,7 @@ const config: NextConfig = {
       ".mjs": [".mts", ".mjs"],
     };
     if (isServer) {
-      cfg.externals = [...(cfg.externals ?? []), "canvas"];
+      cfg.resolve.alias = { ...cfg.resolve.alias, canvas: false };
     }
     return cfg;
   },
