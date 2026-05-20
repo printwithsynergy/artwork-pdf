@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { PreflightReport, PreflightRule } from "@artworkpdf/document-model";
+import {
+  DEFAULT_PREFLIGHT_RULES,
+  type PreflightReport,
+  type PreflightRule,
+} from "@artworkpdf/document-model";
 import { useCallback, useState } from "react";
 import { runClientChecks } from "../lib/preflight/index.js";
 
@@ -19,16 +23,30 @@ export function usePreflight() {
   const [state, setState] = useState<PreflightState>({ phase: "idle" });
 
   const run = useCallback(
-    async (file: File, opts?: { labelClass?: string; labelType?: string; tenantId?: string }) => {
+    async (
+      file: File,
+      opts?: {
+        labelClass?: string;
+        labelType?: string;
+        tenantId?: string;
+        demoMode?: boolean;
+      },
+    ) => {
       setState({ phase: "loading" });
       try {
-        const params = new URLSearchParams();
-        if (opts?.labelClass) params.set("label_class", opts.labelClass);
-        if (opts?.labelType) params.set("label_type", opts.labelType);
-        if (opts?.tenantId) params.set("tenant_id", opts.tenantId);
+        let rules: PreflightRule[];
 
-        const res = await fetch(`${SERVICE_URL}/preflight-rules?${params}`);
-        const { rules }: { rules: PreflightRule[] } = await res.json();
+        if (opts?.demoMode) {
+          rules = DEFAULT_PREFLIGHT_RULES;
+        } else {
+          const params = new URLSearchParams();
+          if (opts?.labelClass) params.set("label_class", opts.labelClass);
+          if (opts?.labelType) params.set("label_type", opts.labelType);
+          if (opts?.tenantId) params.set("tenant_id", opts.tenantId);
+          const res = await fetch(`${SERVICE_URL}/preflight-rules?${params}`);
+          const body: { rules: PreflightRule[] } = await res.json();
+          rules = body.rules;
+        }
 
         const { issues, skippedChecks } = await runClientChecks(file, rules);
         const hasBlockingIssues = issues.some((i) => i.severity === "block");

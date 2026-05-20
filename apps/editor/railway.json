@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd ../.. && pnpm turbo build --filter=@artworkpdf/editor..."
+  },
+  "deploy": {
+    "startCommand": "cd ../.. && pnpm --filter @artworkpdf/editor start",
+    "healthcheckPath": "/"
+  }
+}
