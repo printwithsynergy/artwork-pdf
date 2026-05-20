@@ -142,10 +142,12 @@ export function EditorApp({ demo = false }: Props) {
           />
         )}
 
-        {phase === "editor" && <EditorCanvas />}
+        {phase === "editor" && (
+          <EditorCanvas file={file} report={report} demo={demo} />
+        )}
       </div>
 
-      {demo && (
+      {demo && phase !== "editor" && (
         <footer
           style={{
             background: "#1a0f08",
@@ -176,7 +178,7 @@ export function EditorApp({ demo = false }: Props) {
         <div
           style={{
             position: "fixed",
-            bottom: demo ? "3rem" : "1rem",
+            bottom: "1rem",
             left: "50%",
             transform: "translateX(-50%)",
             background: "#f44336",

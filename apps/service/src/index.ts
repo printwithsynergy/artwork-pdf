@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { getBoss } from "./db/boss.js";
+import { runMigrations } from "./db/migrate.js";
 import { healthzRouter } from "./routes/healthz.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { preflightRulesRouter } from "./routes/preflight-rules.js";
@@ -18,8 +20,13 @@ app.route("/.well-known", synergyNodeRouter);
 
 const port = Number(process.env.PORT ?? 3001);
 
-startWorker().catch(console.error);
+async function main() {
+  await runMigrations();
+  await getBoss(); // initialise connection before worker registers handlers
+  await startWorker();
+  serve({ fetch: app.fetch, port }, () => {
+    console.log(`artworkPDF service listening on :${port}`);
+  });
+}
 
-serve({ fetch: app.fetch, port }, () => {
-  console.log(`artworkPDF service listening on :${port}`);
-});
+main().catch(console.error);

@@ -1,35 +1,108 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { JobSubmitRequest } from "@artworkpdf/document-model";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
+import { getBoss } from "../db/boss.js";
+import { getDb } from "../db/client.js";
+import { jobs } from "../db/schema.js";
 
 export const jobsRouter = new Hono();
 
 jobsRouter.post("/", async (c) => {
   const body = await c.req.json<JobSubmitRequest>();
-  void body;
-  const jobId = crypto.randomUUID();
-  return c.json({ id: jobId, status: "queued" }, 202);
+  const db = getDb();
+
+  if (!db) {
+    return c.json({ id: crypto.randomUUID(), status: "queued" }, 202);
+  }
+
+  const [row] = await db
+    .insert(jobs)
+    .values({ status: "queued", request: body as unknown as Record<string, unknown> })
+    .returning({ id: jobs.id });
+
+  const queueName =
+    body.output.format === "thumbnail"
+      ? "artwork.thumbnail"
+      : body.output.format === "preview-separations"
+        ? "artwork.preview-separations"
+        : "artwork.render";
+
+  if (!row) {
+    return c.json({ error: "insert_failed" }, 500);
+  }
+
+  const boss = await getBoss();
+  if (boss) {
+    await boss.send(queueName, { dbJobId: row.id, ...body } as Record<string, unknown>);
+  }
+
+  return c.json({ id: row.id, status: "queued" }, 202);
 });
 
 jobsRouter.get("/:id", async (c) => {
   const { id } = c.req.param();
-  return c.json({ id, status: "pending" });
+  const db = getDb();
+
+  if (!db) return c.json({ id, status: "pending" });
+
+  const [row] = await db.select().from(jobs).where(eq(jobs.id, id));
+  if (!row) return c.json({ error: "not_found" }, 404);
+
+  return c.json({ id: row.id, status: row.status });
 });
 
 jobsRouter.get("/:id/events", (c) => {
   const { id } = c.req.param();
-  const heartbeatMs = Number(process.env.SSE_HEARTBEAT_MS ?? 15000);
+  const heartbeatMs = Number(process.env.SSE_HEARTBEAT_MS ?? 5000);
+
   return streamSSE(c, async (stream) => {
-    await stream.writeSSE({ data: JSON.stringify({ id, status: "pending" }), event: "status" });
-    const timer = setInterval(() => {
-      stream.writeSSE({ data: "ping", event: "heartbeat" }).catch(() => clearInterval(timer));
+    let lastStatus = "";
+    const db = getDb();
+
+    const emit = async () => {
+      if (!db) {
+        await stream.writeSSE({ data: JSON.stringify({ id, status: "pending" }), event: "status" });
+        return false;
+      }
+      const [row] = await db
+        .select({ status: jobs.status })
+        .from(jobs)
+        .where(eq(jobs.id, id));
+      const status = row?.status ?? "pending";
+      if (status !== lastStatus) {
+        lastStatus = status;
+        await stream.writeSSE({ data: JSON.stringify({ id, status }), event: "status" });
+      }
+      return status === "done" || status === "failed";
+    };
+
+    const done = await emit();
+    if (done) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const finished = await emit();
+        if (finished) clearInterval(timer);
+      } catch {
+        clearInterval(timer);
+      }
     }, heartbeatMs);
+
     stream.onAbort(() => clearInterval(timer));
   });
 });
 
 jobsRouter.get("/:id/result", async (c) => {
   const { id } = c.req.param();
-  return c.json({ id, error: "not_found" }, 404);
+  const db = getDb();
+
+  if (!db) return c.json({ error: "not_found" }, 404);
+
+  const [row] = await db.select().from(jobs).where(eq(jobs.id, id));
+  if (!row) return c.json({ error: "not_found" }, 404);
+  if (row.status !== "done") return c.json({ error: "not_ready", status: row.status }, 202);
+
+  return c.json(row.result);
 });

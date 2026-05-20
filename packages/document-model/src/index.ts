@@ -29,6 +29,16 @@ export type ArtworkObject = {
   height: number;
   fill?: string;
   stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  // text objects
+  text?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  // image objects (data URL or URL)
+  src?: string;
+  // path objects
+  pathData?: string;
 };
 
 export type DocumentModel = {
