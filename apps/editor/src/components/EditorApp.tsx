@@ -9,7 +9,9 @@ import { PreflightPanel } from "./PreflightPanel";
 
 type Phase = "upload" | "checking" | "preflight" | "editor";
 
-export function EditorApp() {
+type Props = { demo?: boolean };
+
+export function EditorApp({ demo = false }: Props) {
   const [phase, setPhase] = useState<Phase>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<PreflightReport | null>(null);
@@ -18,7 +20,7 @@ export function EditorApp() {
   async function handleFile(f: File) {
     setFile(f);
     setPhase("checking");
-    const r = await runPreflight(f);
+    const r = await runPreflight(f, { demoMode: demo });
     if (r) {
       setReport(r);
       setPhase("preflight");
@@ -28,7 +30,6 @@ export function EditorApp() {
   }
 
   function handleSendToLint() {
-    // TODO: enqueue job with lint-only workflow via synergy client
     alert("Job queued for lint node analysis.");
   }
 
@@ -44,42 +45,78 @@ export function EditorApp() {
           display: "flex",
           alignItems: "center",
           flexShrink: 0,
+          gap: "0.75rem",
         }}
       >
-        <span style={{ fontWeight: 600, color: "#fc5102" }}>artworkPDF</span>
+        <span style={{ fontWeight: 600, color: "#fc5102" }}>
+          artworkPDF
+          {demo && (
+            <span
+              style={{
+                marginLeft: "0.5rem",
+                fontSize: "0.65rem",
+                background: "#2a1200",
+                border: "1px solid #fc5102",
+                color: "#fc5102",
+                padding: "0.1rem 0.35rem",
+                borderRadius: 3,
+                verticalAlign: "middle",
+                letterSpacing: "0.08em",
+              }}
+            >
+              DEMO
+            </span>
+          )}
+        </span>
         {file && (
-          <span style={{ marginLeft: "1rem", fontSize: "0.8rem", color: "#888" }}>{file.name}</span>
+          <span style={{ fontSize: "0.8rem", color: "#888" }}>{file.name}</span>
         )}
-        {phase !== "upload" && (
-          <button
-            type="button"
-            onClick={() => {
-              setPhase("upload");
-              setFile(null);
-              setReport(null);
-            }}
-            style={{
-              marginLeft: "auto",
-              background: "transparent",
-              border: "none",
-              color: "#666",
-              cursor: "pointer",
-              fontSize: "0.8rem",
-            }}
-          >
-            New file
-          </button>
-        )}
-        {phase === "editor" && (
-          <a
-            href="/source"
-            style={{ marginLeft: "1rem", fontSize: "0.75rem", color: "#555" }}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Source (AGPL-3.0)
-          </a>
-        )}
+        <div
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}
+        >
+          {phase !== "upload" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPhase("upload");
+                setFile(null);
+                setReport(null);
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#666",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+              }}
+            >
+              New file
+            </button>
+          )}
+          {phase === "editor" && !demo && (
+            <a
+              href="/source"
+              style={{ fontSize: "0.75rem", color: "#555" }}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Source (AGPL-3.0)
+            </a>
+          )}
+          {demo && (
+            <a
+              href="https://artworkpdf.com"
+              style={{
+                fontSize: "0.8rem",
+                color: "#fc5102",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Sign up free →
+            </a>
+          )}
+        </div>
       </header>
 
       <div
@@ -108,11 +145,38 @@ export function EditorApp() {
         {phase === "editor" && <EditorCanvas />}
       </div>
 
+      {demo && (
+        <footer
+          style={{
+            background: "#1a0f08",
+            borderTop: "1px solid #3d1a00",
+            padding: "0.5rem 1.25rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: "0.78rem", color: "#666" }}>Demo — client-side checks only.</span>
+          <a
+            href="https://artworkpdf.com"
+            style={{
+              fontSize: "0.78rem",
+              color: "#fc5102",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Create a free account to save, export &amp; run full lint checks →
+          </a>
+        </footer>
+      )}
+
       {preflightState.phase === "error" && (
         <div
           style={{
             position: "fixed",
-            bottom: "1rem",
+            bottom: demo ? "3rem" : "1rem",
             left: "50%",
             transform: "translateX(-50%)",
             background: "#f44336",
