@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && pnpm turbo build --filter=@artworkpdf/service..."
+  },
+  "deploy": {
+    "startCommand": "cd ../.. && pnpm --filter @artworkpdf/service start",
+    "healthcheckPath": "/healthz"
+  }
+}
