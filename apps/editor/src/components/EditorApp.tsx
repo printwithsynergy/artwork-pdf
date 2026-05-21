@@ -9,10 +9,10 @@ import { PreflightPanel } from "./PreflightPanel";
 
 type Phase = "upload" | "checking" | "preflight" | "editor";
 
-type Props = { demo?: boolean };
+type Props = { demo?: boolean; initialPhase?: Phase };
 
-export function EditorApp({ demo = false }: Props) {
-  const [phase, setPhase] = useState<Phase>("upload");
+export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
+  const [phase, setPhase] = useState<Phase>(initialPhase);
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<PreflightReport | null>(null);
   const { state: preflightState, run: runPreflight } = usePreflight();
@@ -128,7 +128,27 @@ export function EditorApp({ demo = false }: Props) {
           overflow: "hidden",
         }}
       >
-        {phase === "upload" && <FileDropZone onFile={handleFile} />}
+        {phase === "upload" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}>
+            <FileDropZone onFile={handleFile} />
+            {!demo && (
+              <a
+                href="/demo"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#fc5102",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  opacity: 0.85,
+                }}
+              >
+                Try the demo editor (no file needed) →
+              </a>
+            )}
+          </div>
+        )}
 
         {phase === "checking" && (
           <p style={{ color: "#e8a87c" }}>Running preflight checks&hellip;</p>
