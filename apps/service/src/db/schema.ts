@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { boolean, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -26,4 +26,13 @@ export const preflightRules = pgTable("preflight_rules", {
   clientSide: boolean("client_side").notNull().default(false),
   params: jsonb("params").notNull().default({}),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const assets = pgTable("assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  diskPath: text("disk_path").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

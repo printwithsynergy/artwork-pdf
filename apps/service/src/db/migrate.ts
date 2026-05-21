@@ -31,4 +31,15 @@ export async function runMigrations(): Promise<void> {
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS assets (
+      id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      filename    TEXT        NOT NULL,
+      mime_type   TEXT        NOT NULL,
+      size_bytes  INTEGER     NOT NULL,
+      disk_path   TEXT        NOT NULL,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 }

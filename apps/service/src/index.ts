@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { getBoss } from "./db/boss.js";
 import { runMigrations } from "./db/migrate.js";
+import { assetsRouter } from "./routes/assets.js";
 import { healthzRouter } from "./routes/healthz.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { preflightRulesRouter } from "./routes/preflight-rules.js";
@@ -12,6 +13,7 @@ import { startWorker } from "./worker.js";
 
 const app = new Hono();
 
+app.route("/assets", assetsRouter);
 app.route("/jobs", jobsRouter);
 app.route("/preflight-rules", preflightRulesRouter);
 app.route("/healthz", healthzRouter);

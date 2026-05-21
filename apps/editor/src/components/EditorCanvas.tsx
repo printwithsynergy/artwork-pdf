@@ -464,11 +464,34 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
   // ── image import ────────────────────────────────────────────────────────────
 
   async function handleImageFile(f: File) {
-    const src = await new Promise<string>((res) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => res(ev.target?.result as string);
-      reader.readAsDataURL(f);
-    });
+    // Try uploading to the service so the asset has a persistent URL.
+    // Falls back to a local data URL when the service is unavailable or in demo mode.
+    let src: string;
+    if (!demo) {
+      try {
+        const form = new FormData();
+        form.append("file", f);
+        const res = await fetch(`${SERVICE_URL}/assets`, { method: "POST", body: form });
+        if (res.ok) {
+          const json = (await res.json()) as { id: string; url: string };
+          src = `${SERVICE_URL}${json.url}`;
+        } else {
+          throw new Error("upload failed");
+        }
+      } catch {
+        src = await new Promise<string>((res) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => res(ev.target?.result as string);
+          reader.readAsDataURL(f);
+        });
+      }
+    } else {
+      src = await new Promise<string>((res) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => res(ev.target?.result as string);
+        reader.readAsDataURL(f);
+      });
+    }
     const imgEl = await loadImage(src);
     const max = Math.min(pageSize.width, pageSize.height) * 0.5;
     const s = Math.min(1, max / Math.max(imgEl.naturalWidth, imgEl.naturalHeight));
