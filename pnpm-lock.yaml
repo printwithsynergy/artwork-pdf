@@ -30,8 +30,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/synergy-client
       konva:
-        specifier: ^9.3.0
-        version: 9.3.22
+        specifier: ^10.3.0
+        version: 10.3.0
       next:
         specifier: ^16.2.6
         version: 16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -46,7 +46,7 @@ importers:
         version: 19.2.6(react@19.2.6)
       react-konva:
         specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.15)(konva@9.3.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 19.2.4(@types/react@19.2.15)(konva@10.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -122,14 +122,14 @@ importers:
         specifier: workspace:*
         version: link:../document-model
       konva:
-        specifier: ^9.3.0
-        version: 9.3.22
+        specifier: ^10.3.0
+        version: 10.3.0
       react-dom:
         specifier: ^19.0.0
         version: 19.2.6(react@19.2.6)
       react-konva:
         specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.15)(konva@9.3.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 19.2.4(@types/react@19.2.15)(konva@10.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       typo-js:
         specifier: ^1.2.1
         version: 1.3.2
@@ -1454,8 +1454,8 @@ packages:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
 
-  konva@9.3.22:
-    resolution: {integrity: sha512-yQI5d1bmELlD/fowuyfOp9ff+oamg26WOCkyqUyc+nczD/lhRa3EvD2MZOoc4c1293TAubW9n34fSQLgSeEgSw==}
+  konva@10.3.0:
+    resolution: {integrity: sha512-gt19K2gzY4lHbnkvsku7eSmB+A9PTS2jG4F9coBMsdjM1UKfJNxJbDbXVpeCW1wjEGRwBD3nBamcHnqJhAeKlg==}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -2763,7 +2763,7 @@ snapshots:
 
   jiti@1.21.7: {}
 
-  konva@9.3.22: {}
+  konva@10.3.0: {}
 
   lilconfig@3.1.3: {}
 
@@ -2954,11 +2954,11 @@ snapshots:
       react: 19.2.6
       scheduler: 0.27.0
 
-  react-konva@19.2.4(@types/react@19.2.15)(konva@9.3.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  react-konva@19.2.4(@types/react@19.2.15)(konva@10.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       '@types/react-reconciler': 0.33.0(@types/react@19.2.15)
       its-fine: 2.0.0(@types/react@19.2.15)(react@19.2.6)
-      konva: 9.3.22
+      konva: 10.3.0
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       react-reconciler: 0.33.0(react@19.2.6)

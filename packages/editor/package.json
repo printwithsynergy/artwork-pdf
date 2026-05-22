@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@artworkpdf/document-model": "workspace:*",
-    "konva": "^9.3.0",
+    "konva": "^10.3.0",
     "react-konva": "^19.0.0",
     "use-image": "^1.1.0",
     "typo-js": "^1.2.1"
