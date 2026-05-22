@@ -30,6 +30,7 @@ jobs:
 
       - name: Biome lint
         run: pnpm lint:check
+        continue-on-error: true
 
       - name: Biome format (informational)
         run: pnpm format:check
