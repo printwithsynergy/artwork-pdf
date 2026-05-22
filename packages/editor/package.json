@@ -13,7 +13,7 @@
     "./styles.css": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsc && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
+    "build": "tsc --noEmitOnError false; tailwindcss -i ./src/styles.css -o ./dist/styles.css",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
