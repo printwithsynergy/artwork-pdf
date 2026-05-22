@@ -20,20 +20,20 @@
   "dependencies": {
     "@artworkpdf/document-model": "workspace:*",
     "konva": "^9.3.0",
-    "react-konva": "^18.2.0",
+    "react-konva": "^19.0.0",
     "use-image": "^1.1.0",
     "typo-js": "^1.2.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
+    "@types/react": "^19.0.0",
     "@types/typo-js": "^1.2.2",
-    "react": "^18.2.0",
+    "react": "^19.0.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0",
     "tailwindcss": "^3.4.0"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   }
 }
