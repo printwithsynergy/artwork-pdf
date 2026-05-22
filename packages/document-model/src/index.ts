@@ -66,3 +66,4 @@ export type JobSubmitRequest = {
 };
 
 export * from "./preflight.js";
+export * from "./extended.js";

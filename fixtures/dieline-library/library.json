@@ -1,0 +1,186 @@
+{
+  "version": "1.0",
+  "templates": [
+    {
+      "id": "standup-pouch-4x6",
+      "name": "Stand-Up Pouch 4×6",
+      "description": "Standard stand-up pouch for snacks, coffee, supplements. Popular for single-serve packaging.",
+      "category": "pouch",
+      "dimensions": {
+        "widthMm": 101.6,
+        "heightMm": 152.4,
+        "depthMm": 25
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 101.6,
+        "height": 152.4
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 107.6 158.4'><rect x='3' y='3' width='101.6' height='152.4' fill='none' stroke='#333' stroke-width='0.5'/><line x1='3' y1='28.4' x2='104.6' y2='28.4' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><text x='53.8' y='18' text-anchor='middle' font-size='8' fill='#666'>Stand-Up Pouch</text><text x='53.8' y='85' text-anchor='middle' font-size='6' fill='#999'>4×6" (101.6×152.4mm)</text></svg>",
+      "tags": ["pouch", "stand-up", "flexible", "food", "coffee", "snacks"],
+      "isDefault": true
+    },
+    {
+      "id": "standup-pouch-5x8",
+      "name": "Stand-Up Pouch 5×8",
+      "description": "Larger stand-up pouch for family-size snacks, pet food, bulk supplements.",
+      "category": "pouch",
+      "dimensions": {
+        "widthMm": 127,
+        "heightMm": 203.2,
+        "depthMm": 35
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 127,
+        "height": 203.2
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 133 209.2'><rect x='3' y='3' width='127' height='203.2' fill='none' stroke='#333' stroke-width='0.5'/><line x1='3' y1='38.2' x2='130' y2='38.2' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><text x='66.5' y='22' text-anchor='middle' font-size='8' fill='#666'>Stand-Up Pouch</text><text x='66.5' y='108' text-anchor='middle' font-size='6' fill='#999'>5×8" (127×203.2mm)</text></svg>",
+      "tags": ["pouch", "stand-up", "flexible", "family-size", "bulk"]
+    },
+    {
+      "id": "flat-pouch-3x5",
+      "name": "Flat Pouch 3×5",
+      "description": "Slim flat pouch for samples, condiments, travel-size products. Heat-sealed three sides.",
+      "category": "pouch",
+      "dimensions": {
+        "widthMm": 76.2,
+        "heightMm": 127,
+        "depthMm": 0
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 76.2,
+        "height": 127
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 82.2 133'><rect x='3' y='3' width='76.2' height='127' fill='none' stroke='#333' stroke-width='0.5'/><line x1='3' y1='8' x2='79.2' y2='8' stroke='#666' stroke-width='0.3'/><text x='41.1' y='72' text-anchor='middle' font-size='7' fill='#666'>Flat Pouch</text><text x='41.1' y='82' text-anchor='middle' font-size='5' fill='#999'>3×5"</text></svg>",
+      "tags": ["pouch", "flat", "three-side-seal", "sample", "travel"]
+    },
+    {
+      "id": "flat-pouch-4x7",
+      "name": "Flat Pouch 4×7",
+      "description": "Medium flat pouch for protein powder packets, medical devices, hardware kits.",
+      "category": "pouch",
+      "dimensions": {
+        "widthMm": 101.6,
+        "heightMm": 177.8,
+        "depthMm": 0
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 101.6,
+        "height": 177.8
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 107.6 183.8'><rect x='3' y='3' width='101.6' height='177.8' fill='none' stroke='#333' stroke-width='0.5'/><line x1='3' y1='8' x2='104.6' y2='8' stroke='#666' stroke-width='0.3'/><text x='53.8' y='97' text-anchor='middle' font-size='7' fill='#666'>Flat Pouch</text><text x='53.8' y='107' text-anchor='middle' font-size='5' fill='#999'>4×7"</text></svg>",
+      "tags": ["pouch", "flat", "three-side-seal", "medical", "hardware"]
+    },
+    {
+      "id": "bottle-label-2in",
+      "name": "Bottle Label 2\" Diameter",
+      "description": "Round label for standard beverage bottles, jars, cosmetics containers.",
+      "category": "label",
+      "dimensions": {
+        "widthMm": 50.8,
+        "heightMm": 50.8,
+        "depthMm": 0
+      },
+      "bleedMm": 1.5,
+      "trimBox": {
+        "x": 1.5,
+        "y": 1.5,
+        "width": 50.8,
+        "height": 50.8
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 53.8 53.8'><circle cx='26.9' cy='26.9' r='25.4' fill='none' stroke='#333' stroke-width='0.5'/><circle cx='26.9' cy='26.9' r='1.5' fill='#666'/><text x='26.9' y='25' text-anchor='middle' font-size='5' fill='#666'>2\" Circle</text></svg>",
+      "tags": ["label", "circle", "bottle", "jar", "cosmetics"]
+    },
+    {
+      "id": "bottle-label-3in",
+      "name": "Bottle Label 3\" Diameter",
+      "description": "Large round label for wine bottles, premium products, gift packaging.",
+      "category": "label",
+      "dimensions": {
+        "widthMm": 76.2,
+        "heightMm": 76.2,
+        "depthMm": 0
+      },
+      "bleedMm": 1.5,
+      "trimBox": {
+        "x": 1.5,
+        "y": 1.5,
+        "width": 76.2,
+        "height": 76.2
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 79.2 79.2'><circle cx='39.6' cy='39.6' r='38.1' fill='none' stroke='#333' stroke-width='0.5'/><circle cx='39.6' cy='39.6' r='1.5' fill='#666'/><text x='39.6' y='37' text-anchor='middle' font-size='6' fill='#666'>3\" Circle</text></svg>",
+      "tags": ["label", "circle", "wine", "premium", "gift"]
+    },
+    {
+      "id": "carton-6x4x2",
+      "name": "Carton Box 6×4×2",
+      "description": "Straight-tuck carton for retail packaging. Common for cosmetics, electronics accessories.",
+      "category": "carton",
+      "dimensions": {
+        "widthMm": 152.4,
+        "heightMm": 101.6,
+        "depthMm": 50.8
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 152.4,
+        "height": 101.6
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 158.4 107.6'><rect x='3' y='3' width='152.4' height='101.6' fill='none' stroke='#333' stroke-width='0.5'/><line x1='53.8' y1='3' x2='53.8' y2='104.6' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><line x1='104.6' y1='3' x2='104.6' y2='104.6' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><text x='79.2' y='58' text-anchor='middle' font-size='7' fill='#666'>Carton</text><text x='79.2' y='68' text-anchor='middle' font-size='5' fill='#999'>6×4×2"</text></svg>",
+      "tags": ["carton", "box", "straight-tuck", "retail", "electronics"]
+    },
+    {
+      "id": "carton-8x6x3",
+      "name": "Carton Box 8×6×3",
+      "description": "Larger straight-tuck carton for premium products, gift sets, collectibles.",
+      "category": "carton",
+      "dimensions": {
+        "widthMm": 203.2,
+        "heightMm": 152.4,
+        "depthMm": 76.2
+      },
+      "bleedMm": 3,
+      "trimBox": {
+        "x": 3,
+        "y": 3,
+        "width": 203.2,
+        "height": 152.4
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 209.2 158.4'><rect x='3' y='3' width='203.2' height='152.4' fill='none' stroke='#333' stroke-width='0.5'/><line x1='71.7' y1='3' x2='71.7' y2='155.4' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><line x1='137.7' y1='3' x2='137.7' y2='155.4' stroke='#666' stroke-width='0.3' stroke-dasharray='2,1'/><text x='104.6' y='83' text-anchor='middle' font-size='8' fill='#666'>Carton</text><text x='104.6' y='95' text-anchor='middle' font-size='6' fill='#999'>8×6×3"</text></svg>",
+      "tags": ["carton", "box", "straight-tuck", "premium", "gift"]
+    },
+    {
+      "id": "sachet-2x3",
+      "name": "Sachet 2×3",
+      "description": "Single-serve sachet for condiments, sauces, hotel amenities, samples.",
+      "category": "sachet",
+      "dimensions": {
+        "widthMm": 50.8,
+        "heightMm": 76.2,
+        "depthMm": 0
+      },
+      "bleedMm": 2,
+      "trimBox": {
+        "x": 2,
+        "y": 2,
+        "width": 50.8,
+        "height": 76.2
+      },
+      "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54.8 80.2'><rect x='2' y='2' width='50.8' height='76.2' fill='none' stroke='#333' stroke-width='0.5' rx='3'/><line x1='2' y1='12' x2='52.8' y2='12' stroke='#666' stroke-width='0.3'/><text x='27.4' y='47' text-anchor='middle' font-size='6' fill='#666'>Sachet</text><text x='27.4' y='56' text-anchor='middle' font-size='4' fill='#999'>2×3"</text></svg>",
+      "tags": ["sachet", "single-serve", "condiment", "sample", "hotel"]
+    }
+  ]
+}
