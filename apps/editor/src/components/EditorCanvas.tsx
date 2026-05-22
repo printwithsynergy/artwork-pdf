@@ -535,7 +535,7 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
     setExportStatus("sending");
 
     const doc: DocumentModel = {
-      version: "1",
+      version: "2",
       width: pageSize.width,
       height: pageSize.height,
       unit: "pt",
