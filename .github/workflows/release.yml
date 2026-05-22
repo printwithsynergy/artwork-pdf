@@ -32,8 +32,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: Build publishable packages only
+        run: |
+          pnpm --filter @artworkpdf/document-model build
+          pnpm --filter @artworkpdf/editor build
+          pnpm --filter @printwithsynergy/artwork-pdf build
 
       - name: Publish @artworkpdf/document-model
         run: pnpm --filter @artworkpdf/document-model publish --no-git-checks --access public
