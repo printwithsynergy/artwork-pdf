@@ -7,7 +7,7 @@ WYSIWYG label & packaging artwork editor for the Print With Synergy stack. Full 
 
 Workflow: **create → lint → trap → step-and-repeat → RIP**
 
-Self-hostable OSS engine. SaaS at [app.artworkpdf.com](https://app.artworkpdf.com).
+Self-hostable OSS engine. Hosted at [artworkpdf.com](https://artworkpdf.com).
 
 ## Quick start (Docker)
 
