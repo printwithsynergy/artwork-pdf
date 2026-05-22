@@ -47,4 +47,4 @@ A source link also appears in the editor footer.
 
 ## License
 
-AGPL-3.0-or-later. Copyright © 2024–2026 Think Neverland LLC.
+AGPL-3.0-or-later. Copyright © 2024–2026 Print with Synergy.
