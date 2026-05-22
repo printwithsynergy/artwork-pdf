@@ -1,5 +1,5 @@
 {
-  "name": "@artworkpdf/editor",
+  "name": "@artworkpdf/editor-app",
   "version": "0.1.0",
   "description": "artworkPDF WYSIWYG editor — Next.js 15 + react-konva",
   "license": "AGPL-3.0-or-later",
