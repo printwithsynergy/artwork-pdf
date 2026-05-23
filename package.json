@@ -4,7 +4,10 @@
   "description": "WYSIWYG label & packaging artwork editor — synergy node, AGPL-3.0-or-later",
   "license": "AGPL-3.0-or-later",
   "type": "module",
-  "engines": { "node": ">=22", "pnpm": ">=10" },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -24,6 +27,15 @@
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild",
+      "sharp"
+    ],
+    "overrides": {
+      "vite": ">=6.4.2",
+      "postcss": ">=8.5.10",
+      "esbuild": ">=0.25.0"
+    }
   }
 }
