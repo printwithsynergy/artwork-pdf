@@ -18,6 +18,11 @@ import {
   Text,
   Transformer,
 } from "react-konva";
+import { DielineLibraryModal, type DielineTemplate } from "./DielineLibraryModal";
+import { LayersPanel } from "./LayersPanel";
+import { SeparationsPanel } from "./SeparationsPanel";
+
+const MM_TO_PT = 2.83465;
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -54,6 +59,7 @@ type Props = {
   demo?: boolean;
   initialObjects?: CanvasObj[];
   initialPageSize?: { width: number; height: number };
+  mode?: "basic" | "pro";
 };
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -186,7 +192,9 @@ export function EditorCanvas({
   demo = false,
   initialObjects,
   initialPageSize,
+  mode = "basic",
 }: Props) {
+  const pro = mode === "pro";
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -212,6 +220,10 @@ export function EditorCanvas({
   const [exportStatus, setExportStatus] = useState<ExportStatus>("idle");
   const [exportJobId, setExportJobId] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Pro mode state — dieline modal + per-ink visibility filter for separations.
+  const [dielineOpen, setDielineOpen] = useState(false);
+  const [hiddenInks, setHiddenInks] = useState<Set<string>>(new Set());
 
   // ── container resize ────────────────────────────────────────────────────────
 
@@ -666,6 +678,78 @@ export function EditorCanvas({
     setTimeout(tick, 1000);
   }
 
+  // ── pro mode helpers ───────────────────────────────────────────────────────
+
+  function reorderObject(id: string, direction: "up" | "down") {
+    const idx = objects.findIndex((o) => o.id === id);
+    if (idx === -1) return;
+    const swapWith = direction === "up" ? idx + 1 : idx - 1;
+    if (swapWith < 0 || swapWith >= objects.length) return;
+    const next = objects.slice();
+    const a = next[idx];
+    const b = next[swapWith];
+    if (!a || !b) return;
+    next[idx] = b;
+    next[swapWith] = a;
+    commit(next);
+  }
+
+  function toggleVisible(id: string) {
+    commit(
+      objects.map((o) => (o.id === id ? { ...o, opacity: o.opacity === 0 ? 1 : 0 } : o)),
+    );
+  }
+
+  function applyDieline(template: DielineTemplate) {
+    const pw = (template.dimensions.widthMm + template.bleedMm * 2) * MM_TO_PT;
+    const ph = (template.dimensions.heightMm + template.bleedMm * 2) * MM_TO_PT;
+    const tx = template.trimBox.x * MM_TO_PT;
+    const ty = template.trimBox.y * MM_TO_PT;
+    const tw = template.trimBox.width * MM_TO_PT;
+    const th = template.trimBox.height * MM_TO_PT;
+    setPageSize({ width: pw, height: ph });
+    const dielineObj: CanvasObj = {
+      id: `dieline-${template.id}`,
+      type: "rect",
+      x: tx,
+      y: ty,
+      width: tw,
+      height: th,
+      fill: "transparent",
+      stroke: BRAND,
+      strokeWidth: 1,
+      opacity: 1,
+    };
+    // Replace any existing dieline rect so swapping templates is one click.
+    const next = [
+      dielineObj,
+      ...objects.filter((o) => !/dieline/i.test(o.id)),
+    ];
+    commit(next);
+    setSelectedId(null);
+  }
+
+  function toggleInk(color: string) {
+    setHiddenInks((prev) => {
+      const next = new Set(prev);
+      if (next.has(color)) next.delete(color);
+      else next.add(color);
+      return next;
+    });
+  }
+
+  // Objects whose fill/stroke match a hidden ink are rendered with opacity 0
+  // for the preview. We don't mutate the actual object — separations preview
+  // is non-destructive.
+  const visibleObjects = pro && hiddenInks.size > 0
+    ? objects.map((o) => {
+        const fillHidden = hiddenInks.has(o.fill.toLowerCase());
+        const strokeHidden = hiddenInks.has(o.stroke.toLowerCase());
+        if (fillHidden && strokeHidden) return { ...o, opacity: 0 };
+        return o;
+      })
+    : objects;
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   const cursor =
@@ -714,6 +798,19 @@ export function EditorCanvas({
         <button type="button" onClick={() => fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height)} style={iconBtnStyle(false)}>⊡ Fit</button>
         <span style={{ fontSize: "0.75rem", color: MUTED }}>{Math.round(zoom * 100)}%</span>
 
+        {pro && (
+          <>
+            <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
+            <button
+              type="button"
+              onClick={() => setDielineOpen(true)}
+              style={iconBtnStyle(false)}
+            >
+              ▦ Dielines
+            </button>
+          </>
+        )}
+
         <div style={{ flex: 1 }} />
 
         <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", color: "#999" }}>
@@ -746,6 +843,22 @@ export function EditorCanvas({
           {exportLabel}
         </button>
       </div>
+
+      {/* ── workspace row (canvas + pro panels) ── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {pro && (
+          <LayersPanel
+            objects={objects}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId(id)}
+            onReorder={reorderObject}
+            onDelete={(id) => {
+              commit(objects.filter((o) => o.id !== id));
+              if (id === selectedId) setSelectedId(null);
+            }}
+            onToggleVisible={toggleVisible}
+          />
+        )}
 
       {/* ── canvas area ── */}
       <div ref={containerRef} style={{ flex: 1, overflow: "hidden", position: "relative" }}>
@@ -786,7 +899,7 @@ export function EditorCanvas({
             />
 
             {/* objects */}
-            {objects.map((obj) => (
+            {visibleObjects.map((obj) => (
               <ObjNode
                 key={obj.id}
                 obj={obj}
@@ -840,6 +953,15 @@ export function EditorCanvas({
               Use the toolbar to draw shapes, add text, or import an image
             </span>
           </div>
+        )}
+      </div>
+
+        {pro && (
+          <SeparationsPanel
+            objects={objects}
+            hidden={hiddenInks}
+            onToggle={toggleInk}
+          />
         )}
       </div>
 
@@ -908,6 +1030,14 @@ export function EditorCanvas({
           e.target.value = "";
         }}
       />
+
+      {pro && (
+        <DielineLibraryModal
+          open={dielineOpen}
+          onClose={() => setDielineOpen(false)}
+          onSelect={applyDieline}
+        />
+      )}
     </div>
   );
 }
