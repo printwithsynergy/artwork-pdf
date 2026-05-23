@@ -2,9 +2,11 @@
 "use client";
 import type { PreflightReport } from "@artworkpdf/document-model";
 import { useState } from "react";
+import { type EditorMode, useEditorMode } from "../hooks/useEditorMode.js";
 import { usePreflight } from "../hooks/usePreflight.js";
 import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
 import { FileDropZone } from "./FileDropZone";
+import { ModeToggle } from "./ModeToggle";
 import { PreflightPanel } from "./PreflightPanel";
 
 type Phase = "upload" | "checking" | "preflight" | "editor";
@@ -14,6 +16,7 @@ type Props = {
   initialPhase?: Phase;
   initialObjects?: CanvasObj[];
   initialPageSize?: { width: number; height: number };
+  preferMode?: EditorMode | "auto";
 };
 
 export function EditorApp({
@@ -21,7 +24,9 @@ export function EditorApp({
   initialPhase = "upload",
   initialObjects,
   initialPageSize,
+  preferMode = "auto",
 }: Props) {
+  const { mode, setMode } = useEditorMode(preferMode);
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<PreflightReport | null>(null);
@@ -49,13 +54,14 @@ export function EditorApp({
     >
       <header
         style={{
-          padding: "0.75rem 1rem",
+          padding: "0.6rem 0.85rem",
           background: "#1a0f08",
           borderBottom: "1px solid #3d1a00",
           display: "flex",
           alignItems: "center",
           flexShrink: 0,
-          gap: "0.75rem",
+          gap: "0.6rem",
+          flexWrap: "wrap",
         }}
       >
         <span style={{ fontWeight: 600, color: "#fc5102" }}>
@@ -84,6 +90,7 @@ export function EditorApp({
         <div
           style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}
         >
+          {phase === "editor" && <ModeToggle mode={mode} onChange={setMode} />}
           {phase !== "upload" && (
             <button
               type="button"
@@ -177,6 +184,7 @@ export function EditorApp({
             file={file}
             report={report}
             demo={demo}
+            mode={mode}
             {...(initialObjects ? { initialObjects } : {})}
             {...(initialPageSize ? { initialPageSize } : {})}
           />
