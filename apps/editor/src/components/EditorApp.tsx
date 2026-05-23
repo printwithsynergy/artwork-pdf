@@ -3,15 +3,25 @@
 import type { PreflightReport } from "@artworkpdf/document-model";
 import { useState } from "react";
 import { usePreflight } from "../hooks/usePreflight.js";
-import { EditorCanvas } from "./EditorCanvas";
+import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
 import { FileDropZone } from "./FileDropZone";
 import { PreflightPanel } from "./PreflightPanel";
 
 type Phase = "upload" | "checking" | "preflight" | "editor";
 
-type Props = { demo?: boolean; initialPhase?: Phase };
+type Props = {
+  demo?: boolean;
+  initialPhase?: Phase;
+  initialObjects?: CanvasObj[];
+  initialPageSize?: { width: number; height: number };
+};
 
-export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
+export function EditorApp({
+  demo = false,
+  initialPhase = "upload",
+  initialObjects,
+  initialPageSize,
+}: Props) {
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<PreflightReport | null>(null);
@@ -105,7 +115,7 @@ export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
           )}
           {demo && (
             <a
-              href="https://artworkpdf.com"
+              href="/"
               style={{
                 fontSize: "0.8rem",
                 color: "#fc5102",
@@ -113,7 +123,7 @@ export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
                 textDecoration: "none",
               }}
             >
-              Sign up free →
+              ← Home
             </a>
           )}
         </div>
@@ -163,7 +173,13 @@ export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
         )}
 
         {phase === "editor" && (
-          <EditorCanvas file={file} report={report} demo={demo} />
+          <EditorCanvas
+            file={file}
+            report={report}
+            demo={demo}
+            {...(initialObjects ? { initialObjects } : {})}
+            {...(initialPageSize ? { initialPageSize } : {})}
+          />
         )}
       </div>
 
@@ -179,18 +195,9 @@ export function EditorApp({ demo = false, initialPhase = "upload" }: Props) {
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: "0.78rem", color: "#666" }}>Demo — client-side checks only.</span>
-          <a
-            href="https://artworkpdf.com"
-            style={{
-              fontSize: "0.78rem",
-              color: "#fc5102",
-              fontWeight: 600,
-              textDecoration: "none",
-            }}
-          >
-            Create a free account to save, export &amp; run full lint checks →
-          </a>
+          <span style={{ fontSize: "0.78rem", color: "#666" }}>
+            Demo — client-side checks &amp; export only. Self-host for full PDF/X-4 + lint.
+          </span>
         </footer>
       )}
 

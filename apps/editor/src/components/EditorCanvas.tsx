@@ -25,7 +25,7 @@ type Tool = "select" | "rect" | "ellipse" | "text" | "image";
 
 type ObjType = "rect" | "ellipse" | "text" | "image";
 
-type CanvasObj = {
+export type CanvasObj = {
   id: string;
   type: ObjType;
   x: number;
@@ -52,6 +52,8 @@ type Props = {
   file?: File | null;
   report?: PreflightReport | null;
   demo?: boolean;
+  initialObjects?: CanvasObj[];
+  initialPageSize?: { width: number; height: number };
 };
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -178,18 +180,24 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
 
 // ── main component ─────────────────────────────────────────────────────────────
 
-export function EditorCanvas({ file, report, demo = false }: Props) {
+export function EditorCanvas({
+  file,
+  report,
+  demo = false,
+  initialObjects,
+  initialPageSize,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
-  const [pageSize, setPageSize] = useState({ width: 595, height: 842 }); // A4 in pt
+  const [pageSize, setPageSize] = useState(initialPageSize ?? { width: 595, height: 842 }); // A4 in pt
   const [zoom, setZoom] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
-  const [objects, setObjects] = useState<CanvasObj[]>([]);
-  const [history, setHistory] = useState<CanvasObj[][]>([[]]);
+  const [objects, setObjects] = useState<CanvasObj[]>(initialObjects ?? []);
+  const [history, setHistory] = useState<CanvasObj[][]>([initialObjects ?? []]);
   const [historyIdx, setHistoryIdx] = useState(0);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -343,19 +351,20 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [objects, selectedId]);
 
-  // ── stage mouse events ──────────────────────────────────────────────────────
+  // ── stage pointer events (mouse + touch) ───────────────────────────────────
 
-  function onStageMouseDown(e: KonvaEventObject<MouseEvent>) {
+  function onStagePointerDown(e: KonvaEventObject<MouseEvent | TouchEvent>) {
     if (tool === "select") {
       if (e.target === stageRef.current) setSelectedId(null);
       return;
     }
     if (!stageRef.current) return;
+    e.evt.preventDefault();
     const pos = stagePointer(stageRef.current);
     setDrawing({ x: pos.x, y: pos.y, w: 0, h: 0 });
   }
 
-  function onStageMouseMove(e: KonvaEventObject<MouseEvent>) {
+  function onStagePointerMove(e: KonvaEventObject<MouseEvent | TouchEvent>) {
     if (!drawing) return;
     e.evt.preventDefault();
     if (!stageRef.current) return;
@@ -363,7 +372,7 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
     setDrawing((d) => (d ? { ...d, w: pos.x - d.x, h: pos.y - d.y } : null));
   }
 
-  async function onStageMouseUp() {
+  async function onStagePointerUp() {
     if (!drawing) return;
     const { x, y, w, h } = drawing;
     setDrawing(null);
@@ -527,9 +536,49 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
 
   // ── PDF export ──────────────────────────────────────────────────────────────
 
+  async function handleClientExport() {
+    const stage = stageRef.current;
+    if (!stage) return;
+    setExportStatus("sending");
+    try {
+      // Rasterize just the page area at 2x for a crisp embed.
+      const png = stage.toDataURL({
+        x: stagePos.x,
+        y: stagePos.y,
+        width: pageSize.width * zoom,
+        height: pageSize.height * zoom,
+        pixelRatio: 2,
+        mimeType: "image/png",
+      });
+      setSelectedId(null);
+
+      const pdf = await PDFDocument.create();
+      const page = pdf.addPage([pageSize.width, pageSize.height]);
+      const img = await pdf.embedPng(png);
+      page.drawImage(img, {
+        x: 0,
+        y: 0,
+        width: pageSize.width,
+        height: pageSize.height,
+      });
+      const bytes = await pdf.save();
+      const blob = new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "artwork-demo.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+      setExportStatus("done");
+      setTimeout(() => setExportStatus("idle"), 3000);
+    } catch {
+      setExportStatus("error");
+    }
+  }
+
   async function handleExport() {
     if (demo) {
-      alert("Sign up for a free account to export PDF/X-4 files.");
+      await handleClientExport();
       return;
     }
     setExportStatus("sending");
@@ -629,7 +678,7 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
     : exportStatus === "polling" ? "Rendering…"
     : exportStatus === "done" ? "Downloaded ✓"
     : exportStatus === "error" ? "Error — retry"
-    : demo ? "Export (sign up)"
+    : demo ? "Download PDF"
     : "Export PDF/X-4";
 
   return (
@@ -708,9 +757,12 @@ export function EditorCanvas({ file, report, demo = false }: Props) {
           scaleY={zoom}
           x={stagePos.x}
           y={stagePos.y}
-          onMouseDown={onStageMouseDown}
-          onMouseMove={onStageMouseMove}
-          onMouseUp={onStageMouseUp}
+          onMouseDown={onStagePointerDown}
+          onMouseMove={onStagePointerMove}
+          onMouseUp={onStagePointerUp}
+          onTouchStart={onStagePointerDown}
+          onTouchMove={onStagePointerMove}
+          onTouchEnd={onStagePointerUp}
           onWheel={onWheel}
           style={{ cursor }}
         >
