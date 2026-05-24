@@ -18,11 +18,10 @@ import {
   Text,
   Transformer,
 } from "react-konva";
-import { DielineLibraryModal, type DielineTemplate } from "./DielineLibraryModal";
+import { type DielineTemplate, templateToInitialState } from "../lib/dieline-template";
+import { DielineLibraryModal } from "./DielineLibraryModal";
 import { LayersPanel } from "./LayersPanel";
 import { SeparationsPanel } from "./SeparationsPanel";
-
-const MM_TO_PT = 2.83465;
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -701,30 +700,10 @@ export function EditorCanvas({
   }
 
   function applyDieline(template: DielineTemplate) {
-    const pw = (template.dimensions.widthMm + template.bleedMm * 2) * MM_TO_PT;
-    const ph = (template.dimensions.heightMm + template.bleedMm * 2) * MM_TO_PT;
-    const tx = template.trimBox.x * MM_TO_PT;
-    const ty = template.trimBox.y * MM_TO_PT;
-    const tw = template.trimBox.width * MM_TO_PT;
-    const th = template.trimBox.height * MM_TO_PT;
-    setPageSize({ width: pw, height: ph });
-    const dielineObj: CanvasObj = {
-      id: `dieline-${template.id}`,
-      type: "rect",
-      x: tx,
-      y: ty,
-      width: tw,
-      height: th,
-      fill: "transparent",
-      stroke: BRAND,
-      strokeWidth: 1,
-      opacity: 1,
-    };
+    const { objects: seeded, pageSize: newPageSize } = templateToInitialState(template);
+    setPageSize(newPageSize);
     // Replace any existing dieline rect so swapping templates is one click.
-    const next = [
-      dielineObj,
-      ...objects.filter((o) => !/dieline/i.test(o.id)),
-    ];
+    const next = [...seeded, ...objects.filter((o) => !/dieline/i.test(o.id))];
     commit(next);
     setSelectedId(null);
   }
@@ -798,7 +777,7 @@ export function EditorCanvas({
         <button type="button" onClick={() => fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height)} style={iconBtnStyle(false)}>⊡ Fit</button>
         <span style={{ fontSize: "0.75rem", color: MUTED }}>{Math.round(zoom * 100)}%</span>
 
-        {pro && (
+        {(pro || demo) && (
           <>
             <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
             <button
@@ -1031,7 +1010,7 @@ export function EditorCanvas({
         }}
       />
 
-      {pro && (
+      {(pro || demo) && (
         <DielineLibraryModal
           open={dielineOpen}
           onClose={() => setDielineOpen(false)}

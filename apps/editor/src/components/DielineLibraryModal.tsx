@@ -1,20 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 import { useState } from "react";
-import library from "../data/dielines.json";
-
-export type DielineTemplate = {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  dimensions: { widthMm: number; heightMm: number; depthMm: number };
-  bleedMm: number;
-  trimBox: { x: number; y: number; width: number; height: number };
-  previewSvg: string;
-  tags: string[];
-  isDefault?: boolean;
-};
+import { type DielineTemplate, TEMPLATES } from "../lib/dieline-template";
 
 type Props = {
   open: boolean;
@@ -26,8 +13,6 @@ const PANEL = "#1a0f08";
 const BORDER = "#3d1a00";
 const BRAND = "#fc5102";
 const MUTED = "#888";
-
-const TEMPLATES = (library as { templates: DielineTemplate[] }).templates;
 
 export function DielineLibraryModal({ open, onClose, onSelect }: Props) {
   const [query, setQuery] = useState("");
