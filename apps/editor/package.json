@@ -1,7 +1,7 @@
 {
   "name": "@artworkpdf/editor-host",
   "version": "0.1.0",
-  "description": "artworkPDF Next.js host app — mounts @artworkpdf/editor-app at /demo, /upload, and the marketing landing",
+  "description": "artworkPDF Next.js host app — mounts @printwithsynergy/artwork-pdf-editor at /demo, /upload, and the marketing landing",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "scripts": {
@@ -19,7 +19,7 @@
     "konva": "^10.3.0",
     "pdf-lib": "^1.17.1",
     "@artworkpdf/document-model": "workspace:*",
-    "@artworkpdf/editor-app": "workspace:*",
+    "@printwithsynergy/artwork-pdf-editor": "workspace:*",
     "@printwithsynergy/artwork-pdf": "workspace:*"
   },
   "devDependencies": {

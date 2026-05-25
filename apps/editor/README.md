@@ -1,6 +1,6 @@
 # @artworkpdf/editor-host
 
-Next.js 16 host for [`@artworkpdf/editor-app`](../../packages/editor-app/).
+Next.js 16 host for [`@printwithsynergy/artwork-pdf-editor`](../../packages/editor-app/).
 Deployed to `app.artworkpdf.com`. The editor itself lives in the
 package; this app only owns the routes and the Next-specific glue.
 
@@ -36,6 +36,6 @@ pnpm --filter @artworkpdf/editor-host dev
 # http://localhost:3000
 ```
 
-The host imports from `@artworkpdf/editor-app` via the workspace link;
+The host imports from `@printwithsynergy/artwork-pdf-editor` via the workspace link;
 Next's `transpilePackages` config (`next.config.ts`) transpiles the
 TypeScript source on the fly. No package build step needed in dev.
