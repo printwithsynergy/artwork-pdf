@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { EditorApp } from "../../components/EditorApp";
 import {
+  DEFAULT_BLEED_MM,
+  EditorApp,
   getDefaultTemplate,
   getTemplateById,
+  parseBleed,
   templateToInitialState,
-} from "../../lib/dieline-template";
+} from "@artworkpdf/editor-app";
 
 export const metadata = {
   title: "artworkPDF — Demo Editor",
@@ -14,13 +16,25 @@ export const metadata = {
 export default async function DemoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dieline?: string }>;
+  searchParams: Promise<{ dieline?: string; bleed?: string }>;
 }) {
-  const { dieline } = await searchParams;
+  const { dieline, bleed } = await searchParams;
   const template = getTemplateById(dieline) ?? getDefaultTemplate();
-  const { objects, pageSize } = templateToInitialState(template);
+  const bleedMm = parseBleed(bleed) ?? DEFAULT_BLEED_MM;
+  const { objects, pageSize } = templateToInitialState(template, bleedMm);
 
   return (
-    <EditorApp demo initialPhase="editor" initialObjects={objects} initialPageSize={pageSize} />
+    <EditorApp
+      demo
+      initialPhase="editor"
+      initialObjects={objects}
+      initialPageSize={pageSize}
+      bleedMm={bleedMm}
+      topBar={{
+        extraButtons: [
+          { label: "← Back to artworkpdf.com", href: "https://artworkpdf.com", target: "_blank" },
+        ],
+      }}
+    />
   );
 }

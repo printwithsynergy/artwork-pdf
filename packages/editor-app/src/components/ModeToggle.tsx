@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { EditorMode } from "../hooks/useEditorMode.js";
+import type { EditorMode } from "../hooks/useEditorMode";
 
 type Props = {
   mode: EditorMode;

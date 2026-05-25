@@ -35,4 +35,17 @@ describe("dieline-template", () => {
     expect(rect.width).toBeCloseTo(288, 0);
     expect(rect.height).toBeCloseTo(432, 0);
   });
+
+  it("templateToInitialState honors a bleedMm override", () => {
+    // Override with 0.125 in = 3.175 mm → pageSize changes by 0.35 mm
+    // each side, the trim rect shifts to the new offset.
+    const t = getDefaultTemplate();
+    const { objects, pageSize } = templateToInitialState(t, 3.175);
+    expect(pageSize.width).toBeCloseTo((101.6 + 6.35) * 2.83465, 1);
+    expect(pageSize.height).toBeCloseTo((152.4 + 6.35) * 2.83465, 1);
+    const rect = objects[0];
+    if (!rect) throw new Error("expected one dieline rect");
+    expect(rect.x).toBeCloseTo(3.175 * 2.83465, 1);
+    expect(rect.y).toBeCloseTo(3.175 * 2.83465, 1);
+  });
 });

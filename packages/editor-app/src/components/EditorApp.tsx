@@ -1,22 +1,44 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 import type { PreflightReport } from "@artworkpdf/document-model";
-import { useState } from "react";
-import { type EditorMode, useEditorMode } from "../hooks/useEditorMode.js";
-import { usePreflight } from "../hooks/usePreflight.js";
+import { useEffect, useState } from "react";
+import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { usePreflight } from "../hooks/usePreflight";
+import { DEFAULT_BLEED_MM } from "../lib/bleed";
+import { type EditorConfig, resolveConfig } from "../lib/editor-config";
 import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
 import { FileDropZone } from "./FileDropZone";
-import { ModeToggle } from "./ModeToggle";
 import { PreflightPanel } from "./PreflightPanel";
+import { TopBar, type TopBarProps } from "./TopBar";
 
 type Phase = "upload" | "checking" | "preflight" | "editor";
 
-type Props = {
+/**
+ * Props accepted by the top-level editor component. Hosts pass these
+ * to mount the editor in their page (Next.js route, Astro
+ * `client:only`, plain React app, etc.).
+ *
+ * @public
+ */
+export type EditorAppProps = {
+  /** Strips destructive actions and routes export through the
+   *  client-only path. The `/demo` route flips this on. */
   demo?: boolean;
+  /** Starting phase. Set `"editor"` to skip the upload step. */
   initialPhase?: Phase;
+  /** Seed objects for the canvas — typically from `templateToInitialState`. */
   initialObjects?: CanvasObj[];
+  /** Seed page size for the canvas — typically from `templateToInitialState`. */
   initialPageSize?: { width: number; height: number };
+  /** Initial mode preference. `"auto"` resolves by viewport. */
   preferMode?: EditorMode | "auto";
+  /** Per-instance flag overrides. Merged into mode + global defaults. */
+  config?: Partial<EditorConfig>;
+  /** Bleed margin in millimetres. Defaults to {@link DEFAULT_BLEED_MM} (0.125 in). */
+  bleedMm?: number;
+  /** Host-supplied top bar configuration (logo, extra CTAs, etc.). */
+  topBar?: Partial<TopBarProps>;
 };
 
 export function EditorApp({
@@ -25,12 +47,19 @@ export function EditorApp({
   initialObjects,
   initialPageSize,
   preferMode = "auto",
-}: Props) {
+  config: configOverrides,
+  bleedMm = DEFAULT_BLEED_MM,
+  topBar,
+}: EditorAppProps) {
   const { mode, setMode } = useEditorMode(preferMode);
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<PreflightReport | null>(null);
   const { state: preflightState, run: runPreflight } = usePreflight();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isMobile = useIsMobile();
+  const config = resolveConfig(mode, configOverrides);
 
   async function handleFile(f: File) {
     setFile(f);
@@ -50,91 +79,14 @@ export function EditorApp({
 
   return (
     <main
-      style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#120a04" }}
+      style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#ffffff" }}
     >
-      <header
-        style={{
-          padding: "0.6rem 0.85rem",
-          background: "#1a0f08",
-          borderBottom: "1px solid #3d1a00",
-          display: "flex",
-          alignItems: "center",
-          flexShrink: 0,
-          gap: "0.6rem",
-          flexWrap: "wrap",
-        }}
-      >
-        <span style={{ fontWeight: 600, color: "#fc5102" }}>
-          artworkPDF
-          {demo && (
-            <span
-              style={{
-                marginLeft: "0.5rem",
-                fontSize: "0.65rem",
-                background: "#2a1200",
-                border: "1px solid #fc5102",
-                color: "#fc5102",
-                padding: "0.1rem 0.35rem",
-                borderRadius: 3,
-                verticalAlign: "middle",
-                letterSpacing: "0.08em",
-              }}
-            >
-              DEMO
-            </span>
-          )}
-        </span>
-        {file && (
-          <span style={{ fontSize: "0.8rem", color: "#888" }}>{file.name}</span>
-        )}
-        <div
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.75rem" }}
-        >
-          {phase === "editor" && <ModeToggle mode={mode} onChange={setMode} />}
-          {phase !== "upload" && (
-            <button
-              type="button"
-              onClick={() => {
-                setPhase("upload");
-                setFile(null);
-                setReport(null);
-              }}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#666",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-              }}
-            >
-              New file
-            </button>
-          )}
-          {phase === "editor" && !demo && (
-            <a
-              href="/source"
-              style={{ fontSize: "0.75rem", color: "#555" }}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Source (AGPL-3.0)
-            </a>
-          )}
-          {demo && (
-            <a
-              href="/"
-              style={{
-                fontSize: "0.8rem",
-                color: "#fc5102",
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              ← Home
-            </a>
-          )}
-        </div>
-      </header>
+      <TopBar
+        {...topBar}
+        showDemoBadge={(topBar?.showDemoBadge ?? (demo && config.enable_demo_badge)) || false}
+        onMenuToggle={() => setMenuOpen((v) => !v)}
+        showMenuButton={isMobile && phase === "editor"}
+      />
 
       <div
         style={{
@@ -143,10 +95,18 @@ export function EditorApp({
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
+          background: "#ffffff",
         }}
       >
         {phase === "upload" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1.25rem",
+            }}
+          >
             <FileDropZone onFile={handleFile} />
             {!demo && (
               <a
@@ -168,15 +128,18 @@ export function EditorApp({
         )}
 
         {phase === "checking" && (
-          <p style={{ color: "#e8a87c" }}>Running preflight checks&hellip;</p>
+          <p style={{ color: "#995b30" }}>Running preflight checks&hellip;</p>
         )}
 
-        {phase === "preflight" && report && (
+        {phase === "preflight" && report && config.enable_preflight_banner && (
           <PreflightPanel
             report={report}
             onProceed={() => setPhase("editor")}
             onSendToLint={handleSendToLint}
           />
+        )}
+        {phase === "preflight" && report && !config.enable_preflight_banner && (
+          <AutoAdvance onContinue={() => setPhase("editor")} />
         )}
 
         {phase === "editor" && (
@@ -185,6 +148,12 @@ export function EditorApp({
             report={report}
             demo={demo}
             mode={mode}
+            onModeChange={setMode}
+            config={config}
+            bleedMm={bleedMm}
+            isMobile={isMobile}
+            menuOpen={menuOpen}
+            onMenuOpenChange={setMenuOpen}
             {...(initialObjects ? { initialObjects } : {})}
             {...(initialPageSize ? { initialPageSize } : {})}
           />
@@ -228,4 +197,19 @@ export function EditorApp({
       )}
     </main>
   );
+}
+
+function AutoAdvance({ onContinue }: { onContinue: () => void }) {
+  // Host disabled the preflight banner; skip straight into the editor.
+  // Runs once via effect so React's render cycle stays clean.
+  useAutoAdvance(onContinue);
+  return null;
+}
+
+function useAutoAdvance(fn: () => void) {
+  // Inline single-use helper — avoids polluting hooks/ for one effect.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire-once
+  useEffect(() => {
+    fn();
+  }, []);
 }

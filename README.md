@@ -36,6 +36,39 @@ curl -X POST http://localhost:3001/jobs \
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
 
+## Embedding the editor
+
+The WYSIWYG canvas ships as a host-customizable React package
+[`@artworkpdf/editor-app`](packages/editor-app/) so other apps (Next.js
+routes, Astro pages, Remix, plain React) can mount it without an
+iframe:
+
+```tsx
+import {
+  EditorApp,
+  getDefaultTemplate,
+  templateToInitialState,
+} from "@artworkpdf/editor-app";
+
+const { objects, pageSize } = templateToInitialState(getDefaultTemplate());
+
+<EditorApp
+  demo
+  initialPhase="editor"
+  initialObjects={objects}
+  initialPageSize={pageSize}
+  bleedMm={3.175}                                  // 0.125 in
+  config={{ enable_separations_panel: false }}     // disable any feature
+  topBar={{
+    logo: <img src="/my-logo.svg" alt="Acme" />,
+    extraButtons: [{ label: "← Back", href: "/" }],
+  }}
+/>
+```
+
+Full prop reference: [`packages/editor-app/src/lib/editor-config.ts`](packages/editor-app/src/lib/editor-config.ts)
+and [`packages/editor-app/src/components/TopBar.tsx`](packages/editor-app/src/components/TopBar.tsx).
+
 ## AGPL §13 Network Use
 
 If you run artworkPDF as a network service (SaaS), you must make the

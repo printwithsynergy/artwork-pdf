@@ -205,8 +205,8 @@ export function SeparationsPanel({ objects, hidden, onToggle }: Props) {
           lineHeight: 1.4,
         }}
       >
-        Preview only. Final separations are produced by the render service
-        (pdf-writer + Ghostscript ICC).
+        Preview only. Final separations are produced by the render service (pdf-writer + Ghostscript
+        ICC).
       </p>
     </aside>
   );
