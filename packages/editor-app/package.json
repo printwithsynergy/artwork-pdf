@@ -1,13 +1,16 @@
 {
   "name": "@printwithsynergy/artwork-pdf-editor",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "artworkPDF WYSIWYG editor as a host-customizable React component. Drop-in mountable in Next.js, Astro, Remix, etc.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": ["dist", "README.md", "LICENSE"],
   "sideEffects": false,
@@ -36,14 +39,6 @@
     "vitest": "^3.2.0"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
-      }
-    }
+    "access": "public"
   }
 }
