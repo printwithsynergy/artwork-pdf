@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { DocumentModel, JobSubmitRequest, PreflightReport } from "@artworkpdf/document-model";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { PDFDocument } from "pdf-lib";
@@ -20,10 +19,33 @@ import { type DielineTemplate, templateToInitialState } from "../lib/dieline-tem
 import type { EditorConfig } from "../lib/editor-config";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { LayersPanel } from "./LayersPanel";
+import type { PreflightReport } from "../lib/preflight/types";
 import { MobileToolDrawer } from "./MobileToolDrawer";
 import { SeparationsPanel } from "./SeparationsPanel";
 
 // ── types ─────────────────────────────────────────────────────────────────────
+
+// Structural shape of the production export request, kept inline so
+// the published package doesn't depend on @artworkpdf/document-model.
+// Mirrors the JobSubmitRequest shape consumed by apps/service.
+type ProductionExportRequest = {
+  document: {
+    version: "2";
+    width: number;
+    height: number;
+    unit: "pt";
+    separations: unknown[];
+    layers: Array<{
+      id: string;
+      type: "artwork";
+      name: string;
+      visible: boolean;
+      objects: Array<Record<string, unknown>>;
+    }>;
+  };
+  output: { format: "pdf-x4" };
+  preflightReport?: PreflightReport;
+};
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "image";
 
@@ -638,7 +660,7 @@ export function EditorCanvas({
     }
     setExportStatus("sending");
 
-    const doc: DocumentModel = {
+    const doc: ProductionExportRequest["document"] = {
       version: "2",
       width: pageSize.width,
       height: pageSize.height,
@@ -671,7 +693,7 @@ export function EditorCanvas({
       ],
     };
 
-    const req: JobSubmitRequest = {
+    const req: ProductionExportRequest = {
       document: doc,
       output: { format: "pdf-x4" },
       ...(report ? { preflightReport: report } : {}),
