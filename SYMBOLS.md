@@ -10,7 +10,7 @@ _placeholder — run `pnpm run symbols` after first build_
 
 _placeholder_
 
-## @artworkpdf/editor-app
+## @printwithsynergy/artwork-pdf-editor
 
 _placeholder — re-exports EditorApp, TopBar, MobileToolDrawer, EditorConfig, dieline-template helpers, bleed helpers. See packages/editor-app/README.md._
 

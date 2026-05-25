@@ -6,9 +6,9 @@ const config: NextConfig = {
     NEXT_PUBLIC_SERVICE_URL: process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:3001",
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   },
-  // The editor lives in @artworkpdf/editor-app. Workspace link points
+  // The editor lives in @printwithsynergy/artwork-pdf-editor. Workspace link points
   // at TypeScript source in dev; Next transpiles it for us.
-  transpilePackages: ["@artworkpdf/editor-app"],
+  transpilePackages: ["@printwithsynergy/artwork-pdf-editor"],
   // Turbopack handles react-konva + canvas without a custom alias —
   // the "use client" boundary keeps canvas out of the server bundle.
   turbopack: {},

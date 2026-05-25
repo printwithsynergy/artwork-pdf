@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 /**
- * Public API surface of `@artworkpdf/editor-app`. Hosts mount the
+ * Public API surface of `@printwithsynergy/artwork-pdf-editor`. Hosts mount the
  * editor by importing {@link EditorApp} and optionally customize it
  * via {@link EditorAppProps.config}, {@link EditorAppProps.topBar},
  * and {@link EditorAppProps.bleedMm}.

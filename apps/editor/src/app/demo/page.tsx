@@ -6,7 +6,7 @@ import {
   getTemplateById,
   parseBleed,
   templateToInitialState,
-} from "@artworkpdf/editor-app";
+} from "@printwithsynergy/artwork-pdf-editor";
 
 export const metadata = {
   title: "artworkPDF — Demo Editor",

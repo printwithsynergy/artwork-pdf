@@ -31,12 +31,12 @@ importers:
       '@artworkpdf/document-model':
         specifier: workspace:*
         version: link:../../packages/document-model
-      '@artworkpdf/editor-app':
-        specifier: workspace:*
-        version: link:../../packages/editor-app
       '@printwithsynergy/artwork-pdf':
         specifier: workspace:*
         version: link:../../packages/synergy-client
+      '@printwithsynergy/artwork-pdf-editor':
+        specifier: workspace:*
+        version: link:../../packages/editor-app
       konva:
         specifier: ^10.3.0
         version: 10.3.0

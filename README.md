@@ -39,7 +39,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Embedding the editor
 
 The WYSIWYG canvas ships as a host-customizable React package
-[`@artworkpdf/editor-app`](packages/editor-app/) so other apps (Next.js
+[`@printwithsynergy/artwork-pdf-editor`](packages/editor-app/) so other apps (Next.js
 routes, Astro pages, Remix, plain React) can mount it without an
 iframe:
 
@@ -48,7 +48,7 @@ import {
   EditorApp,
   getDefaultTemplate,
   templateToInitialState,
-} from "@artworkpdf/editor-app";
+} from "@printwithsynergy/artwork-pdf-editor";
 
 const { objects, pageSize } = templateToInitialState(getDefaultTemplate());
 

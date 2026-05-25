@@ -11,7 +11,7 @@ by the synergy engine in a `create → lint → trap → step-and-repeat → RIP
 artwork-pdf/
   apps/
     service/      Hono API — /jobs, SSE, /healthz, /source, /.well-known/synergy-node.json
-    editor/       Next.js 16 host — mounts @artworkpdf/editor-app at /demo, /upload, /
+    editor/       Next.js 16 host — mounts @printwithsynergy/artwork-pdf-editor at /demo, /upload, /
   packages/
     editor-app/        Publishable React editor (host-customizable TopBar, EditorConfig flag layer)
     document-model/    TypeScript document schema
@@ -21,7 +21,7 @@ artwork-pdf/
     synergy-client/    Typed HTTP client for @synergy/client
 ```
 
-`@artworkpdf/editor-app` is published to npm so any host (the marketing
+`@printwithsynergy/artwork-pdf-editor` is published to npm so any host (the marketing
 site, third-party integrations) can mount the editor directly with
 their own logo, CTAs, and feature-flag set — no iframe needed. See the
 "Embedding the editor" section in the [root README](README.md).

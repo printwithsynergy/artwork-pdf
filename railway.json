@@ -1,10 +1,10 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "pnpm turbo build --filter=@artworkpdf/editor-app..."
+    "buildCommand": "pnpm turbo build --filter=@artworkpdf/editor-host..."
   },
   "deploy": {
-    "startCommand": "pnpm --filter @artworkpdf/editor-app start",
+    "startCommand": "pnpm --filter @artworkpdf/editor-host start",
     "healthcheckPath": "/"
   }
 }

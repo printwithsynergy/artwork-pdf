@@ -1,4 +1,4 @@
-# @artworkpdf/editor-app
+# @printwithsynergy/artwork-pdf-editor
 
 Host-customizable React editor for [artworkPDF](https://artworkpdf.com).
 Drop into any React 19 host (Next.js, Astro `client:only`, Remix, plain
@@ -8,7 +8,7 @@ templates, bleed visualization, and PDF export. AGPL-3.0-or-later.
 ## Install
 
 ```sh
-pnpm add @artworkpdf/editor-app react react-dom react-konva konva
+pnpm add @printwithsynergy/artwork-pdf-editor react react-dom react-konva konva
 ```
 
 Peers: `react@^19`, `react-dom@^19`, `react-konva@^19`, `konva@^10`.
@@ -22,7 +22,7 @@ import {
   EditorApp,
   getDefaultTemplate,
   templateToInitialState,
-} from "@artworkpdf/editor-app";
+} from "@printwithsynergy/artwork-pdf-editor";
 
 const { objects, pageSize } = templateToInitialState(getDefaultTemplate());
 
@@ -105,7 +105,7 @@ Templates live in [`src/data/dielines.json`](src/data/dielines.json).
 Each has a stable `id`; one is flagged `isDefault: true`.
 
 ```tsx
-import { getTemplateById } from "@artworkpdf/editor-app";
+import { getTemplateById } from "@printwithsynergy/artwork-pdf-editor";
 const tpl = getTemplateById("standup-pouch-4x6");
 ```
 
