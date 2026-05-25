@@ -31,6 +31,9 @@ importers:
       '@artworkpdf/document-model':
         specifier: workspace:*
         version: link:../../packages/document-model
+      '@artworkpdf/editor-app':
+        specifier: workspace:*
+        version: link:../../packages/editor-app
       '@printwithsynergy/artwork-pdf':
         specifier: workspace:*
         version: link:../../packages/synergy-client
@@ -160,6 +163,40 @@ importers:
       vitest:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(esbuild@0.28.0)(jiti@1.21.7)
+
+  packages/editor-app:
+    dependencies:
+      '@artworkpdf/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.15
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.15)
+      konva:
+        specifier: ^10.3.0
+        version: 10.3.0
+      react:
+        specifier: ^19.0.0
+        version: 19.2.6
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.6(react@19.2.6)
+      react-konva:
+        specifier: ^19.0.0
+        version: 19.2.4(@types/react@19.2.15)(konva@10.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.4(@types/node@22.19.19)(esbuild@0.28.0)(jiti@1.21.7)
 
   packages/flexo-distortion:
     devDependencies:

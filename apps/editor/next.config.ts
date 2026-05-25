@@ -6,16 +6,12 @@ const config: NextConfig = {
     NEXT_PUBLIC_SERVICE_URL: process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:3001",
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   },
-  webpack(cfg, { isServer }) {
-    cfg.resolve.extensionAlias = {
-      ".js": [".ts", ".tsx", ".js", ".jsx"],
-      ".mjs": [".mts", ".mjs"],
-    };
-    if (isServer) {
-      cfg.resolve.alias = { ...cfg.resolve.alias, canvas: false };
-    }
-    return cfg;
-  },
+  // The editor lives in @artworkpdf/editor-app. Workspace link points
+  // at TypeScript source in dev; Next transpiles it for us.
+  transpilePackages: ["@artworkpdf/editor-app"],
+  // Turbopack handles react-konva + canvas without a custom alias —
+  // the "use client" boundary keeps canvas out of the server bundle.
+  turbopack: {},
 };
 
 export default config;

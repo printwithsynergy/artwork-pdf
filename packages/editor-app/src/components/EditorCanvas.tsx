@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type {
-  DocumentModel,
-  JobSubmitRequest,
-  PreflightReport,
-} from "@artworkpdf/document-model";
+import type { DocumentModel, JobSubmitRequest, PreflightReport } from "@artworkpdf/document-model";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { PDFDocument } from "pdf-lib";
@@ -13,14 +9,18 @@ import {
   Ellipse,
   Image as KonvaImage,
   Layer,
+  Line,
   Rect,
   Stage,
   Text,
   Transformer,
 } from "react-konva";
+import { DEFAULT_BLEED_MM, formatBleed } from "../lib/bleed";
 import { type DielineTemplate, templateToInitialState } from "../lib/dieline-template";
+import type { EditorConfig } from "../lib/editor-config";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { LayersPanel } from "./LayersPanel";
+import { MobileToolDrawer } from "./MobileToolDrawer";
 import { SeparationsPanel } from "./SeparationsPanel";
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -59,6 +59,12 @@ type Props = {
   initialObjects?: CanvasObj[];
   initialPageSize?: { width: number; height: number };
   mode?: "basic" | "pro";
+  onModeChange?: (m: "basic" | "pro") => void;
+  config: EditorConfig;
+  bleedMm?: number;
+  isMobile?: boolean;
+  menuOpen?: boolean;
+  onMenuOpenChange?: (open: boolean) => void;
 };
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -69,7 +75,6 @@ const SERVICE_URL = (process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:30
 );
 
 const BRAND = "#fc5102";
-const BG = "#120a04";
 const PANEL_BG = "#1a0f08";
 const BORDER = "#3d1a00";
 const MUTED = "#666";
@@ -123,7 +128,12 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
       const scaleY = node.scaleY();
       node.scaleX(1);
       node.scaleY(1);
-      onTransformEnd(node.x(), node.y(), Math.max(4, node.width() * scaleX), Math.max(4, node.height() * scaleY));
+      onTransformEnd(
+        node.x(),
+        node.y(),
+        Math.max(4, node.width() * scaleX),
+        Math.max(4, node.height() * scaleY),
+      );
     },
   };
 
@@ -192,8 +202,13 @@ export function EditorCanvas({
   initialObjects,
   initialPageSize,
   mode = "basic",
+  onModeChange,
+  config,
+  bleedMm: bleedMmProp = DEFAULT_BLEED_MM,
+  isMobile = false,
+  menuOpen = false,
+  onMenuOpenChange,
 }: Props) {
-  const pro = mode === "pro";
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -202,6 +217,8 @@ export function EditorCanvas({
   const [pageSize, setPageSize] = useState(initialPageSize ?? { width: 595, height: 842 }); // A4 in pt
   const [zoom, setZoom] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [bleedMm, setBleedMm] = useState<number>(bleedMmProp);
+  const [currentTemplate, setCurrentTemplate] = useState<DielineTemplate | null>(null);
 
   const [objects, setObjects] = useState<CanvasObj[]>(initialObjects ?? []);
   const [history, setHistory] = useState<CanvasObj[][]>([initialObjects ?? []]);
@@ -223,6 +240,28 @@ export function EditorCanvas({
   // Pro mode state — dieline modal + per-ink visibility filter for separations.
   const [dielineOpen, setDielineOpen] = useState(false);
   const [hiddenInks, setHiddenInks] = useState<Set<string>>(new Set());
+
+  // ── sync bleed from prop ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    setBleedMm(bleedMmProp);
+  }, [bleedMmProp]);
+
+  // ── recompute page + dieline when bleed changes ────────────────────────────
+
+  useEffect(() => {
+    if (!currentTemplate) return;
+    const { objects: seeded, pageSize: newPageSize } = templateToInitialState(
+      currentTemplate,
+      bleedMm,
+    );
+    setPageSize(newPageSize);
+    setObjects((prev) => {
+      const dielineObj = seeded[0];
+      if (!dielineObj) return prev;
+      return [dielineObj, ...prev.filter((o) => !/dieline/i.test(o.id))];
+    });
+  }, [bleedMm, currentTemplate]);
 
   // ── container resize ────────────────────────────────────────────────────────
 
@@ -270,17 +309,14 @@ export function EditorCanvas({
 
   // ── fit to page when container or page size changes ─────────────────────────
 
-  const fitPage = useCallback(
-    (cw: number, ch: number, pw: number, ph: number) => {
-      if (cw <= 0 || ch <= 0 || pw <= 0 || ph <= 0) return;
-      const pad = 80;
-      const s = Math.min((cw - pad * 2) / pw, (ch - pad * 2) / ph, 3);
-      const newZoom = Math.max(s, 0.05);
-      setZoom(newZoom);
-      setStagePos({ x: (cw - pw * newZoom) / 2, y: (ch - ph * newZoom) / 2 });
-    },
-    [],
-  );
+  const fitPage = useCallback((cw: number, ch: number, pw: number, ph: number) => {
+    if (cw <= 0 || ch <= 0 || pw <= 0 || ph <= 0) return;
+    const pad = 80;
+    const s = Math.min((cw - pad * 2) / pw, (ch - pad * 2) / ph, 3);
+    const newZoom = Math.max(s, 0.05);
+    setZoom(newZoom);
+    setStagePos({ x: (cw - pw * newZoom) / 2, y: (ch - ph * newZoom) / 2 });
+  }, []);
 
   useEffect(() => {
     fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height);
@@ -348,8 +384,16 @@ export function EditorCanvas({
         return;
       }
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
-      if (mod && e.key === "y") { e.preventDefault(); redo(); return; }
+      if (mod && e.key === "z") {
+        e.preventDefault();
+        e.shiftKey ? redo() : undo();
+        return;
+      }
+      if (mod && e.key === "y") {
+        e.preventDefault();
+        redo();
+        return;
+      }
       if (!mod) {
         if (e.key === "v") setTool("select");
         if (e.key === "r") setTool("rect");
@@ -652,7 +696,10 @@ export function EditorCanvas({
     let attempts = 0;
     const tick = async () => {
       attempts++;
-      if (attempts > 60) { setExportStatus("error"); return; }
+      if (attempts > 60) {
+        setExportStatus("error");
+        return;
+      }
       try {
         const r = await fetch(`${SERVICE_URL}/jobs/${id}`);
         const { status } = (await r.json()) as { status: string };
@@ -694,13 +741,12 @@ export function EditorCanvas({
   }
 
   function toggleVisible(id: string) {
-    commit(
-      objects.map((o) => (o.id === id ? { ...o, opacity: o.opacity === 0 ? 1 : 0 } : o)),
-    );
+    commit(objects.map((o) => (o.id === id ? { ...o, opacity: o.opacity === 0 ? 1 : 0 } : o)));
   }
 
   function applyDieline(template: DielineTemplate) {
-    const { objects: seeded, pageSize: newPageSize } = templateToInitialState(template);
+    setCurrentTemplate(template);
+    const { objects: seeded, pageSize: newPageSize } = templateToInitialState(template, bleedMm);
     setPageSize(newPageSize);
     // Replace any existing dieline rect so swapping templates is one click.
     const next = [...seeded, ...objects.filter((o) => !/dieline/i.test(o.id))];
@@ -720,112 +766,248 @@ export function EditorCanvas({
   // Objects whose fill/stroke match a hidden ink are rendered with opacity 0
   // for the preview. We don't mutate the actual object — separations preview
   // is non-destructive.
-  const visibleObjects = pro && hiddenInks.size > 0
-    ? objects.map((o) => {
-        const fillHidden = hiddenInks.has(o.fill.toLowerCase());
-        const strokeHidden = hiddenInks.has(o.stroke.toLowerCase());
-        if (fillHidden && strokeHidden) return { ...o, opacity: 0 };
-        return o;
-      })
-    : objects;
+  const visibleObjects =
+    config.enable_separations_panel && hiddenInks.size > 0
+      ? objects.map((o) => {
+          const fillHidden = hiddenInks.has(o.fill.toLowerCase());
+          const strokeHidden = hiddenInks.has(o.stroke.toLowerCase());
+          if (fillHidden && strokeHidden) return { ...o, opacity: 0 };
+          return o;
+        })
+      : objects;
 
   // ── render ──────────────────────────────────────────────────────────────────
 
-  const cursor =
-    tool === "select" ? "default"
-    : tool === "image" ? "cell"
-    : "crosshair";
+  const cursor = tool === "select" ? "default" : tool === "image" ? "cell" : "crosshair";
 
   const exportLabel =
-    exportStatus === "sending" ? "Sending…"
-    : exportStatus === "polling" ? "Rendering…"
-    : exportStatus === "done" ? "Downloaded ✓"
-    : exportStatus === "error" ? "Error — retry"
-    : demo ? "Download PDF"
-    : "Export PDF/X-4";
+    exportStatus === "sending"
+      ? "Sending…"
+      : exportStatus === "polling"
+        ? "Rendering…"
+        : exportStatus === "done"
+          ? "Downloaded ✓"
+          : exportStatus === "error"
+            ? "Error — retry"
+            : demo
+              ? "Download PDF"
+              : "Export PDF/X-4";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: BG }}>
-
-      {/* ── toolbar ── */}
-      <div style={{
+    <div
+      style={{
         display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        padding: "0.375rem 0.75rem",
-        background: PANEL_BG,
-        borderBottom: `1px solid ${BORDER}`,
-        flexShrink: 0,
-        flexWrap: "wrap",
-      }}>
-        {(["select","rect","ellipse","text","image"] as Tool[]).map((t) => (
-          <ToolBtn key={t} active={tool === t} onClick={() => {
-            setTool(t);
-            if (t === "image") imageInputRef.current?.click();
-          }}>
-            {t === "select" ? "↖ Select" : t === "rect" ? "▭ Rect" : t === "ellipse" ? "◯ Ellipse" : t === "text" ? "T Text" : "⬚ Image"}
-          </ToolBtn>
-        ))}
-
-        <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
-
-        <button type="button" onClick={undo} disabled={historyIdx === 0} style={iconBtnStyle(historyIdx === 0)}>↩ Undo</button>
-        <button type="button" onClick={redo} disabled={historyIdx >= history.length - 1} style={iconBtnStyle(historyIdx >= history.length - 1)}>↪ Redo</button>
-
-        <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
-
-        <button type="button" onClick={() => fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height)} style={iconBtnStyle(false)}>⊡ Fit</button>
-        <span style={{ fontSize: "0.75rem", color: MUTED }}>{Math.round(zoom * 100)}%</span>
-
-        {(pro || demo) && (
-          <>
-            <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
-            <button
-              type="button"
-              onClick={() => setDielineOpen(true)}
-              style={iconBtnStyle(false)}
-            >
-              ▦ Dielines
-            </button>
-          </>
-        )}
-
-        <div style={{ flex: 1 }} />
-
-        <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", color: "#999" }}>
-          Fill
-          <input type="color" value={fillColor} onChange={(e) => { setFillColor(e.target.value); if (selected) updateSelected({ fill: e.target.value }); }} style={{ width: 24, height: 20, border: "none", padding: 0, background: "none", cursor: "pointer" }} />
-        </label>
-        <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", color: "#999" }}>
-          Stroke
-          <input type="color" value={strokeColor === "transparent" ? "#000000" : strokeColor} onChange={(e) => { setStrokeColor(e.target.value); if (selected) updateSelected({ stroke: e.target.value }); }} style={{ width: 24, height: 20, border: "none", padding: 0, background: "none", cursor: "pointer" }} />
-        </label>
-
-        <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
-
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={exportStatus === "sending" || exportStatus === "polling"}
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        background: "#ffffff",
+      }}
+    >
+      {/* ── desktop toolbar (hidden on mobile; replaced by drawer + slim export strip) ── */}
+      {!isMobile && (
+        <div
           style={{
-            background: exportStatus === "done" ? "#2e7d32" : exportStatus === "error" ? "#b71c1c" : BRAND,
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            padding: "0.3rem 0.85rem",
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            cursor: exportStatus === "sending" || exportStatus === "polling" ? "wait" : "pointer",
-            opacity: exportStatus === "sending" || exportStatus === "polling" ? 0.7 : 1,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            padding: "0.375rem 0.75rem",
+            background: PANEL_BG,
+            borderBottom: `1px solid ${BORDER}`,
+            flexShrink: 0,
+            flexWrap: "wrap",
           }}
         >
-          {exportLabel}
-        </button>
-      </div>
+          {(["select", "rect", "ellipse", "text", "image"] as Tool[]).map((t) => (
+            <ToolBtn
+              key={t}
+              active={tool === t}
+              onClick={() => {
+                setTool(t);
+                if (t === "image") imageInputRef.current?.click();
+              }}
+            >
+              {t === "select"
+                ? "↖ Select"
+                : t === "rect"
+                  ? "▭ Rect"
+                  : t === "ellipse"
+                    ? "◯ Ellipse"
+                    : t === "text"
+                      ? "T Text"
+                      : "⬚ Image"}
+            </ToolBtn>
+          ))}
+
+          <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
+
+          <button
+            type="button"
+            onClick={undo}
+            disabled={historyIdx === 0}
+            style={iconBtnStyle(historyIdx === 0)}
+          >
+            ↩ Undo
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={historyIdx >= history.length - 1}
+            style={iconBtnStyle(historyIdx >= history.length - 1)}
+          >
+            ↪ Redo
+          </button>
+
+          <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
+
+          <button
+            type="button"
+            onClick={() =>
+              fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height)
+            }
+            style={iconBtnStyle(false)}
+          >
+            ⊡ Fit
+          </button>
+          <span style={{ fontSize: "0.75rem", color: MUTED }}>{Math.round(zoom * 100)}%</span>
+
+          {config.enable_dieline_chooser && (
+            <>
+              <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
+              <button
+                type="button"
+                onClick={() => setDielineOpen(true)}
+                style={iconBtnStyle(false)}
+              >
+                ▦ Dielines
+              </button>
+            </>
+          )}
+
+          <div style={{ flex: 1 }} />
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.3rem",
+              fontSize: "0.75rem",
+              color: "#999",
+            }}
+          >
+            Fill
+            <input
+              type="color"
+              value={fillColor}
+              onChange={(e) => {
+                setFillColor(e.target.value);
+                if (selected) updateSelected({ fill: e.target.value });
+              }}
+              style={{
+                width: 24,
+                height: 20,
+                border: "none",
+                padding: 0,
+                background: "none",
+                cursor: "pointer",
+              }}
+            />
+          </label>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.3rem",
+              fontSize: "0.75rem",
+              color: "#999",
+            }}
+          >
+            Stroke
+            <input
+              type="color"
+              value={strokeColor === "transparent" ? "#000000" : strokeColor}
+              onChange={(e) => {
+                setStrokeColor(e.target.value);
+                if (selected) updateSelected({ stroke: e.target.value });
+              }}
+              style={{
+                width: 24,
+                height: 20,
+                border: "none",
+                padding: 0,
+                background: "none",
+                cursor: "pointer",
+              }}
+            />
+          </label>
+
+          <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
+
+          {config.enable_export_button && (
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exportStatus === "sending" || exportStatus === "polling"}
+              style={{
+                background:
+                  exportStatus === "done"
+                    ? "#2e7d32"
+                    : exportStatus === "error"
+                      ? "#b71c1c"
+                      : BRAND,
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                padding: "0.3rem 0.85rem",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                cursor:
+                  exportStatus === "sending" || exportStatus === "polling" ? "wait" : "pointer",
+                opacity: exportStatus === "sending" || exportStatus === "polling" ? 0.7 : 1,
+              }}
+            >
+              {exportLabel}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── mobile slim strip: just the export button (rest lives in the drawer) ── */}
+      {isMobile && config.enable_export_button && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "0.4rem 0.75rem",
+            background: PANEL_BG,
+            borderBottom: `1px solid ${BORDER}`,
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exportStatus === "sending" || exportStatus === "polling"}
+            style={{
+              background:
+                exportStatus === "done" ? "#2e7d32" : exportStatus === "error" ? "#b71c1c" : BRAND,
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              padding: "0.35rem 0.95rem",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: exportStatus === "sending" || exportStatus === "polling" ? "wait" : "pointer",
+              opacity: exportStatus === "sending" || exportStatus === "polling" ? 0.7 : 1,
+            }}
+          >
+            {exportLabel}
+          </button>
+        </div>
+      )}
 
       {/* ── workspace row (canvas + pro panels) ── */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-        {pro && (
+        {config.enable_layers_panel && !isMobile && (
           <LayersPanel
             objects={objects}
             selectedId={selectedId}
@@ -839,161 +1021,278 @@ export function EditorCanvas({
           />
         )}
 
-      {/* ── canvas area ── */}
-      <div ref={containerRef} style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-        <Stage
-          ref={stageRef}
-          width={containerSize.width}
-          height={containerSize.height}
-          scaleX={zoom}
-          scaleY={zoom}
-          x={stagePos.x}
-          y={stagePos.y}
-          onMouseDown={onStagePointerDown}
-          onMouseMove={onStagePointerMove}
-          onMouseUp={onStagePointerUp}
-          onTouchStart={onStagePointerDown}
-          onTouchMove={onStagePointerMove}
-          onTouchEnd={onStagePointerUp}
-          onWheel={onWheel}
-          style={{ cursor }}
-        >
-          <Layer>
-            {/* page shadow */}
-            <Rect
-              x={4}
-              y={4}
-              width={pageSize.width}
-              height={pageSize.height}
-              fill="rgba(0,0,0,0.4)"
-            />
-            {/* page white background */}
-            <Rect
-              x={0}
-              y={0}
-              width={pageSize.width}
-              height={pageSize.height}
-              fill="#ffffff"
-              onClick={() => { if (tool === "select") setSelectedId(null); }}
-            />
-
-            {/* objects */}
-            {visibleObjects.map((obj) => (
-              <ObjNode
-                key={obj.id}
-                obj={obj}
-                selected={obj.id === selectedId}
-                onSelect={() => setSelectedId(obj.id)}
-                onDragEnd={(x, y) => commit(objects.map((o) => o.id === obj.id ? { ...o, x, y } : o))}
-                onTransformEnd={(x, y, w, h) => commit(objects.map((o) => o.id === obj.id ? { ...o, x, y, width: w, height: h } : o))}
-                onDblClick={(e) => obj.type === "text" && onTextDblClick(obj.id, e)}
-              />
-            ))}
-
-            {/* transformer */}
-            <Transformer
-              ref={trRef}
-              borderStroke={BRAND}
-              borderStrokeWidth={1}
-              anchorStroke={BRAND}
-              anchorFill="#fff"
-              anchorSize={8}
-              rotateEnabled={false}
-              keepRatio={false}
-            />
-
-            {/* drawing preview */}
-            {drawing && tool !== "select" && (
+        {/* ── canvas area ── */}
+        <div ref={containerRef} style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          <Stage
+            ref={stageRef}
+            width={containerSize.width}
+            height={containerSize.height}
+            scaleX={zoom}
+            scaleY={zoom}
+            x={stagePos.x}
+            y={stagePos.y}
+            onMouseDown={onStagePointerDown}
+            onMouseMove={onStagePointerMove}
+            onMouseUp={onStagePointerUp}
+            onTouchStart={onStagePointerDown}
+            onTouchMove={onStagePointerMove}
+            onTouchEnd={onStagePointerUp}
+            onWheel={onWheel}
+            style={{ cursor }}
+          >
+            <Layer>
+              {/* page shadow (subtle, on white) */}
               <Rect
-                x={drawing.w < 0 ? drawing.x + drawing.w : drawing.x}
-                y={drawing.h < 0 ? drawing.y + drawing.h : drawing.y}
-                width={Math.abs(drawing.w)}
-                height={Math.abs(drawing.h)}
-                fill={tool === "text" ? "rgba(252,81,2,0.08)" : `${fillColor}80`}
-                stroke={BRAND}
-                strokeWidth={1 / zoom}
-                dash={[4 / zoom, 4 / zoom]}
+                x={3}
+                y={3}
+                width={pageSize.width}
+                height={pageSize.height}
+                fill="rgba(0,0,0,0.08)"
               />
-            )}
-          </Layer>
-        </Stage>
+              {/* page white background */}
+              <Rect
+                x={0}
+                y={0}
+                width={pageSize.width}
+                height={pageSize.height}
+                fill="#ffffff"
+                stroke="#d4d4d8"
+                strokeWidth={0.5 / zoom}
+                onClick={() => {
+                  if (tool === "select") setSelectedId(null);
+                }}
+              />
 
-        {/* empty state hint */}
-        {objects.length === 0 && (
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}>
-            <span style={{ fontSize: "0.8rem", color: "#3d2000" }}>
-              Use the toolbar to draw shapes, add text, or import an image
-            </span>
-          </div>
-        )}
-      </div>
+              {/* light grid overlay — 10 mm / 50 mm bands */}
+              {config.enable_canvas_grid && <GridLines pageSize={pageSize} zoom={zoom} />}
 
-        {pro && (
-          <SeparationsPanel
-            objects={objects}
-            hidden={hiddenInks}
-            onToggle={toggleInk}
-          />
+              {/* bleed visualization: dashed cyan rect at page edge + label */}
+              {config.enable_bleed_visualization && (
+                <>
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={pageSize.width}
+                    height={pageSize.height}
+                    stroke="#0ea5e9"
+                    strokeWidth={1 / zoom}
+                    dash={[6 / zoom, 4 / zoom]}
+                    listening={false}
+                  />
+                  <Text
+                    text={`BLEED ${formatBleed(bleedMm, "in")}`}
+                    x={6}
+                    y={-14 / zoom}
+                    fontSize={10 / zoom}
+                    fill="#0ea5e9"
+                    listening={false}
+                  />
+                </>
+              )}
+
+              {/* objects */}
+              {visibleObjects.map((obj) => (
+                <ObjNode
+                  key={obj.id}
+                  obj={obj}
+                  selected={obj.id === selectedId}
+                  onSelect={() => setSelectedId(obj.id)}
+                  onDragEnd={(x, y) =>
+                    commit(objects.map((o) => (o.id === obj.id ? { ...o, x, y } : o)))
+                  }
+                  onTransformEnd={(x, y, w, h) =>
+                    commit(
+                      objects.map((o) =>
+                        o.id === obj.id ? { ...o, x, y, width: w, height: h } : o,
+                      ),
+                    )
+                  }
+                  onDblClick={(e) => obj.type === "text" && onTextDblClick(obj.id, e)}
+                />
+              ))}
+
+              {/* transformer */}
+              <Transformer
+                ref={trRef}
+                borderStroke={BRAND}
+                borderStrokeWidth={1}
+                anchorStroke={BRAND}
+                anchorFill="#fff"
+                anchorSize={8}
+                rotateEnabled={false}
+                keepRatio={false}
+              />
+
+              {/* drawing preview */}
+              {drawing && tool !== "select" && (
+                <Rect
+                  x={drawing.w < 0 ? drawing.x + drawing.w : drawing.x}
+                  y={drawing.h < 0 ? drawing.y + drawing.h : drawing.y}
+                  width={Math.abs(drawing.w)}
+                  height={Math.abs(drawing.h)}
+                  fill={tool === "text" ? "rgba(252,81,2,0.08)" : `${fillColor}80`}
+                  stroke={BRAND}
+                  strokeWidth={1 / zoom}
+                  dash={[4 / zoom, 4 / zoom]}
+                />
+              )}
+            </Layer>
+          </Stage>
+
+          {/* empty state hint */}
+          {objects.length === 0 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none",
+              }}
+            >
+              <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                Use the toolbar to draw shapes, add text, or import an image
+              </span>
+            </div>
+          )}
+        </div>
+
+        {config.enable_separations_panel && !isMobile && (
+          <SeparationsPanel objects={objects} hidden={hiddenInks} onToggle={toggleInk} />
         )}
       </div>
 
       {/* ── selected properties footer ── */}
       {selected && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1rem",
-          padding: "0.375rem 0.75rem",
-          background: PANEL_BG,
-          borderTop: `1px solid ${BORDER}`,
-          flexShrink: 0,
-          fontSize: "0.75rem",
-          color: "#999",
-          flexWrap: "wrap",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
+            padding: "0.375rem 0.75rem",
+            background: PANEL_BG,
+            borderTop: `1px solid ${BORDER}`,
+            flexShrink: 0,
+            fontSize: "0.75rem",
+            color: "#999",
+            flexWrap: "wrap",
+          }}
+        >
           <span style={{ color: BRAND, fontWeight: 600 }}>{selected.type}</span>
 
-          <PropNum label="X" value={Math.round(selected.x)} onChange={(v) => updateSelected({ x: v })} />
-          <PropNum label="Y" value={Math.round(selected.y)} onChange={(v) => updateSelected({ y: v })} />
-          <PropNum label="W" value={Math.round(selected.width)} onChange={(v) => updateSelected({ width: Math.max(1, v) })} />
-          <PropNum label="H" value={Math.round(selected.height)} onChange={(v) => updateSelected({ height: Math.max(1, v) })} />
+          <PropNum
+            label="X"
+            value={Math.round(selected.x)}
+            onChange={(v) => updateSelected({ x: v })}
+          />
+          <PropNum
+            label="Y"
+            value={Math.round(selected.y)}
+            onChange={(v) => updateSelected({ y: v })}
+          />
+          <PropNum
+            label="W"
+            value={Math.round(selected.width)}
+            onChange={(v) => updateSelected({ width: Math.max(1, v) })}
+          />
+          <PropNum
+            label="H"
+            value={Math.round(selected.height)}
+            onChange={(v) => updateSelected({ height: Math.max(1, v) })}
+          />
 
           <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
             Fill
-            <input type="color" value={selected.fill === "transparent" ? "#ffffff" : selected.fill} onChange={(e) => updateSelected({ fill: e.target.value })} style={{ width: 22, height: 18, border: "none", padding: 0, background: "none", cursor: "pointer" }} />
+            <input
+              type="color"
+              value={selected.fill === "transparent" ? "#ffffff" : selected.fill}
+              onChange={(e) => updateSelected({ fill: e.target.value })}
+              style={{
+                width: 22,
+                height: 18,
+                border: "none",
+                padding: 0,
+                background: "none",
+                cursor: "pointer",
+              }}
+            />
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
             Stroke
-            <input type="color" value={selected.stroke === "transparent" ? "#000000" : selected.stroke} onChange={(e) => updateSelected({ stroke: e.target.value })} style={{ width: 22, height: 18, border: "none", padding: 0, background: "none", cursor: "pointer" }} />
+            <input
+              type="color"
+              value={selected.stroke === "transparent" ? "#000000" : selected.stroke}
+              onChange={(e) => updateSelected({ stroke: e.target.value })}
+              style={{
+                width: 22,
+                height: 18,
+                border: "none",
+                padding: 0,
+                background: "none",
+                cursor: "pointer",
+              }}
+            />
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
             Opacity
-            <input type="range" min={0} max={1} step={0.05} value={selected.opacity} onChange={(e) => updateSelected({ opacity: Number(e.target.value) })} style={{ width: 60 }} />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={selected.opacity}
+              onChange={(e) => updateSelected({ opacity: Number(e.target.value) })}
+              style={{ width: 60 }}
+            />
             <span>{Math.round(selected.opacity * 100)}%</span>
           </label>
 
           {selected.type === "text" && (
             <>
-              <PropNum label="Size" value={selected.fontSize ?? 16} onChange={(v) => updateSelected({ fontSize: Math.max(4, v) })} />
-              <button type="button" onClick={() => {
-                // Spawn inline text edit by focusing textarea overlay
-                const stage = stageRef.current;
-                if (!stage) return;
-                const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
-                if (!node) return;
-                onTextDblClick(selected.id, { target: node } as unknown as KonvaEventObject<MouseEvent>);
-              }} style={{ ...iconBtnStyle(false), fontSize: "0.72rem" }}>Edit text</button>
+              <PropNum
+                label="Size"
+                value={selected.fontSize ?? 16}
+                onChange={(v) => updateSelected({ fontSize: Math.max(4, v) })}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  // Spawn inline text edit by focusing textarea overlay
+                  const stage = stageRef.current;
+                  if (!stage) return;
+                  const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
+                  if (!node) return;
+                  onTextDblClick(selected.id, {
+                    target: node,
+                  } as unknown as KonvaEventObject<MouseEvent>);
+                }}
+                style={{ ...iconBtnStyle(false), fontSize: "0.72rem" }}
+              >
+                Edit text
+              </button>
             </>
           )}
 
-          <button type="button" onClick={() => { commit(objects.filter((o) => o.id !== selectedId)); setSelectedId(null); }} style={{ marginLeft: "auto", background: "transparent", border: "1px solid #5a1a1a", color: "#e57373", borderRadius: 3, padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.72rem" }}>Delete</button>
+          <button
+            type="button"
+            onClick={() => {
+              commit(objects.filter((o) => o.id !== selectedId));
+              setSelectedId(null);
+            }}
+            style={{
+              marginLeft: "auto",
+              background: "transparent",
+              border: "1px solid #5a1a1a",
+              color: "#e57373",
+              borderRadius: 3,
+              padding: "0.2rem 0.5rem",
+              cursor: "pointer",
+              fontSize: "0.72rem",
+            }}
+          >
+            Delete
+          </button>
         </div>
       )}
 
@@ -1010,15 +1309,95 @@ export function EditorCanvas({
         }}
       />
 
-      {(pro || demo) && (
+      {config.enable_dieline_chooser && (
         <DielineLibraryModal
           open={dielineOpen}
           onClose={() => setDielineOpen(false)}
           onSelect={applyDieline}
         />
       )}
+
+      {isMobile && (
+        <MobileToolDrawer
+          isOpen={menuOpen}
+          onClose={() => onMenuOpenChange?.(false)}
+          config={config}
+          activeTool={tool}
+          onSelectTool={(t) => {
+            setTool(t);
+            if (t === "image") imageInputRef.current?.click();
+          }}
+          canUndo={historyIdx > 0}
+          canRedo={historyIdx < history.length - 1}
+          onUndo={undo}
+          onRedo={redo}
+          zoomPct={Math.round(zoom * 100)}
+          onFit={() =>
+            fitPage(containerSize.width, containerSize.height, pageSize.width, pageSize.height)
+          }
+          onOpenDielineChooser={() => setDielineOpen(true)}
+          fillColor={fillColor}
+          strokeColor={strokeColor === "transparent" ? "#000000" : strokeColor}
+          onFillChange={(hex) => {
+            setFillColor(hex);
+            if (selected) updateSelected({ fill: hex });
+          }}
+          onStrokeChange={(hex) => {
+            setStrokeColor(hex);
+            if (selected) updateSelected({ stroke: hex });
+          }}
+          bleedMm={bleedMm}
+          onBleedMmChange={setBleedMm}
+          mode={mode}
+          onModeChange={(m) => onModeChange?.(m)}
+          onExport={handleExport}
+          exportLabel={exportLabel}
+          exportBusy={exportStatus === "sending" || exportStatus === "polling"}
+        />
+      )}
     </div>
   );
+}
+
+// ── grid overlay ──────────────────────────────────────────────────────────────
+
+const MM_TO_PT_GRID = 2.83465;
+
+function GridLines({
+  pageSize,
+  zoom,
+}: {
+  pageSize: { width: number; height: number };
+  zoom: number;
+}) {
+  const minor = 10 * MM_TO_PT_GRID; // 10 mm → pt
+  const major = 50 * MM_TO_PT_GRID; // 50 mm → pt
+  const lines: React.ReactNode[] = [];
+  for (let x = 0; x <= pageSize.width; x += minor) {
+    const isMajor = Math.abs(x % major) < 0.01 || Math.abs((x % major) - major) < 0.01;
+    lines.push(
+      <Line
+        key={`v-${x}`}
+        points={[x, 0, x, pageSize.height]}
+        stroke={isMajor ? "#cbd5e1" : "#e5e7eb"}
+        strokeWidth={0.5 / zoom}
+        listening={false}
+      />,
+    );
+  }
+  for (let y = 0; y <= pageSize.height; y += minor) {
+    const isMajor = Math.abs(y % major) < 0.01 || Math.abs((y % major) - major) < 0.01;
+    lines.push(
+      <Line
+        key={`h-${y}`}
+        points={[0, y, pageSize.width, y]}
+        stroke={isMajor ? "#cbd5e1" : "#e5e7eb"}
+        strokeWidth={0.5 / zoom}
+        listening={false}
+      />,
+    );
+  }
+  return <>{lines}</>;
 }
 
 // ── small helper components ───────────────────────────────────────────────────

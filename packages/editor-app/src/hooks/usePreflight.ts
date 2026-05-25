@@ -6,7 +6,7 @@ import {
   type PreflightRule,
 } from "@artworkpdf/document-model";
 import { useCallback, useState } from "react";
-import { runClientChecks } from "../lib/preflight/index.js";
+import { runClientChecks } from "../lib/preflight/index";
 
 type PreflightState =
   | { phase: "idle" }

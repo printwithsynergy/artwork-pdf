@@ -11,14 +11,20 @@ by the synergy engine in a `create → lint → trap → step-and-repeat → RIP
 artwork-pdf/
   apps/
     service/      Hono API — /jobs, SSE, /healthz, /source, /.well-known/synergy-node.json
-    editor/       Next.js 15 — react-konva WYSIWYG editor
+    editor/       Next.js 16 host — mounts @artworkpdf/editor-app at /demo, /upload, /
   packages/
+    editor-app/        Publishable React editor (host-customizable TopBar, EditorConfig flag layer)
     document-model/    TypeScript document schema
     pdf-writer/        pdf-lib + Ghostscript PDF/X-4 composer
     dieline-parser/    CF2/DDES/ARD structural dieline import
     flexo-distortion/  Flexo distortion compensation
     synergy-client/    Typed HTTP client for @synergy/client
 ```
+
+`@artworkpdf/editor-app` is published to npm so any host (the marketing
+site, third-party integrations) can mount the editor directly with
+their own logo, CTAs, and feature-flag set — no iframe needed. See the
+"Embedding the editor" section in the [root README](README.md).
 
 ## Node contract
 

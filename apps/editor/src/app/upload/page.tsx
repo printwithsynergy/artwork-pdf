@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { EditorApp } from "../../components/EditorApp";
+import { EditorApp } from "@artworkpdf/editor-app";
 
 export const metadata = {
   title: "artworkPDF — Upload artwork",

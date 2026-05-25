@@ -33,19 +33,27 @@ export function getTemplateById(id: string | undefined): DielineTemplate | undef
   return TEMPLATES.find((t) => t.id === id);
 }
 
-export function templateToInitialState(template: DielineTemplate): {
+export function templateToInitialState(
+  template: DielineTemplate,
+  bleedMmOverride?: number,
+): {
   objects: CanvasObj[];
   pageSize: { width: number; height: number };
 } {
+  const bleedMm = bleedMmOverride ?? template.bleedMm;
   const pageSize = {
-    width: (template.dimensions.widthMm + template.bleedMm * 2) * MM_TO_PT,
-    height: (template.dimensions.heightMm + template.bleedMm * 2) * MM_TO_PT,
+    width: (template.dimensions.widthMm + bleedMm * 2) * MM_TO_PT,
+    height: (template.dimensions.heightMm + bleedMm * 2) * MM_TO_PT,
   };
+  // The trim sits inside the bleed margin by `bleedMm` on each side.
+  // Templates carry their own trimBox.x/y assuming their bundled
+  // bleedMm; we override here so the trim stays the right size and
+  // shifts to match the effective bleed.
   const dielineObj: CanvasObj = {
     id: `dieline-${template.id}`,
     type: "rect",
-    x: template.trimBox.x * MM_TO_PT,
-    y: template.trimBox.y * MM_TO_PT,
+    x: bleedMm * MM_TO_PT,
+    y: bleedMm * MM_TO_PT,
     width: template.trimBox.width * MM_TO_PT,
     height: template.trimBox.height * MM_TO_PT,
     fill: "transparent",
