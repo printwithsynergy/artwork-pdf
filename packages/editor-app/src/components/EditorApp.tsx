@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { PreflightReport } from "@artworkpdf/document-model";
+import type { PreflightReport } from "../lib/preflight/types";
 import { useEffect, useState } from "react";
 import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";

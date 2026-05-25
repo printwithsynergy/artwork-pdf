@@ -1,6 +1,6 @@
 {
   "name": "@printwithsynergy/artwork-pdf-editor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "artworkPDF WYSIWYG editor as a host-customizable React component. Drop-in mountable in Next.js, Astro, Remix, etc.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -17,7 +17,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@artworkpdf/document-model": "workspace:*",
     "pdf-lib": "^1.17.1"
   },
   "peerDependencies": {

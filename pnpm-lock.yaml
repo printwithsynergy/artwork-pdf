@@ -166,9 +166,6 @@ importers:
 
   packages/editor-app:
     dependencies:
-      '@artworkpdf/document-model':
-        specifier: workspace:*
-        version: link:../document-model
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1

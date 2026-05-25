@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { PreflightIssue, PreflightReport } from "@artworkpdf/document-model";
+import type { PreflightIssue, PreflightReport } from "../lib/preflight/types";
 
 type Props = {
   report: PreflightReport;

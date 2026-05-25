@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
+import { useCallback, useState } from "react";
+import { runClientChecks } from "../lib/preflight/index";
 import {
   DEFAULT_PREFLIGHT_RULES,
   type PreflightReport,
   type PreflightRule,
-} from "@artworkpdf/document-model";
-import { useCallback, useState } from "react";
-import { runClientChecks } from "../lib/preflight/index";
+} from "../lib/preflight/types";
 
 type PreflightState =
   | { phase: "idle" }
