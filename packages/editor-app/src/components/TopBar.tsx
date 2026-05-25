@@ -42,36 +42,51 @@ export type TopBarProps = {
   showMenuButton?: boolean;
 };
 
-const BAR_BG = "#1a0f08";
-const BAR_BORDER = "#3d1a00";
+const BAR_BG = "rgba(15, 23, 42, 0.95)"; // slate-900/95 to match marketing nav
+const BAR_BORDER = "#1e293b"; // slate-800
 const BRAND = "#fc5102";
-const MUTED = "#888";
+const TEXT_PRIMARY = "#f1f5f9"; // slate-100
+const TEXT_MUTED = "#64748b"; // slate-500
+const ICON_BORDER = "#334155"; // slate-700
 
 /**
  * Bundled default logo. Inline SVG so the package has no external
- * asset paths leaking into consumers.
+ * asset paths leaking into consumers. Matches the marketing site's
+ * `/logo-artwork.svg`: orange `#fc5102` rounded square with a white
+ * stylized "A" mark inside a frame.
  *
  * @public
  */
-export function ArtworkPdfLogo({ size = 22 }: { size?: number }) {
-  // Square mark — orange rounded rect with white "A" wordmark.
+export function ArtworkPdfLogo({ size = 24 }: { size?: number }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
+      viewBox="0 0 1024 1024"
       width={size}
       height={size}
-      aria-label="artworkPDF"
+      aria-label="ArtworkPDF"
       role="img"
+      style={{
+        borderRadius: 4,
+        border: `1px solid ${ICON_BORDER}`,
+        background: "#020617",
+        padding: 1,
+        boxSizing: "border-box",
+      }}
     >
-      <rect x={2} y={2} width={60} height={60} rx={12} fill={BRAND} />
+      <title>ArtworkPDF</title>
+      <rect x={18.75} y={18.75} width={988} height={988} rx={165} ry={165} fill={BRAND} />
       <path
-        d="M22 46 L32 18 L42 46 M26 38 L38 38"
-        stroke="#fff"
-        strokeWidth={4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
+        d="M151,224c0-34,26-60,60-60h88c22,0,40,18,40,40s-18,40-40,40h-92v537h92c22,0,40,18,40,40s-18,40-40,40h-88c-34,0-60-26-60-60V224Z"
+        fill="#fff"
+      />
+      <path
+        d="M874,224c0-34-26-60-60-60h-88c-22,0-40,18-40,40s18,40,40,40h92v537h-92c-22,0-40,18-40,40s18,40,40,40h88c34,0,60-26,60-60V224Z"
+        fill="#fff"
+      />
+      <path
+        d="M455,300h114l145,425h-96l-30-95h-152l-30,95h-95L455,300ZM458,560h100l-50-158L458,560Z"
+        fill="#fff"
       />
     </svg>
   );
@@ -99,11 +114,12 @@ export function TopBar({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "0.6rem",
-        padding: "0.4rem 0.75rem",
+        gap: "0.55rem",
+        padding: "0.45rem 0.85rem",
         background: BAR_BG,
         borderBottom: `1px solid ${BAR_BORDER}`,
         flexShrink: 0,
+        backdropFilter: "blur(8px)",
       }}
     >
       {showMenuButton && (
@@ -113,13 +129,14 @@ export function TopBar({
           onClick={onMenuToggle}
           style={{
             background: "transparent",
-            border: `1px solid ${BAR_BORDER}`,
-            color: "#ddd",
+            border: "none",
+            color: TEXT_MUTED,
             cursor: "pointer",
-            padding: "0.2rem 0.45rem",
+            padding: "0.25rem 0.4rem",
             borderRadius: 4,
-            fontSize: "1rem",
+            fontSize: "1.05rem",
             lineHeight: 1,
+            marginRight: "0.15rem",
           }}
         >
           ☰
@@ -129,20 +146,28 @@ export function TopBar({
         <span style={{ display: "inline-flex", alignItems: "center" }}>{resolvedLogo}</span>
       )}
       {brandText !== null && (
-        <span style={{ fontWeight: 600, color: BRAND, fontSize: "0.9rem" }}>
+        <span
+          style={{
+            fontWeight: 600,
+            color: TEXT_PRIMARY,
+            fontSize: "0.9rem",
+            letterSpacing: "-0.01em",
+          }}
+        >
           {brandText}
           {showDemoBadge && (
             <span
               style={{
-                marginLeft: "0.45rem",
+                marginLeft: "0.5rem",
                 fontSize: "0.6rem",
-                background: "#2a1200",
+                background: "transparent",
                 border: `1px solid ${BRAND}`,
                 color: BRAND,
                 padding: "0.1rem 0.35rem",
                 borderRadius: 3,
                 verticalAlign: "middle",
                 letterSpacing: "0.08em",
+                fontWeight: 700,
               }}
             >
               DEMO
@@ -154,15 +179,16 @@ export function TopBar({
       {extraButtons.map((b) => {
         const style: React.CSSProperties = {
           fontSize: "0.8rem",
-          color: b.primary ? "#fff" : MUTED,
+          color: b.primary ? "#fff" : TEXT_MUTED,
           background: b.primary ? BRAND : "transparent",
           border: b.primary ? `1px solid ${BRAND}` : "none",
-          borderRadius: 4,
-          padding: b.primary ? "0.25rem 0.6rem" : "0.25rem 0.4rem",
+          borderRadius: 6,
+          padding: b.primary ? "0.3rem 0.7rem" : "0.3rem 0.55rem",
           cursor: "pointer",
           fontFamily: "inherit",
           textDecoration: "none",
-          fontWeight: b.primary ? 600 : 400,
+          fontWeight: b.primary ? 600 : 500,
+          transition: "color 0.12s",
         };
         return b.href ? (
           <a
