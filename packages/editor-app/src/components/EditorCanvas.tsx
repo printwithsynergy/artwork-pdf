@@ -68,6 +68,10 @@ export type CanvasObj = {
   src?: string;
   pathData?: string;
   imageEl?: HTMLImageElement;
+  /** When true, the object is non-interactive: not draggable,
+   *  not selectable, not transformable. Used for the dieline
+   *  template rect — users shouldn't be able to move the trim. */
+  locked?: boolean;
 };
 
 type ExportStatus = "idle" | "sending" | "polling" | "done" | "error";
@@ -134,29 +138,38 @@ type NodeProps = {
 };
 
 function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClick }: NodeProps) {
+  const locked = obj.locked === true;
+  // Locked objects (the dieline template rect) are inert: not
+  // draggable, not selectable, not transformable, and don't
+  // intercept pointer events so users can draw shapes over them.
   const sharedProps = {
     id: obj.id,
     x: obj.x,
     y: obj.y,
     opacity: obj.opacity,
-    draggable: true,
-    onClick: onSelect,
-    onTap: onSelect,
-    onDblClick: onDblClick,
-    onDragEnd: (e: KonvaEventObject<DragEvent>) => onDragEnd(e.target.x(), e.target.y()),
-    onTransformEnd: (e: KonvaEventObject<Event>) => {
-      const node = e.target;
-      const scaleX = node.scaleX();
-      const scaleY = node.scaleY();
-      node.scaleX(1);
-      node.scaleY(1);
-      onTransformEnd(
-        node.x(),
-        node.y(),
-        Math.max(4, node.width() * scaleX),
-        Math.max(4, node.height() * scaleY),
-      );
-    },
+    draggable: !locked,
+    listening: !locked,
+    ...(locked
+      ? {}
+      : {
+          onClick: onSelect,
+          onTap: onSelect,
+          onDblClick,
+          onDragEnd: (e: KonvaEventObject<DragEvent>) => onDragEnd(e.target.x(), e.target.y()),
+          onTransformEnd: (e: KonvaEventObject<Event>) => {
+            const node = e.target;
+            const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
+            node.scaleX(1);
+            node.scaleY(1);
+            onTransformEnd(
+              node.x(),
+              node.y(),
+              Math.max(4, node.width() * scaleX),
+              Math.max(4, node.height() * scaleY),
+            );
+          },
+        }),
   };
 
   if (obj.type === "rect") {
@@ -1375,6 +1388,42 @@ export function EditorCanvas({
           onExport={handleExport}
           exportLabel={exportLabel}
           exportBusy={exportStatus === "sending" || exportStatus === "polling"}
+          extraSections={[
+            ...(config.enable_layers_panel
+              ? [
+                  {
+                    title: "Layers",
+                    content: (
+                      <LayersPanel
+                        objects={objects}
+                        selectedId={selectedId}
+                        onSelect={(id) => setSelectedId(id)}
+                        onReorder={reorderObject}
+                        onDelete={(id) => {
+                          commit(objects.filter((o) => o.id !== id));
+                          if (id === selectedId) setSelectedId(null);
+                        }}
+                        onToggleVisible={toggleVisible}
+                      />
+                    ),
+                  },
+                ]
+              : []),
+            ...(config.enable_separations_panel
+              ? [
+                  {
+                    title: "Separations",
+                    content: (
+                      <SeparationsPanel
+                        objects={objects}
+                        hidden={hiddenInks}
+                        onToggle={toggleInk}
+                      />
+                    ),
+                  },
+                ]
+              : []),
+          ]}
         />
       )}
     </div>

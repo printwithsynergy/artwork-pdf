@@ -60,6 +60,7 @@ export function templateToInitialState(
     stroke: DIELINE_STROKE,
     strokeWidth: 1,
     opacity: 1,
+    locked: true,
   };
   return { objects: [dielineObj], pageSize };
 }
