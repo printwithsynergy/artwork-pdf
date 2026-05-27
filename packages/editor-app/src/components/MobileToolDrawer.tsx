@@ -44,6 +44,9 @@ export type MobileToolDrawerProps = {
   onExport: () => void;
   exportLabel: string;
   exportBusy: boolean;
+  /** Extra collapsible sections appended to the drawer (used for the
+   *  Layers / Separations panels in pro mode on mobile). */
+  extraSections?: Array<{ title: string; content: ReactNode; defaultOpen?: boolean }>;
 };
 
 const PANEL_BG = "#1a0f08";
@@ -166,6 +169,7 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
     onExport,
     exportLabel,
     exportBusy,
+    extraSections = [],
   } = props;
 
   const handle = (fn: () => void) => () => {
@@ -410,6 +414,12 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
               <DrawerItem label="Pro" active={mode === "pro"} onClick={() => onModeChange("pro")} />
             </DrawerSection>
           )}
+
+          {extraSections.map((s) => (
+            <DrawerSection key={s.title} title={s.title} defaultOpen={s.defaultOpen ?? false}>
+              {s.content}
+            </DrawerSection>
+          ))}
         </div>
 
         {config.enable_export_button && (
