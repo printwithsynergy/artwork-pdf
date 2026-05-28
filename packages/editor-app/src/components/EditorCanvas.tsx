@@ -1009,39 +1009,8 @@ export function EditorCanvas({
         </div>
       )}
 
-      {/* ── mobile slim strip: just the export button (rest lives in the drawer) ── */}
-      {isMobile && config.enable_export_button && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            padding: "0.4rem 0.75rem",
-            background: PANEL_BG,
-            borderBottom: `1px solid ${BORDER}`,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={exportStatus === "sending" || exportStatus === "polling"}
-            style={{
-              background:
-                exportStatus === "done" ? "#2e7d32" : exportStatus === "error" ? "#b71c1c" : BRAND,
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "0.35rem 0.95rem",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: exportStatus === "sending" || exportStatus === "polling" ? "wait" : "pointer",
-              opacity: exportStatus === "sending" || exportStatus === "polling" ? 0.7 : 1,
-            }}
-          >
-            {exportLabel}
-          </button>
-        </div>
-      )}
+      {/* On mobile the export action lives in the drawer's footer, not
+          a top strip — keeps the chrome above the canvas minimal. */}
 
       {/* ── workspace row (canvas + pro panels) ── */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
