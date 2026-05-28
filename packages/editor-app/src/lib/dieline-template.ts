@@ -16,7 +16,12 @@ export type DielineTemplate = {
 };
 
 const MM_TO_PT = 2.83465;
-const DIELINE_STROKE = "#fc5102";
+
+/** Stroke color + display name for the dieline trim rect. The dieline
+ *  is a technical separation in print, so it gets its own named plate
+ *  rather than being lumped in with artwork spot inks. */
+export const DIELINE_STROKE = "#fc5102";
+export const DIELINE_NAME = "Die Line";
 
 export const TEMPLATES: DielineTemplate[] = (library as { templates: DielineTemplate[] }).templates;
 
@@ -60,6 +65,7 @@ export function templateToInitialState(
     stroke: DIELINE_STROKE,
     strokeWidth: 1,
     opacity: 1,
+    name: DIELINE_NAME,
     locked: true,
   };
   return { objects: [dielineObj], pageSize };

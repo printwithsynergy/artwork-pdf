@@ -17,9 +17,9 @@ import {
 import { DEFAULT_BLEED_MM, formatBleed } from "../lib/bleed";
 import { type DielineTemplate, templateToInitialState } from "../lib/dieline-template";
 import type { EditorConfig } from "../lib/editor-config";
+import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { LayersPanel } from "./LayersPanel";
-import type { PreflightReport } from "../lib/preflight/types";
 import { MobileToolDrawer } from "./MobileToolDrawer";
 import { SeparationsPanel } from "./SeparationsPanel";
 
@@ -68,6 +68,9 @@ export type CanvasObj = {
   src?: string;
   pathData?: string;
   imageEl?: HTMLImageElement;
+  /** Display name shown in the Layers panel. Falls back to the type
+   *  when absent. The dieline rect sets this to "Die Line". */
+  name?: string;
   /** When true, the object is non-interactive: not draggable,
    *  not selectable, not transformable. Used for the dieline
    *  template rect — users shouldn't be able to move the trim. */
