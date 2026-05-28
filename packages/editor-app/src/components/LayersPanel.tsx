@@ -25,6 +25,7 @@ const ICONS: Record<CanvasObj["type"], string> = {
 };
 
 function label(o: CanvasObj): string {
+  if (o.name) return o.name;
   if (o.type === "text") return o.text?.slice(0, 24) || "Text";
   return `${o.type.charAt(0).toUpperCase()}${o.type.slice(1)}`;
 }
@@ -74,11 +75,14 @@ export function LayersPanel({
         {[...objects].reverse().map((o) => {
           const selected = o.id === selectedId;
           const hidden = o.opacity === 0;
+          const locked = o.locked === true;
           return (
             <button
               key={o.id}
               type="button"
-              onClick={() => onSelect(o.id)}
+              onClick={() => {
+                if (!locked) onSelect(o.id);
+              }}
               style={{
                 width: "100%",
                 background: selected ? "rgba(252,81,2,0.12)" : "transparent",
@@ -91,7 +95,7 @@ export function LayersPanel({
                 display: "flex",
                 alignItems: "center",
                 gap: "0.5rem",
-                cursor: "pointer",
+                cursor: locked ? "default" : "pointer",
                 fontSize: "0.78rem",
                 fontFamily: "inherit",
               }}
@@ -119,39 +123,51 @@ export function LayersPanel({
               >
                 {label(o)}
               </span>
-              <RowIcon
-                title={hidden ? "Show" : "Hide"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleVisible(o.id);
-                }}
-                ch={hidden ? "○" : "●"}
-              />
-              <RowIcon
-                title="Bring forward"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReorder(o.id, "up");
-                }}
-                ch="↑"
-              />
-              <RowIcon
-                title="Send backward"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReorder(o.id, "down");
-                }}
-                ch="↓"
-              />
-              <RowIcon
-                title="Delete"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(o.id);
-                }}
-                ch="✕"
-                danger
-              />
+              {locked ? (
+                <span
+                  aria-label="Locked"
+                  title="Locked"
+                  style={{ color: MUTED, fontSize: "0.72rem", userSelect: "none" }}
+                >
+                  🔒
+                </span>
+              ) : (
+                <>
+                  <RowIcon
+                    title={hidden ? "Show" : "Hide"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleVisible(o.id);
+                    }}
+                    ch={hidden ? "○" : "●"}
+                  />
+                  <RowIcon
+                    title="Bring forward"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReorder(o.id, "up");
+                    }}
+                    ch="↑"
+                  />
+                  <RowIcon
+                    title="Send backward"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReorder(o.id, "down");
+                    }}
+                    ch="↓"
+                  />
+                  <RowIcon
+                    title="Delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(o.id);
+                    }}
+                    ch="✕"
+                    danger
+                  />
+                </>
+              )}
             </button>
           );
         })}

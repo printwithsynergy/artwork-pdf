@@ -25,6 +25,9 @@ type Channel = {
   swatch: string;
   colors: string[];
   isSpot: boolean;
+  /** Technical plate (e.g. the dieline cut line) — named, not an
+   *  artwork ink. Rendered with a "DIE" tag instead of "Spot". */
+  technical?: boolean;
 };
 
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -93,6 +96,27 @@ function inkChannels(objects: CanvasObj[]): Channel[] {
   };
 
   for (const o of objects) {
+    // Locked, named objects (the dieline) are technical separations:
+    // a dedicated named plate from their stroke, not merged with the
+    // artwork ink channels.
+    if (o.locked && o.name) {
+      const raw = o.stroke && o.stroke !== "transparent" ? o.stroke : o.fill;
+      const hex = (raw ?? "").toLowerCase();
+      if (hex && hex !== "transparent") {
+        const key = `tech:${o.name}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            label: o.name,
+            swatch: hex,
+            colors: [hex],
+            isSpot: false,
+            technical: true,
+          });
+        }
+      }
+      continue;
+    }
     addColor(o.fill);
     addColor(o.stroke);
   }
@@ -178,7 +202,7 @@ export function SeparationsPanel({ objects, hidden, onToggle }: Props) {
                 }}
               />
               <span style={{ flex: 1 }}>{ch.label}</span>
-              {ch.isSpot && (
+              {(ch.isSpot || ch.technical) && (
                 <span
                   style={{
                     fontSize: "0.6rem",
@@ -187,7 +211,7 @@ export function SeparationsPanel({ objects, hidden, onToggle }: Props) {
                     letterSpacing: "0.08em",
                   }}
                 >
-                  Spot
+                  {ch.technical ? "Die" : "Spot"}
                 </span>
               )}
             </label>
