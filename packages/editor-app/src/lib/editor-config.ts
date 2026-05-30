@@ -39,7 +39,6 @@ export interface EditorConfig {
 
   // ── Panels (pro-tier by default) ─────────────────────────────────
   enable_layers_panel: boolean;
-  enable_separations_panel: boolean;
   enable_preflight_banner: boolean;
 
   // ── Canvas overlays ──────────────────────────────────────────────
@@ -77,7 +76,6 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_bleed_input: true,
   // Panels
   enable_layers_panel: true,
-  enable_separations_panel: true,
   enable_preflight_banner: true,
   // Canvas
   enable_canvas_grid: true,
@@ -93,7 +91,6 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  */
 export const BASIC_MODE_OVERRIDES: Partial<EditorConfig> = {
   enable_layers_panel: false,
-  enable_separations_panel: false,
   enable_source_link: false,
 };
 

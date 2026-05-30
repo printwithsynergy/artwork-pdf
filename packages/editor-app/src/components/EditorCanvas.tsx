@@ -21,7 +21,6 @@ import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { LayersPanel } from "./LayersPanel";
 import { MobileToolDrawer } from "./MobileToolDrawer";
-import { SeparationsPanel } from "./SeparationsPanel";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -277,7 +276,6 @@ export function EditorCanvas({
 
   // Pro mode state — dieline modal + per-ink visibility filter for separations.
   const [dielineOpen, setDielineOpen] = useState(false);
-  const [hiddenInks, setHiddenInks] = useState<Set<string>>(new Set());
 
   // ── sync bleed from prop ────────────────────────────────────────────────────
 
@@ -792,27 +790,10 @@ export function EditorCanvas({
     setSelectedId(null);
   }
 
-  function toggleInk(color: string) {
-    setHiddenInks((prev) => {
-      const next = new Set(prev);
-      if (next.has(color)) next.delete(color);
-      else next.add(color);
-      return next;
-    });
-  }
-
-  // Objects whose fill/stroke match a hidden ink are rendered with opacity 0
-  // for the preview. We don't mutate the actual object — separations preview
-  // is non-destructive.
-  const visibleObjects =
-    config.enable_separations_panel && hiddenInks.size > 0
-      ? objects.map((o) => {
-          const fillHidden = hiddenInks.has(o.fill.toLowerCase());
-          const strokeHidden = hiddenInks.has(o.stroke.toLowerCase());
-          if (fillHidden && strokeHidden) return { ...o, opacity: 0 };
-          return o;
-        })
-      : objects;
+  // Real post-render separations live in the lens-pdf viewer
+  // (`SeparationCanvas`, codex-backed). The pre-render RGB approximation
+  // we used to do here was misleading and is no longer rendered.
+  const visibleObjects = objects;
 
   // ── render ──────────────────────────────────────────────────────────────────
 
@@ -1165,9 +1146,6 @@ export function EditorCanvas({
           )}
         </div>
 
-        {config.enable_separations_panel && !isMobile && (
-          <SeparationsPanel objects={objects} hidden={hiddenInks} onToggle={toggleInk} />
-        )}
       </div>
 
       {/* ── selected properties footer ── */}
@@ -1376,20 +1354,6 @@ export function EditorCanvas({
                           if (id === selectedId) setSelectedId(null);
                         }}
                         onToggleVisible={toggleVisible}
-                      />
-                    ),
-                  },
-                ]
-              : []),
-            ...(config.enable_separations_panel
-              ? [
-                  {
-                    title: "Separations",
-                    content: (
-                      <SeparationsPanel
-                        objects={objects}
-                        hidden={hiddenInks}
-                        onToggle={toggleInk}
                       />
                     ),
                   },
