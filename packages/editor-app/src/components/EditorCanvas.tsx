@@ -93,6 +93,19 @@ type Props = {
   isMobile?: boolean;
   menuOpen?: boolean;
   onMenuOpenChange?: (open: boolean) => void;
+  /** Fired whenever the canvas's objects change (drawing, drag, transform,
+   *  delete, undo/redo, applyDieline). Used by the multi-page wrapper to
+   *  keep the parent's `pages` array in sync. */
+  onObjectsChange?: (objects: CanvasObj[]) => void;
+  /** Fired whenever the page size changes (template apply, bleed override,
+   *  uploaded-PDF parse). */
+  onPageSizeChange?: (pageSize: { width: number; height: number }) => void;
+  /** Fired whenever the bleed value changes (drawer input or URL prop sync). */
+  onBleedMmChange?: (bleedMm: number) => void;
+  /** Extra collapsible sections added to the *top* of the mobile drawer
+   *  (used by `EditorApp` to insert the `PageNavigator` stack when the
+   *  document is multi-page). */
+  prependDrawerSections?: Array<{ title: string; content: import("react").ReactNode; defaultOpen?: boolean }>;
 };
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -245,6 +258,10 @@ export function EditorCanvas({
   isMobile = false,
   menuOpen = false,
   onMenuOpenChange,
+  onObjectsChange,
+  onPageSizeChange,
+  onBleedMmChange,
+  prependDrawerSections = [],
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -282,6 +299,25 @@ export function EditorCanvas({
   useEffect(() => {
     setBleedMm(bleedMmProp);
   }, [bleedMmProp]);
+
+  // ── notify parent of document-state changes ─────────────────────────────────
+  // Used by the multi-page wrapper in EditorApp to mirror the active page
+  // back into its `pages` array; no-op when the host doesn't pass callbacks.
+
+  useEffect(() => {
+    onObjectsChange?.(objects);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on objects only
+  }, [objects]);
+
+  useEffect(() => {
+    onPageSizeChange?.(pageSize);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on pageSize only
+  }, [pageSize]);
+
+  useEffect(() => {
+    onBleedMmChange?.(bleedMm);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on bleedMm only
+  }, [bleedMm]);
 
   // ── recompute page + dieline when bleed changes ────────────────────────────
 
@@ -1339,6 +1375,7 @@ export function EditorCanvas({
           exportLabel={exportLabel}
           exportBusy={exportStatus === "sending" || exportStatus === "polling"}
           extraSections={[
+            ...prependDrawerSections,
             ...(config.enable_layers_panel
               ? [
                   {

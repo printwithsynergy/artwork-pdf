@@ -9,6 +9,7 @@ import { DEFAULT_BLEED_MM } from "../lib/bleed";
 import type { Page } from "../lib/dieline-template";
 import { type EditorConfig, resolveConfig } from "../lib/editor-config";
 import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
+import { PageNavigator } from "./PageNavigator";
 import { FileDropZone } from "./FileDropZone";
 import { PreflightPanel } from "./PreflightPanel";
 import { TopBar, type TopBarProps } from "./TopBar";
@@ -39,11 +40,14 @@ export type EditorAppProps = {
    * `objects`, `pageSize`, and `bleedMm`. Takes precedence over the
    * single-page `initialObjects` / `initialPageSize` props when supplied.
    *
-   * In the current build the editor renders the **first** page; the
-   * navigator UI for switching between pages ships in a follow-up.
-   * The types and prop are wired now so hosts can begin producing
-   * multi-page documents (`templatesToPages`, `templateSetToPages`)
-   * without waiting for the UI.
+   * A `PageNavigator` strip renders above the canvas on desktop and a
+   * "Pages" section appears in the mobile drawer; users can switch
+   * between pages, add (duplicate) pages, and delete pages. Per-page
+   * state (objects, pageSize, bleedMm) is preserved across switches.
+   * Each page has its own undo history.
+   *
+   * Pair with `templatesToPages` / `templateSetToPages` helpers to seed
+   * known multi-page documents (e.g. carton front + back).
    */
   initialPages?: Page[];
   /** Initial mode preference. `"auto"` resolves by viewport. */
@@ -68,13 +72,58 @@ export function EditorApp({
   bleedMm = DEFAULT_BLEED_MM,
   topBar,
 }: EditorAppProps) {
-  // Multi-page seed wins over single-page convenience props. Until the
-  // PageNavigator UI lands, we render the first page; the rest are held
-  // for the upcoming switch UI but do not affect the canvas yet.
-  const firstPage = initialPages?.[0];
-  const seedObjects = firstPage?.objects ?? initialObjects;
-  const seedPageSize = firstPage?.pageSize ?? initialPageSize;
-  const seedBleedMm = firstPage?.bleedMm ?? bleedMm;
+  // Multi-page seed wins over the single-page convenience props. We
+  // wrap legacy `initialObjects` / `initialPageSize` into a single-page
+  // array so the rest of EditorApp can treat everything as multi-page.
+  const seededPages = ((): Page[] => {
+    if (initialPages && initialPages.length > 0) return initialPages;
+    return [
+      {
+        id: "page-1",
+        objects: initialObjects ?? [],
+        pageSize: initialPageSize ?? { width: 595, height: 842 },
+        bleedMm,
+      },
+    ];
+  })();
+
+  const [pages, setPages] = useState<Page[]>(seededPages);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  const activePage =
+    pages[Math.min(Math.max(currentPageIndex, 0), pages.length - 1)] ?? seededPages[0];
+
+  function updateActivePage(patch: Partial<Page>) {
+    setPages((prev) =>
+      prev.map((p, i) => (i === currentPageIndex ? { ...p, ...patch } : p)),
+    );
+  }
+
+  function handleAddPage() {
+    // Duplicate the active page; user can edit / pick a new dieline from there.
+    setPages((prev) => {
+      const src = prev[currentPageIndex];
+      if (!src) return prev;
+      const dup: Page = {
+        ...src,
+        id: `page-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        objects: src.objects.map((o) => ({ ...o })),
+      };
+      const next = [...prev];
+      next.splice(currentPageIndex + 1, 0, dup);
+      return next;
+    });
+    setCurrentPageIndex((i) => i + 1);
+  }
+
+  function handleDeletePage() {
+    setPages((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((_, i) => i !== currentPageIndex);
+      return next;
+    });
+    setCurrentPageIndex((i) => Math.max(0, i - 1));
+  }
 
   const { mode, setMode } = useEditorMode(preferMode);
   const [phase, setPhase] = useState<Phase>(initialPhase);
@@ -167,21 +216,66 @@ export function EditorApp({
           <AutoAdvance onContinue={() => setPhase("editor")} />
         )}
 
-        {phase === "editor" && (
-          <EditorCanvas
-            file={file}
-            report={report}
-            demo={demo}
-            mode={mode}
-            onModeChange={setMode}
-            config={config}
-            bleedMm={seedBleedMm}
-            isMobile={isMobile}
-            menuOpen={menuOpen}
-            onMenuOpenChange={setMenuOpen}
-            {...(seedObjects ? { initialObjects: seedObjects } : {})}
-            {...(seedPageSize ? { initialPageSize: seedPageSize } : {})}
-          />
+        {phase === "editor" && activePage && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            {/* Multi-page strip — desktop only; the mobile drawer hosts the
+                stacked variant via MobileToolDrawer's extraSections. */}
+            {pages.length > 1 && !isMobile && (
+              <PageNavigator
+                pages={pages}
+                currentPageIndex={currentPageIndex}
+                onSelect={setCurrentPageIndex}
+                onAddPage={handleAddPage}
+                {...(pages.length > 1 ? { onDeletePage: handleDeletePage } : {})}
+                variant="strip"
+              />
+            )}
+            <EditorCanvas
+              key={activePage.id}
+              file={file}
+              report={report}
+              demo={demo}
+              mode={mode}
+              onModeChange={setMode}
+              config={config}
+              bleedMm={activePage.bleedMm}
+              isMobile={isMobile}
+              menuOpen={menuOpen}
+              onMenuOpenChange={setMenuOpen}
+              initialObjects={activePage.objects}
+              initialPageSize={activePage.pageSize}
+              onObjectsChange={(objects) => updateActivePage({ objects })}
+              onPageSizeChange={(pageSize) => updateActivePage({ pageSize })}
+              onBleedMmChange={(bleedMmValue) => updateActivePage({ bleedMm: bleedMmValue })}
+              prependDrawerSections={
+                pages.length > 1 || isMobile
+                  ? [
+                      {
+                        title: "Pages",
+                        defaultOpen: true,
+                        content: (
+                          <PageNavigator
+                            pages={pages}
+                            currentPageIndex={currentPageIndex}
+                            onSelect={setCurrentPageIndex}
+                            onAddPage={handleAddPage}
+                            {...(pages.length > 1 ? { onDeletePage: handleDeletePage } : {})}
+                            variant="stack"
+                          />
+                        ),
+                      },
+                    ]
+                  : []
+              }
+            />
+          </div>
         )}
       </div>
 

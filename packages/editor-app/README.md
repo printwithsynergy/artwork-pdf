@@ -143,8 +143,10 @@ Helpers:
   set → Page[].
 - `templateSetToPages(set, bleedMm?)` — bundled set → Page[].
 
-The current build seeds from page 1 of `initialPages`; the page
-navigator UI for switching between pages ships in a follow-up.
+A `PageNavigator` strip renders above the canvas on desktop and a
+"Pages" section appears in the mobile drawer. Users can switch
+between pages, add (duplicate) pages, and delete pages. Per-page state
+is preserved across switches; each page has its own undo history.
 
 ## Lens plugins (`/lens` subpath)
 
