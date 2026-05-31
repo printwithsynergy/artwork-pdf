@@ -70,7 +70,6 @@ Defaults to everything enabled.
 ```tsx
 <EditorApp
   config={{
-    enable_separations_panel: false,
     enable_layers_panel: false,
     enable_source_link: false,
   }}
@@ -109,7 +108,67 @@ import { getTemplateById } from "@printwithsynergy/artwork-pdf-editor";
 const tpl = getTemplateById("standup-pouch-4x6");
 ```
 
-Hosted routes can deep-link with `?dieline=<id>`.
+Hosted routes can deep-link with `?dieline=<id>`. The demo route also
+accepts:
+
+- A bundled multi-page set id (`?dieline=carton-6x4x2-set`) — see
+  `TEMPLATE_SETS`.
+- A comma-separated list of template ids
+  (`?dieline=carton-6x4x2,carton-6x4x2`).
+
+Unknown ids silently fall back to the default template.
+
+## Multi-page documents
+
+Each page in a multi-page artwork carries its own `objects`, `pageSize`,
+`bleedMm`, and optional `templateId` + `name`. Seed via `initialPages`:
+
+```tsx
+import {
+  EditorApp,
+  getTemplateSetById,
+  templateSetToPages,
+} from "@printwithsynergy/artwork-pdf-editor";
+
+const set = getTemplateSetById("carton-6x4x2-set");
+const pages = templateSetToPages(set!, 3.175); // 0.125 in bleed
+
+<EditorApp demo initialPhase="editor" initialPages={pages} />
+```
+
+Helpers:
+
+- `templateToPage(template, bleedMm?, name?)` — single template → Page.
+- `templatesToPages([{ template, name }], bleedMm?)` — ordered ad-hoc
+  set → Page[].
+- `templateSetToPages(set, bleedMm?)` — bundled set → Page[].
+
+The current build seeds from page 1 of `initialPages`; the page
+navigator UI for switching between pages ships in a follow-up.
+
+## Lens plugins (`/lens` subpath)
+
+Hosts that mount [`@printwithsynergy/lens-pdf`](https://www.npmjs.com/package/@printwithsynergy/lens-pdf)
+to display rendered output can register artwork-aware overlays:
+
+```tsx
+import { LensPDF } from "@printwithsynergy/lens-pdf";
+import {
+  dielineOverlayPlugin,
+  preflightFindingsPlugin,
+} from "@printwithsynergy/artwork-pdf-editor/lens";
+
+<LensPDF
+  pdfUrl={blobUrl}
+  plugins={[
+    dielineOverlayPlugin({ pages: { 1: { template: tpl, bleedMm: 3.175 } } }),
+    preflightFindingsPlugin({ report }),
+  ]}
+/>
+```
+
+`@printwithsynergy/lens-pdf` is an **optional** peer dep — only required
+when you import from the `/lens` subpath.
 
 ## License
 

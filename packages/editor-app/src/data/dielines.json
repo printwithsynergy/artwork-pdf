@@ -182,5 +182,40 @@
       "previewSvg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 54.8 80.2'><rect x='2' y='2' width='50.8' height='76.2' fill='none' stroke='#333' stroke-width='0.5' rx='3'/><line x1='2' y1='12' x2='52.8' y2='12' stroke='#666' stroke-width='0.3'/><text x='27.4' y='47' text-anchor='middle' font-size='6' fill='#666'>Sachet</text><text x='27.4' y='56' text-anchor='middle' font-size='4' fill='#999'>2×3″</text></svg>",
       "tags": ["sachet", "single-serve", "condiment", "sample", "hotel"]
     }
+  ],
+  "templateSets": [
+    {
+      "id": "carton-6x4x2-set",
+      "name": "Carton 6×4×2 (front + back)",
+      "description": "Two-sided dieline for a 6×4×2 straight-tuck carton. Front and back share the same trim.",
+      "category": "carton-set",
+      "pages": [
+        { "templateId": "carton-6x4x2", "name": "Front" },
+        { "templateId": "carton-6x4x2", "name": "Back" }
+      ],
+      "tags": ["carton", "box", "multi-page", "front-back"]
+    },
+    {
+      "id": "carton-8x6x3-set",
+      "name": "Carton 8×6×3 (front + back)",
+      "description": "Two-sided dieline for an 8×6×3 straight-tuck carton.",
+      "category": "carton-set",
+      "pages": [
+        { "templateId": "carton-8x6x3", "name": "Front" },
+        { "templateId": "carton-8x6x3", "name": "Back" }
+      ],
+      "tags": ["carton", "box", "multi-page", "front-back"]
+    },
+    {
+      "id": "standup-pouch-4x6-set",
+      "name": "Stand-Up Pouch 4×6 (front + back)",
+      "description": "Two-sided dieline for a 4×6 stand-up pouch — front graphic + back panel.",
+      "category": "pouch-set",
+      "pages": [
+        { "templateId": "standup-pouch-4x6", "name": "Front" },
+        { "templateId": "standup-pouch-4x6", "name": "Back" }
+      ],
+      "tags": ["pouch", "stand-up", "multi-page", "front-back"]
+    }
   ]
 }

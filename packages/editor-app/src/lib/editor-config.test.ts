@@ -6,7 +6,6 @@ describe("editor-config", () => {
   it("basic mode hides pro panels and the source link", () => {
     const cfg = resolveConfig("basic");
     expect(cfg.enable_layers_panel).toBe(false);
-    expect(cfg.enable_separations_panel).toBe(false);
     expect(cfg.enable_source_link).toBe(false);
     // Non-pro features remain enabled
     expect(cfg.enable_tool_rect).toBe(true);
@@ -25,6 +24,6 @@ describe("editor-config", () => {
 
     const cfg2 = resolveConfig("basic", { enable_layers_panel: true });
     expect(cfg2.enable_layers_panel).toBe(true);
-    expect(cfg2.enable_separations_panel).toBe(false);
+    expect(cfg2.enable_source_link).toBe(false);
   });
 });

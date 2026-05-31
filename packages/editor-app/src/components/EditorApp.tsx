@@ -6,6 +6,7 @@ import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { usePreflight } from "../hooks/usePreflight";
 import { DEFAULT_BLEED_MM } from "../lib/bleed";
+import type { Page } from "../lib/dieline-template";
 import { type EditorConfig, resolveConfig } from "../lib/editor-config";
 import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
 import { FileDropZone } from "./FileDropZone";
@@ -27,15 +28,30 @@ export type EditorAppProps = {
   demo?: boolean;
   /** Starting phase. Set `"editor"` to skip the upload step. */
   initialPhase?: Phase;
-  /** Seed objects for the canvas — typically from `templateToInitialState`. */
+  /** Seed objects for the canvas — typically from `templateToInitialState`.
+   *  Single-page convenience; for multi-page documents pass `initialPages`. */
   initialObjects?: CanvasObj[];
-  /** Seed page size for the canvas — typically from `templateToInitialState`. */
+  /** Seed page size for the canvas — typically from `templateToInitialState`.
+   *  Single-page convenience; for multi-page documents pass `initialPages`. */
   initialPageSize?: { width: number; height: number };
+  /**
+   * Multi-page seed. Each entry is a {@link Page} with its own
+   * `objects`, `pageSize`, and `bleedMm`. Takes precedence over the
+   * single-page `initialObjects` / `initialPageSize` props when supplied.
+   *
+   * In the current build the editor renders the **first** page; the
+   * navigator UI for switching between pages ships in a follow-up.
+   * The types and prop are wired now so hosts can begin producing
+   * multi-page documents (`templatesToPages`, `templateSetToPages`)
+   * without waiting for the UI.
+   */
+  initialPages?: Page[];
   /** Initial mode preference. `"auto"` resolves by viewport. */
   preferMode?: EditorMode | "auto";
   /** Per-instance flag overrides. Merged into mode + global defaults. */
   config?: Partial<EditorConfig>;
-  /** Bleed margin in millimetres. Defaults to {@link DEFAULT_BLEED_MM} (0.125 in). */
+  /** Bleed margin in millimetres. Defaults to {@link DEFAULT_BLEED_MM} (0.125 in).
+   *  Ignored when `initialPages` is supplied (each page carries its own bleed). */
   bleedMm?: number;
   /** Host-supplied top bar configuration (logo, extra CTAs, etc.). */
   topBar?: Partial<TopBarProps>;
@@ -46,11 +62,20 @@ export function EditorApp({
   initialPhase = "upload",
   initialObjects,
   initialPageSize,
+  initialPages,
   preferMode = "auto",
   config: configOverrides,
   bleedMm = DEFAULT_BLEED_MM,
   topBar,
 }: EditorAppProps) {
+  // Multi-page seed wins over single-page convenience props. Until the
+  // PageNavigator UI lands, we render the first page; the rest are held
+  // for the upcoming switch UI but do not affect the canvas yet.
+  const firstPage = initialPages?.[0];
+  const seedObjects = firstPage?.objects ?? initialObjects;
+  const seedPageSize = firstPage?.pageSize ?? initialPageSize;
+  const seedBleedMm = firstPage?.bleedMm ?? bleedMm;
+
   const { mode, setMode } = useEditorMode(preferMode);
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [file, setFile] = useState<File | null>(null);
@@ -150,12 +175,12 @@ export function EditorApp({
             mode={mode}
             onModeChange={setMode}
             config={config}
-            bleedMm={bleedMm}
+            bleedMm={seedBleedMm}
             isMobile={isMobile}
             menuOpen={menuOpen}
             onMenuOpenChange={setMenuOpen}
-            {...(initialObjects ? { initialObjects } : {})}
-            {...(initialPageSize ? { initialPageSize } : {})}
+            {...(seedObjects ? { initialObjects: seedObjects } : {})}
+            {...(seedPageSize ? { initialPageSize: seedPageSize } : {})}
           />
         )}
       </div>

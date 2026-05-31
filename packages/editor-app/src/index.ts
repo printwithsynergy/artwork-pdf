@@ -29,9 +29,16 @@ export {
 } from "./lib/editor-config";
 export {
   type DielineTemplate,
+  type Page,
+  type TemplateSet,
   TEMPLATES,
+  TEMPLATE_SETS,
   getDefaultTemplate,
   getTemplateById,
+  getTemplateSetById,
   templateToInitialState,
+  templateToPage,
+  templatesToPages,
+  templateSetToPages,
 } from "./lib/dieline-template";
 export { DEFAULT_BLEED_MM, parseBleed, formatBleed } from "./lib/bleed";

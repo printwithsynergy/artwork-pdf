@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { getDefaultTemplate, getTemplateById, templateToInitialState } from "./dieline-template";
+import {
+  TEMPLATE_SETS,
+  getDefaultTemplate,
+  getTemplateById,
+  getTemplateSetById,
+  templateSetToPages,
+  templateToInitialState,
+  templateToPage,
+  templatesToPages,
+} from "./dieline-template";
 
 describe("dieline-template", () => {
   it("getDefaultTemplate returns the entry flagged isDefault", () => {
@@ -47,5 +56,55 @@ describe("dieline-template", () => {
     if (!rect) throw new Error("expected one dieline rect");
     expect(rect.x).toBeCloseTo(3.175 * 2.83465, 1);
     expect(rect.y).toBeCloseTo(3.175 * 2.83465, 1);
+  });
+
+  it("templateToPage produces a Page with id + templateId + optional name", () => {
+    const t = getDefaultTemplate();
+    const page = templateToPage(t, 3.175, "Front");
+    expect(page.templateId).toBe("standup-pouch-4x6");
+    expect(page.bleedMm).toBe(3.175);
+    expect(page.name).toBe("Front");
+    expect(page.objects).toHaveLength(1);
+    expect(page.objects[0]?.id).toBe("dieline-standup-pouch-4x6");
+    expect(page.id).toMatch(/^page-standup-pouch-4x6-/);
+  });
+
+  it("templatesToPages preserves order and per-entry names", () => {
+    const a = getDefaultTemplate();
+    const b = getTemplateById("flat-pouch-3x5");
+    if (!b) throw new Error("missing flat-pouch-3x5 fixture");
+    const pages = templatesToPages(
+      [
+        { template: a, name: "Front" },
+        { template: b, name: "Insert" },
+      ],
+      3.175,
+    );
+    expect(pages.map((p) => p.templateId)).toEqual(["standup-pouch-4x6", "flat-pouch-3x5"]);
+    expect(pages.map((p) => p.name)).toEqual(["Front", "Insert"]);
+  });
+
+  it("templateSetToPages expands a bundled set into pages", () => {
+    const set = getTemplateSetById("carton-6x4x2-set");
+    if (!set) throw new Error("missing carton-6x4x2-set fixture");
+    const pages = templateSetToPages(set, 3.175);
+    expect(pages).toHaveLength(2);
+    expect(pages.map((p) => p.templateId)).toEqual(["carton-6x4x2", "carton-6x4x2"]);
+    expect(pages.map((p) => p.name)).toEqual(["Front", "Back"]);
+  });
+
+  it("getTemplateSetById falls back to undefined for unknown ids", () => {
+    expect(getTemplateSetById("does-not-exist")).toBeUndefined();
+    expect(getTemplateSetById(undefined)).toBeUndefined();
+  });
+
+  it("bundled TEMPLATE_SETS exist and all reference valid template ids", () => {
+    expect(TEMPLATE_SETS.length).toBeGreaterThan(0);
+    for (const set of TEMPLATE_SETS) {
+      for (const entry of set.pages) {
+        const t = getTemplateById(entry.templateId);
+        expect(t, `unknown templateId in set ${set.id}: ${entry.templateId}`).toBeDefined();
+      }
+    }
   });
 });
