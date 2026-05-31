@@ -4,3 +4,5 @@
 
 export * from "./preflight.js";
 export * from "./extended.js";
+export * from "./v3.js";
+export * from "./migrate.js";
