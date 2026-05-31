@@ -84,6 +84,36 @@ describe("upgradeV2ToV3", () => {
     const v2 = minimalV2();
     expect(upgradeV2ToV3(v2)).toEqual(upgradeV2ToV3(v2));
   });
+
+  it("is structurally independent — mutating v3 collections does not leak into v2", () => {
+    const v2: DocumentModel = {
+      ...minimalV2(),
+      swatches: ["#000", "#FFF"],
+      graphicStyles: [],
+      variableData: { sku: "ABC-123" },
+    };
+    const v2SeparationsBefore = [...v2.separations];
+    const v2LayersBefore = [...v2.layers];
+    const v2SwatchesBefore = [...(v2.swatches ?? [])];
+    const v2VariableDataBefore = { ...(v2.variableData ?? {}) };
+
+    const v3 = upgradeV2ToV3(v2);
+    v3.pages[0]?.separations.push({ name: "Spot1", colorSpace: "Spot" });
+    v3.pages[0]?.layers.push({
+      id: "leak",
+      type: "artwork",
+      name: "leak",
+      visible: true,
+      objects: [],
+    });
+    v3.swatches?.push("#FF0000");
+    if (v3.variableData) v3.variableData.batch = "leak";
+
+    expect(v2.separations).toEqual(v2SeparationsBefore);
+    expect(v2.layers).toEqual(v2LayersBefore);
+    expect(v2.swatches).toEqual(v2SwatchesBefore);
+    expect(v2.variableData).toEqual(v2VariableDataBefore);
+  });
 });
 
 describe("isV3 / ensureV3", () => {
