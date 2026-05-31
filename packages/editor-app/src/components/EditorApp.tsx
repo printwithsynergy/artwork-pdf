@@ -90,19 +90,25 @@ export function EditorApp({
   const [pages, setPages] = useState<Page[]>(seededPages);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
-  const activePage =
-    pages[Math.min(Math.max(currentPageIndex, 0), pages.length - 1)] ?? seededPages[0];
+  const clampedPageIndex = Math.min(Math.max(currentPageIndex, 0), pages.length - 1);
+  // `pages` is seeded with at least one entry and `handleDeletePage`
+  // refuses to drop the last one, so `pages[clampedPageIndex]` is always
+  // defined. The non-null assertion makes the invariant explicit; a
+  // misuse would crash here instead of silently swapping back to the
+  // seeded default.
+  // biome-ignore lint/style/noNonNullAssertion: pages is non-empty by construction
+  const activePage = pages[clampedPageIndex]!;
 
   function updateActivePage(patch: Partial<Page>) {
     setPages((prev) =>
-      prev.map((p, i) => (i === currentPageIndex ? { ...p, ...patch } : p)),
+      prev.map((p, i) => (i === clampedPageIndex ? { ...p, ...patch } : p)),
     );
   }
 
   function handleAddPage() {
     // Duplicate the active page; user can edit / pick a new dieline from there.
     setPages((prev) => {
-      const src = prev[currentPageIndex];
+      const src = prev[clampedPageIndex];
       if (!src) return prev;
       const dup: Page = {
         ...src,
@@ -110,19 +116,21 @@ export function EditorApp({
         objects: src.objects.map((o) => ({ ...o })),
       };
       const next = [...prev];
-      next.splice(currentPageIndex + 1, 0, dup);
+      next.splice(clampedPageIndex + 1, 0, dup);
       return next;
     });
     setCurrentPageIndex((i) => i + 1);
   }
 
   function handleDeletePage() {
-    setPages((prev) => {
-      if (prev.length <= 1) return prev;
-      const next = prev.filter((_, i) => i !== currentPageIndex);
-      return next;
-    });
-    setCurrentPageIndex((i) => Math.max(0, i - 1));
+    // Deleting the current page should keep the user on the *next* page
+    // (now at the same index in the shorter array). Only fall back to the
+    // previous page when the deleted one was the last in the list.
+    if (pages.length <= 1) return;
+    const deletedIdx = clampedPageIndex;
+    const nextPages = pages.filter((_, i) => i !== deletedIdx);
+    setPages(nextPages);
+    setCurrentPageIndex(Math.min(deletedIdx, nextPages.length - 1));
   }
 
   const { mode, setMode } = useEditorMode(preferMode);

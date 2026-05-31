@@ -45,36 +45,50 @@ export function PageNavigator({
   if (variant === "stack") {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", padding: "0.4rem 0.65rem" }}>
-        {pages.map((p, i) => {
-          const active = i === currentPageIndex;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onSelect(i)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.55rem",
-                padding: "0.45rem 0.6rem",
-                background: active ? "#241308" : "transparent",
-                border: `1px solid ${active ? BRAND : "transparent"}`,
-                borderRadius: 4,
-                color: active ? BRAND : "#ddd",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: "0.82rem",
-                textAlign: "left",
-              }}
-            >
-              <span style={{ fontFamily: "monospace", color: MUTED, fontSize: "0.7rem" }}>
-                {i + 1}
-              </span>
-              <span style={{ flex: 1 }}>{p.name ?? `Page ${i + 1}`}</span>
-              {active && <span style={{ color: BRAND }}>●</span>}
-            </button>
-          );
-        })}
+        <div
+          role="tablist"
+          aria-label="Pages"
+          aria-orientation="vertical"
+          style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}
+        >
+          {pages.map((p, i) => {
+            const active = i === currentPageIndex;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                aria-label={`Page ${i + 1}${p.name ? `: ${p.name}` : ""}`}
+                onClick={() => onSelect(i)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.55rem",
+                  padding: "0.45rem 0.6rem",
+                  background: active ? "#241308" : "transparent",
+                  border: `1px solid ${active ? BRAND : "transparent"}`,
+                  borderRadius: 4,
+                  color: active ? BRAND : "#ddd",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "0.82rem",
+                  textAlign: "left",
+                }}
+              >
+                <span aria-hidden style={{ fontFamily: "monospace", color: MUTED, fontSize: "0.7rem" }}>
+                  {i + 1}
+                </span>
+                <span style={{ flex: 1 }}>{p.name ?? `Page ${i + 1}`}</span>
+                {active && (
+                  <span aria-hidden style={{ color: BRAND }}>
+                    ●
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
         {(onAddPage || canDelete) && (
           <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.4rem" }}>
@@ -107,6 +121,9 @@ export function PageNavigator({
   // strip — thin desktop row
   return (
     <div
+      role="tablist"
+      aria-label="Pages"
+      aria-orientation="horizontal"
       style={{
         display: "flex",
         alignItems: "center",
@@ -119,6 +136,7 @@ export function PageNavigator({
       }}
     >
       <span
+        aria-hidden
         style={{
           fontSize: "0.7rem",
           color: MUTED,
@@ -136,6 +154,9 @@ export function PageNavigator({
           <button
             key={p.id}
             type="button"
+            role="tab"
+            aria-selected={active}
+            aria-label={`Page ${i + 1}${p.name ? `: ${p.name}` : ""}`}
             onClick={() => onSelect(i)}
             title={p.name ?? `Page ${i + 1}`}
             style={{
