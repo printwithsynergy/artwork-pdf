@@ -3,12 +3,7 @@
 // v2 (flat layers + doc-level dimensions) is preserved in extended.ts for
 // backward-compat; use upgradeV2ToV3 in migrate.ts to lift v2 into v3.
 
-import type {
-  GraphicStyle,
-  Layer,
-  PrintContext,
-  Separation,
-} from "./extended.js";
+import type { GraphicStyle, Layer, PrintContext, Separation } from "./extended.js";
 
 export type PageV3 = {
   id: string;

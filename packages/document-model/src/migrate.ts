@@ -35,14 +35,10 @@ export function upgradeV2ToV3(doc: DocumentModel): DocumentV3 {
   };
 }
 
-export function isV3(
-  doc: DocumentModel | DocumentV3,
-): doc is DocumentV3 {
+export function isV3(doc: DocumentModel | DocumentV3): doc is DocumentV3 {
   return doc.version === "3";
 }
 
-export function ensureV3(
-  doc: DocumentModel | DocumentV3,
-): DocumentV3 {
+export function ensureV3(doc: DocumentModel | DocumentV3): DocumentV3 {
   return isV3(doc) ? doc : upgradeV2ToV3(doc);
 }
