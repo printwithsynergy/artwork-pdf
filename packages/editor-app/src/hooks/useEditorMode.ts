@@ -2,17 +2,37 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
+/**
+ * Editor UI complexity tier. `"basic"` strips advanced controls and
+ * is the touch/mobile default; `"pro"` shows the full toolset.
+ * Resolved via {@link useEditorMode}.
+ *
+ * @public
+ */
 export type EditorMode = "basic" | "pro";
 
 const STORAGE_KEY = "artworkpdf:editor-mode";
 
 /**
- * Resolves the editor mode with this precedence:
- *  1. Explicit user choice persisted in localStorage
- *  2. `prefer` prop (set by the page — e.g. demo passes "auto")
- *  3. Viewport heuristic: pro on >= 900 CSS px, basic otherwise
+ * Resolve the active editor mode and expose a setter that persists
+ * the choice across reloads.
  *
- * `setMode(null)` clears the saved preference and returns to auto.
+ * Precedence (later wins):
+ *
+ *   1. Explicit user choice persisted in `localStorage`
+ *      (`"artworkpdf:editor-mode"`)
+ *   2. The `prefer` arg (typically threaded from the host page —
+ *      `/demo` passes `"auto"` so the viewport heuristic picks)
+ *   3. Viewport heuristic: `"pro"` on wider viewports, `"basic"`
+ *      on narrower ones
+ *
+ * `setMode(null)` clears the persisted preference and falls back to
+ * the heuristic; `isAuto` is true while no explicit choice is saved.
+ *
+ * SSR-safe: returns the resolved fallback until hydration completes,
+ * so the server render matches the first client paint.
+ *
+ * @public
  */
 export function useEditorMode(prefer: EditorMode | "auto" = "auto"): {
   mode: EditorMode;

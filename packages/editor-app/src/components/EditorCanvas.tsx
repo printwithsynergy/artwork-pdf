@@ -50,6 +50,21 @@ type Tool = "select" | "rect" | "ellipse" | "text" | "image";
 
 type ObjType = "rect" | "ellipse" | "text" | "image";
 
+/**
+ * One renderable object on the editor canvas.
+ *
+ * Intentionally a flat, structural shape (not the richer
+ * `@artworkpdf/document-model` `ArtworkObject`) — the published
+ * package stays consumable by hosts that don't pull in the
+ * document-model dep. The structural fields here mirror the
+ * `JobSubmitRequest` payload sent to `apps/service`.
+ *
+ * `name` falls back to `type` when absent; `locked` makes the object
+ * non-interactive (used for the dieline trim rect so users can't
+ * drag the trim out of position).
+ *
+ * @public
+ */
 export type CanvasObj = {
   id: string;
   type: ObjType;
