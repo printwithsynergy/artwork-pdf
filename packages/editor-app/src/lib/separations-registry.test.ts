@@ -48,9 +48,9 @@ describe("registerSpot", () => {
 
   it("omits absent optional fields rather than emitting undefined", () => {
     const out = registerSpot([], "#000000", "Black");
-    expect("pantone" in out[0]!).toBe(false);
-    expect("lab" in out[0]!).toBe(false);
-    expect("type" in out[0]!).toBe(false);
+    expect(out[0]).not.toHaveProperty("pantone");
+    expect(out[0]).not.toHaveProperty("lab");
+    expect(out[0]).not.toHaveProperty("type");
   });
 
   it("does not mutate the input array", () => {
