@@ -31,6 +31,12 @@ export {
   type TrapEditorPanelProps,
   type TrapEditorValue,
 } from "./components/TrapEditorPanel";
+export {
+  ImposePanel,
+  type ImposePanelPreset,
+  type ImposePanelProps,
+  type ImposePanelValue,
+} from "./components/ImposePanel";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   SwatchesPicker,

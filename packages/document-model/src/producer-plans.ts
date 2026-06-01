@@ -81,4 +81,20 @@ export type ImposeTemplate = {
   rows: number;
   cols: number;
   pageMapping?: "sequential" | "repeat";
+  /** Uniform inter-cell spacing in millimeters (converted to points
+   *  at the wire boundary). Defaults to 0 when omitted. */
+  gutterMm?: number;
+  /** Uniform sheet-edge margin in millimeters reserved for marks /
+   *  bleed handling, projected onto compile-pdf's `marks_zone` at
+   *  submission. Defaults to 0 when omitted. */
+  marginMm?: number;
+  /** Request four-color registration targets in the margin area.
+   *  Plumbs through to compile-pdf's `ImposePlan.registration_marks`
+   *  (Wave 1 PR-14). Engine rendering is a follow-up; the toggle
+   *  round-trips through the policy until then. */
+  registrationMarks?: boolean;
+  /** Request crop marks at per-cell trim corners — plumbs through
+   *  to compile-pdf's `ImposePlan.crop_marks` with the same
+   *  plumb-only semantics. */
+  cropMarks?: boolean;
 };

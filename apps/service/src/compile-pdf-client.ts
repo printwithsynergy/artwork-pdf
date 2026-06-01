@@ -105,6 +105,23 @@ export type ImposeTemplate = {
   cols: number;
   /** "sequential" maps source page N → cell N; "repeat" reuses page 0. */
   pageMapping?: "sequential" | "repeat";
+  /** Uniform inter-cell spacing in millimeters. Converted to points
+   *  at submission. Defaults to 0 (cells touch). */
+  gutterMm?: number;
+  /** Uniform sheet-edge margin in millimeters reserved for marks and
+   *  bleed handling. Converted to points + projected onto the
+   *  server's `marks_zone` (top/right/bottom/left) at submission.
+   *  Defaults to 0. */
+  marginMm?: number;
+  /** When true, request four-color registration targets in the
+   *  reserved margin area. Wired to compile-pdf's
+   *  `ImposePlan.registration_marks` (Wave 1 PR-14); engine rendering
+   *  lands in a follow-up. */
+  registrationMarks?: boolean;
+  /** When true, request crop marks at per-cell trim corners. Wired
+   *  to compile-pdf's `ImposePlan.crop_marks`; same plumb-only
+   *  semantics as `registrationMarks`. */
+  cropMarks?: boolean;
 };
 
 export type RewritePlan = {
