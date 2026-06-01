@@ -20,7 +20,9 @@ import { type DielineTemplate, templateToInitialState } from "../lib/dieline-tem
 import type { EditorConfig } from "../lib/editor-config";
 import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
+import { HistoryPanel } from "./HistoryPanel";
 import { LayersPanel } from "./LayersPanel";
+import { isPanelVisible } from "../lib/editor-config";
 import { MobileToolDrawer } from "./MobileToolDrawer";
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -457,25 +459,45 @@ export function EditorCanvas({
 
   // ── history helpers ─────────────────────────────────────────────────────────
 
+  // Maximum snapshots kept in the undo stack. Prevents unbounded
+  // memory growth in long-running editor sessions; X2's HistoryPanel
+  // (`packages/editor-app/src/components/HistoryPanel.tsx`) reads the
+  // capped stack so the rendered row count stays bounded too.
+  const HISTORY_MAX = 100;
+
   function commit(next: CanvasObj[]) {
-    const newHist = history.slice(0, historyIdx + 1).concat([next]);
-    setHistory(newHist);
-    setHistoryIdx(newHist.length - 1);
+    const truncated = history.slice(0, historyIdx + 1).concat([next]);
+    // Drop oldest entries when over the cap. The cursor lands on the
+    // last entry (newest) because we just committed it.
+    const capped =
+      truncated.length > HISTORY_MAX
+        ? truncated.slice(truncated.length - HISTORY_MAX)
+        : truncated;
+    setHistory(capped);
+    setHistoryIdx(capped.length - 1);
     setObjects(next);
   }
 
+  function seekHistory(idx: number) {
+    const clamped = Math.max(0, Math.min(history.length - 1, idx));
+    const snapshot = history[clamped] ?? [];
+    setHistoryIdx(clamped);
+    setObjects(snapshot);
+    // Preserve selection only if the selected object still exists in
+    // the target snapshot — otherwise the selection points at a
+    // deleted id (e.g. undoing an "add"). Single consistent rule for
+    // all three history-navigation paths (seek / undo / redo).
+    if (selectedId && !snapshot.some((o) => o.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }
+
   function undo() {
-    const idx = Math.max(0, historyIdx - 1);
-    setHistoryIdx(idx);
-    setObjects(history[idx] ?? []);
-    setSelectedId(null);
+    seekHistory(historyIdx - 1);
   }
 
   function redo() {
-    const idx = Math.min(history.length - 1, historyIdx + 1);
-    setHistoryIdx(idx);
-    setObjects(history[idx] ?? []);
-    setSelectedId(null);
+    seekHistory(historyIdx + 1);
   }
 
   // ── keyboard shortcuts ──────────────────────────────────────────────────────
@@ -1224,6 +1246,15 @@ export function EditorCanvas({
             </div>
           )}
         </div>
+
+        {/* ── right rail: history scrubber (X2) ── */}
+        {!isMobile && isPanelVisible(config, "history") && (
+          <HistoryPanel
+            cursor={historyIdx}
+            objectCounts={history.map((snap) => snap.length)}
+            onSelect={seekHistory}
+          />
+        )}
       </div>
 
       {/* ── selected properties footer ── */}

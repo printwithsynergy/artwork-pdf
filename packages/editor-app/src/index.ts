@@ -18,6 +18,7 @@ export { EditorApp, type EditorAppProps } from "./components/EditorApp";
 export type { CanvasObj } from "./components/EditorCanvas";
 export { TopBar, ArtworkPdfLogo, type TopBarProps, type TopBarButton } from "./components/TopBar";
 export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/MobileToolDrawer";
+export { HistoryPanel, type HistoryPanelProps } from "./components/HistoryPanel";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   JobSetupPanel,
