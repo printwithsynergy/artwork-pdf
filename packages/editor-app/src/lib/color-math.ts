@@ -81,9 +81,7 @@ export function parseHex(hex: string): [number, number, number] | null {
  *
  * @public
  */
-export function hexToCmyk(
-  hex: string,
-): { c: number; m: number; y: number; k: number } | null {
+export function hexToCmyk(hex: string): { c: number; m: number; y: number; k: number } | null {
   const rgb = parseHex(hex);
   if (rgb === null) return null;
   return rgbToCmyk(rgb[0], rgb[1], rgb[2]);

@@ -43,10 +43,7 @@ type StageLike = {
  *
  * @public
  */
-export function rasterizeStage(
-  stage: StageLike,
-  opts: { pixelRatio?: number } = {},
-): ImageData {
+export function rasterizeStage(stage: StageLike, opts: { pixelRatio?: number } = {}): ImageData {
   const cfg: { pixelRatio?: number } = {};
   if (opts.pixelRatio !== undefined) cfg.pixelRatio = opts.pixelRatio;
   const canvas = stage.toCanvas(cfg);
