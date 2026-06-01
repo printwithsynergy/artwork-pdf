@@ -54,8 +54,10 @@ export type DistortionParams = {
  * - `Z` / `z` — close-path, no parameters.
  *
  * Identity case (`factorX === factorY === 1`) returns the input
- * unchanged. Unrecognized command letters are passed through as-is
- * — fail-open against SVG-path dialect quirks.
+ * unchanged. Only the standard SVG path-data alphabet
+ * (`M L H V C S Q T A Z` and their lowercase forms) is recognized;
+ * any other letters are stripped at tokenization time, so callers
+ * with non-standard extensions must normalize before calling.
  */
 export function applyFlexoDistortion(pathData: string, params: DistortionParams): string {
   if (params.factorX === 1 && params.factorY === 1) return pathData;
