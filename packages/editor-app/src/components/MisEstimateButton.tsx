@@ -18,6 +18,7 @@
  * @public
  */
 import { useEffect, useRef, useState } from "react";
+import type { PrintProcess } from "./JobSetupPanel";
 
 /**
  * Manifest payload — the shape the synergy `mis.estimate` node
@@ -31,9 +32,10 @@ export type MisEstimateManifest = {
   /** Stable identifier the host uses to correlate this submission
    *  with the underlying document (e.g. a CMS row id). */
   documentId: string;
-  /** Matches `PrintContext.process` from the document-model so the
-   *  MIS can route to the right press cell. */
-  processClass: "offset" | "flexo" | "gravure" | "digital" | "screen";
+  /** Matches `PrintContext.process` from the document-model (re-using
+   *  `JobSetupPanel`'s `PrintProcess` to keep the two in lockstep) so
+   *  the MIS can route to the right press cell. */
+  processClass: PrintProcess;
   /** Ordered ink list at submission time — typically the live ink
    *  list from PR-5's InksPanel. Names mirror the wire shape, not
    *  the human display string. */
