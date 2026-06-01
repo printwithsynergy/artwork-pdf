@@ -1,7 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// Dieline-template bundle + helpers for seeding the editor canvas.
+//
+// The shipped JSON library (`data/dielines.json`) gets loaded eagerly
+// so server components (Next.js RSC, Astro frontmatter) can pick a
+// template and produce initial Page state without touching the
+// browser-only editor bundle.
+
 import type { CanvasObj } from "../components/EditorCanvas";
 import library from "../data/dielines.json";
 
+/**
+ * One packaging structure — geometry + metadata for a known dieline
+ * (pouch, bottle wrap, carton, etc.).
+ *
+ * `dimensions` is the *trim* size in mm; `bleedMm` is the per-side
+ * bleed extension; `trimBox` is the trim rect in mm relative to the
+ * full bleed-included page. `previewSvg` is an inline string suitable
+ * for thumbnail rendering in the template-picker UI.
+ *
+ * Distinct from `@artworkpdf/document-model`'s `DielineTemplate`: the
+ * shape here is a published, self-contained type so the editor
+ * package doesn't force the document-model dep on hosts.
+ *
+ * @public
+ */
 export type DielineTemplate = {
   id: string;
   name: string;
@@ -47,6 +70,15 @@ type DielineLibrary = {
 
 const LIBRARY = library as DielineLibrary;
 
+/**
+ * All bundled dieline templates, in library declaration order.
+ *
+ * Mirrors the shape of `data/dielines.json`. Hosts that want a
+ * filtered or ordered subset should derive from this array rather
+ * than reloading the JSON file.
+ *
+ * @public
+ */
 export const TEMPLATES: DielineTemplate[] = LIBRARY.templates;
 
 /**
@@ -57,6 +89,13 @@ export const TEMPLATES: DielineTemplate[] = LIBRARY.templates;
  */
 export const TEMPLATE_SETS: TemplateSet[] = LIBRARY.templateSets ?? [];
 
+/**
+ * Return the library's default template (`isDefault: true`), falling
+ * back to the first entry. Throws if the library is empty — that
+ * would indicate a packaging defect, not a runtime condition.
+ *
+ * @public
+ */
 export function getDefaultTemplate(): DielineTemplate {
   const flagged = TEMPLATES.find((t) => t.isDefault);
   if (flagged) return flagged;
@@ -65,6 +104,12 @@ export function getDefaultTemplate(): DielineTemplate {
   return first;
 }
 
+/**
+ * Lookup by template id. Returns `undefined` (not throws) for
+ * unknown or missing ids so callers can fall back to a default.
+ *
+ * @public
+ */
 export function getTemplateById(id: string | undefined): DielineTemplate | undefined {
   if (!id) return undefined;
   return TEMPLATES.find((t) => t.id === id);
@@ -156,6 +201,22 @@ export function templatesToPages(
   return entries.map(({ template, name }) => templateToPage(template, bleedMmOverride, name));
 }
 
+/**
+ * Build the initial canvas state for a single template — the dieline
+ * trim rect (locked, non-interactive) plus the page size including
+ * bleed on all sides.
+ *
+ * Pass `bleedMmOverride` to use a host-supplied bleed instead of the
+ * template's bundled value (e.g. when the user picks a custom bleed
+ * in the URL or UI). Returned coordinates are in PDF points
+ * (1 mm = 2.83465 pt).
+ *
+ * Use this for single-page seeds; for multi-page documents use
+ * {@link templateToPage} or {@link templatesToPages} which wrap the
+ * result in a {@link Page}.
+ *
+ * @public
+ */
 export function templateToInitialState(
   template: DielineTemplate,
   bleedMmOverride?: number,
