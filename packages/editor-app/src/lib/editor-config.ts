@@ -20,6 +20,7 @@ export type PaletteId =
   | "layers"
   | "preflight"
   | "dieline-library"
+  | "dieline-parameters"
   | "swatches"
   | "graphic-styles"
   | "history"
@@ -97,6 +98,13 @@ export interface EditorConfig {
   /** F1 plumb — separation-aware UI surface. UI ships in Wave 1+;
    *  flag prepares the surface so hosts can opt out preemptively. */
   enable_separations: boolean;
+  /** S1 — parametric dieline parameter panel. When enabled, hosts can
+   *  surface a width/height/depth/bleed editor on top of a parametric
+   *  dieline template (CF2 or codex-pdf carton macro); the panel
+   *  emits new parameters via `onChange` and the host wires the
+   *  regen step. Disable for hosts that only ship the bundled
+   *  static library. */
+  enable_dieline_parameters: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -196,6 +204,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_banner: true,
   enable_palettes: true,
   enable_separations: true,
+  enable_dieline_parameters: true,
   // Job setup
   enable_print_context: true,
   // Canvas
