@@ -19,8 +19,8 @@ cycles tight; CI/typecheck/test must stay green at every step.
 | 2 | Wave 1 PR-2 | `apps/service/src/` | Hono handlers, routes, pg-boss worker, `CompilePdfClient`, DB client, schema | **merged** |
 | 3 | Wave 1 PR-3 | `packages/document-model/src/` | DocumentModel TS schema, JSON-Schema emitter | **merged** |
 | 4 | Wave 1 PR-4 | `packages/editor-app/src/` | `EditorApp`, `TopBar`, `MobileToolDrawer`, `EditorConfig`, lens plugin pack, dieline/bleed helpers | **merged** |
-| 5 | Wave 1 PR-5 | `packages/compose/src/` | compose-producer renderer (DocumentV3 → PDF via pdf-lib) | **in flight** |
-| 6 | Wave 1 PR-6 | `packages/dieline-parser/src/` | CF2 / DDES / ARD parsers | queued |
+| 5 | Wave 1 PR-5 | `packages/compose/src/` | compose-producer renderer (DocumentV3 → PDF via pdf-lib) | **merged** |
+| 6 | Wave 1 PR-6 | `packages/dieline-parser/src/` | CF2 / DDES / ARD parsers | **in flight** |
 | 7 | Wave 1 PR-7 | `packages/flexo-distortion/src/` | flexo distortion compensation math | queued |
 | 8 | Wave 1 PR-8 | `packages/synergy-client/src/` | typed HTTP client for `@synergy/client` | queued |
 | 9 | Wave 1 PR-9 | `apps/editor/src/` | Next.js host, `MarketingPage`, `EditorCanvas`, route handlers | queued |

@@ -1,13 +1,42 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// `@artworkpdf/dieline-parser` — structural dieline import for the
+// three legacy ASCII formats the packaging industry still ships:
+// CF2 (ISO 12182:2012), DDES (Barco Die Design Electronic Standard 2),
+// and ARD (ArtiosCAD ASCII export).
+//
+// All three parsers return the same normalized {@link Dieline} shape
+// so downstream consumers (editor preview, compose geometry, lens
+// overlay) can treat the source format as an implementation detail.
 
+/** The three supported source formats. */
 export type DielineFormat = "CF2" | "DDES" | "ARD";
 
+/**
+ * One path on the dieline, with its structural role.
+ *
+ * `type` discriminates how the path renders / what the press will
+ * do with it: `cut` (knife), `crease` (score for folding), `perf`
+ * (perforation), `bleed` (extension boundary). `d` is an SVG path
+ * data string suitable for `<path d="...">` — the parsers emit
+ * `M`/`L`/`A` commands in dieline-native coordinates (mm,
+ * Y-down).
+ */
 export type DielinePath = {
   id: string;
   type: "cut" | "crease" | "perf" | "bleed";
   d: string;
 };
 
+/**
+ * A parsed dieline.
+ *
+ * `widthMm`/`heightMm` are the bounding-box dimensions derived from
+ * the union of all path coordinates (not declared in the source —
+ * the formats vary on whether they declare dimensions, so we compute
+ * for consistency). `paths` is grouped by `type`; empty groups are
+ * dropped so downstream code can iterate without checking lengths.
+ */
 export type Dieline = {
   format: DielineFormat;
   widthMm: number;
@@ -94,7 +123,23 @@ function emptySegments(): Map<PathType, string[]> {
 }
 
 // ── CF2 parser ────────────────────────────────────────────────────────────────
-// ISO 12182:2012 Common File Format 2 — ASCII variant
+
+/**
+ * Parse an ISO 12182:2012 CF2 ASCII dieline into the normalized
+ * {@link Dieline} shape.
+ *
+ * Recognized forms:
+ * - `LAYER N [TYPE N]` / `LAYERBEGIN ...` — switches the active path
+ *   type (1 = crease, 2 = perf, 3 = bleed, anything else = cut).
+ * - `TYPE N` — same as above without a layer wrapper.
+ * - `LINE x1 y1 x2 y2`
+ * - `ARC cx cy r startDeg endDeg`
+ * - Bare `<typeCode> x1 y1 x2 y2` lines (some CF2 dialects)
+ *
+ * `#` and `//` start line comments. Unrecognized lines are ignored
+ * (CF2 has dialect variants; failing closed makes round-tripping
+ * unfamiliar files easier).
+ */
 export function parseCF2(content: string): Dieline {
   const lines = content.split(/\r?\n/);
   const segments = emptySegments();
@@ -156,7 +201,20 @@ export function parseCF2(content: string): Dieline {
 }
 
 // ── DDES2 parser ──────────────────────────────────────────────────────────────
-// Barco Die Design Electronic Standard 2
+
+/**
+ * Parse a Barco DDES2 (Die Design Electronic Standard 2) ASCII
+ * dieline.
+ *
+ * Recognized forms:
+ * - `LINE <typeCode> x1 y1 x2 y2`
+ * - `ARC <typeCode> cx cy r startDeg endDeg`
+ * - Bare `<typeCode> x1 y1 x2 y2`
+ *
+ * `DDES`, `UNIT`, and `//`-prefixed header lines are skipped.
+ * Type codes share the same {@link DielinePath} mapping as CF2:
+ * 1 = crease, 2 = perf, 3 = bleed, else cut.
+ */
 export function parseDDES(content: string): Dieline {
   const lines = content.split(/\r?\n/);
   const segments = emptySegments();
@@ -201,7 +259,24 @@ export function parseDDES(content: string): Dieline {
 }
 
 // ── ARD parser ────────────────────────────────────────────────────────────────
-// ArtiosCAD ASCII export — line sections and arc sections
+
+/**
+ * Parse an ArtiosCAD ARD ASCII export into the normalized
+ * {@link Dieline} shape.
+ *
+ * Section-based format. The parser tracks two modes:
+ *
+ * - Inside a `LINES` / `LINES:` section, each line is
+ *   `<typeCode> x1 y1 x2 y2`.
+ * - Inside an `ARCS` / `ARCS:` section, each line is
+ *   `<typeCode> cx cy r startDeg endDeg`.
+ * - Section keywords `END`, `BOX`, `UNITS` clear both modes.
+ * - Outside sections, a bare `<typeCode> x1 y1 x2 y2` is treated as
+ *   a line (some ARD dialects emit lines without a wrapping section).
+ *
+ * Type codes share the same mapping as CF2 / DDES (1 = crease,
+ * 2 = perf, 3 = bleed, else cut).
+ */
 export function parseARD(content: string): Dieline {
   const lines = content.split(/\r?\n/);
   const segments = emptySegments();
