@@ -8,6 +8,30 @@ export type Separation = {
   colorSpace: ColorSpace;
   pantone?: string;
   isTechnical?: boolean;
+  // F1 — additive, backward compatible.
+  // Spot *identity* resolution stays in codex-pdf (resolve_spot_swatch_color);
+  // these fields let a job override or annotate the channel.
+  lab?: { L: number; a: number; b: number };
+  opacity?: number;
+  type?: "ink" | "varnish" | "foil" | "emboss" | "white";
+  overprint?: boolean;
+  knockout?: boolean;
+  order?: number;
+};
+
+// F2 — print process / substrate / market context applied at the job level.
+// Optional; absent means "use defaults / no constraint".
+export type PrintContext = {
+  process: "offset" | "flexo" | "gravure" | "digital" | "screen";
+  substrate: {
+    id: string;
+    color: string;
+    opacity: number;
+    finish: "matte" | "gloss" | "satin" | "uncoated";
+  };
+  targetMarkets?: string[];
+  colorProfile?: string;
+  tacLimit?: number;
 };
 
 // NEW: Gradient types
