@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 
 /**
  * Wave 2 C1 — inks palette.
@@ -37,6 +37,12 @@ export type Ink = {
  * Host-supplied adapter. Returns the inks for `pdfB64` (typically by
  * proxying to `CompilePdfClient.separationsList`). Rejects on
  * transport errors; the panel renders the error inline.
+ *
+ * **Identity matters.** The panel re-fetches whenever the `loader`
+ * reference changes (the standard React-effect dependency rule);
+ * hosts that build the adapter inline should memoize it with
+ * `useCallback` so an unrelated parent re-render doesn't trigger a
+ * spurious `POST /v1/separations/list` round-trip.
  *
  * @public
  */
@@ -155,9 +161,9 @@ export function InksPanel({ pdfB64, loader, onSelect }: InksPanelProps) {
 /** Best-effort swatch chip. We don't have a Lab→sRGB pipeline in the
  *  editor (codex-pdf owns colour conversion); show a process-color
  *  hint for the common CMYK names and a neutral chip otherwise. */
-function swatchStyleFor(ink: Ink): React.CSSProperties {
+function swatchStyleFor(ink: Ink): CSSProperties {
   const lower = ink.name.toLowerCase();
-  const base: React.CSSProperties = {
+  const base: CSSProperties = {
     width: "0.85rem",
     height: "0.85rem",
     borderRadius: "0.15rem",
