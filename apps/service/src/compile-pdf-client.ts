@@ -11,13 +11,9 @@
 // This file is the integration seam. Tests stub the fetcher via the
 // `fetch` option so we don't need a running compile-pdf instance.
 
-import type {
-  DocumentModel,
-  PreflightReport,
-} from "@artworkpdf/document-model";
+import type { DocumentModel, PreflightReport } from "@artworkpdf/document-model";
 
-const COMPILE_PDF_URL =
-  process.env.COMPILE_PDF_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+const COMPILE_PDF_URL = process.env.COMPILE_PDF_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
 
 export type CompilePdfClientOptions = {
   /** Override the base URL (default: `COMPILE_PDF_URL` env). */

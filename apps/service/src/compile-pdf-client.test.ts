@@ -56,10 +56,7 @@ describe("CompilePdfClient", () => {
 
     await client.marks({ trim: true, bleed: true }, DUMMY_PDF);
     await client.trap({ widthMm: 0.1 }, DUMMY_PDF);
-    await client.impose(
-      { sheetWidth: 1000, sheetHeight: 1500, rows: 2, cols: 2 },
-      DUMMY_PDF,
-    );
+    await client.impose({ sheetWidth: 1000, sheetHeight: 1500, rows: 2, cols: 2 }, DUMMY_PDF);
     await client.rewrite({ metadata: { Title: "x" } }, DUMMY_PDF);
 
     expect(seen.map((s) => s.url)).toEqual([

@@ -74,9 +74,6 @@ importers:
       '@artworkpdf/document-model':
         specifier: workspace:*
         version: link:../../packages/document-model
-      '@artworkpdf/pdf-writer':
-        specifier: workspace:*
-        version: link:../../packages/pdf-writer
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.14(hono@4.12.22)
