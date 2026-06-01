@@ -109,20 +109,19 @@ export type SubstrateClass = "coated" | "uncoated" | "newsprint" | "synthetic";
  *
  * Mirrors lint-pdf's `ConditionBlock.when` vocabulary (Wave 2 PR-C)
  * so the same rule set evaluated client-side and server-side produces
- * identical findings. Matchers are *additive* — when neither is set
- * the rule applies universally (identity behaviour with `PreflightRule`).
+ * identical findings — both matchers are arrays here for parity with
+ * lint-pdf's `list[LabelClass] | None` Python wire shape. Callers
+ * passing a single value wrap it in a one-element array; consumers
+ * never branch on scalar-vs-array.
  *
  * Empty-array contract: `[]` means "no match possible" — the rule is
- * effectively disabled. `undefined`/absent means "match all". Callers
- * that want "any of {a, b}" must pass the array.
+ * effectively disabled. `undefined`/absent means "match all".
  */
 export type ProcessAwareRule = PreflightRule & {
-  /** When set, rule applies iff the job's process matches one of the
-   *  listed values. Single value is sugar for a one-element array. */
-  process?: LabelClass | LabelClass[];
-  /** When set, rule applies iff the job's substrate matches one of
-   *  the listed values. Same semantics as `process`. */
-  substrate?: SubstrateClass | SubstrateClass[];
+  /** When set, rule applies iff the job's process is in the list. */
+  process?: LabelClass[];
+  /** When set, rule applies iff the job's substrate is in the list. */
+  substrate?: SubstrateClass[];
 };
 
 /**

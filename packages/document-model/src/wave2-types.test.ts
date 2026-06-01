@@ -162,18 +162,30 @@ describe("SubstrateClass + ProcessAwareRule (P1 / P3)", () => {
     expect([coated, uncoated, newsprint, synthetic]).toHaveLength(4);
   });
 
-  it("ProcessAwareRule extends PreflightRule with optional process / substrate matchers", () => {
+  it("ProcessAwareRule extends PreflightRule with optional process / substrate matchers (array-only)", () => {
     const r: ProcessAwareRule = {
       checkName: "tac_substrate_aware",
       enabled: true,
       severity: "warn",
       clientSide: false,
       params: { maxPercent: 240 },
-      process: "flexo",
+      process: ["flexo"],
       substrate: ["newsprint", "uncoated"],
     };
-    expect(r.process).toBe("flexo");
-    expect(Array.isArray(r.substrate) && r.substrate).toContain("newsprint");
+    expect(r.process).toEqual(["flexo"]);
+    expect(r.substrate).toContain("newsprint");
+  });
+
+  it("empty matcher array means 'never apply'; absent means 'match all'", () => {
+    const disabled: ProcessAwareRule = {
+      checkName: "never",
+      enabled: true,
+      severity: "warn",
+      clientSide: false,
+      params: {},
+      process: [],
+    };
+    expect(disabled.process).toEqual([]);
   });
 
   it("matchers are optional — falls back to universal PreflightRule shape", () => {
