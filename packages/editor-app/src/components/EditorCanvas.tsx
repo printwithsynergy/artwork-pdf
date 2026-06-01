@@ -265,11 +265,18 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
     // imported CF2/DDES/ARD dieline paths (cut/crease/perf/bleed lines
     // emitted by `dielineToPage`); the locked flag keeps users from
     // dragging the structural reference geometry.
+    //
+    // Stroke is NOT overridden when selected — dieline paths encode
+    // cut/crease/perf/bleed semantics via stroke color (per
+    // DIELINE_PATH_STROKES); masking that with BRAND on selection
+    // would hide the structural information. In practice the locked
+    // flag means these can't be selected anyway, but keep the
+    // semantic stroke in case a future feature unlocks them.
     return (
       <Path
         {...sharedProps}
         data={obj.pathData}
-        stroke={selected ? BRAND : obj.stroke}
+        stroke={obj.stroke}
         strokeWidth={obj.strokeWidth}
         fill={obj.fill === "transparent" ? "" : obj.fill}
       />

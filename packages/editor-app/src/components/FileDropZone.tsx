@@ -32,19 +32,18 @@ export function FileDropZone({ onFile, onDieline }: Props) {
   const [parseError, setParseError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const dielineSupported = onDieline !== undefined;
+
   const handle = useCallback(
     async (file: File) => {
       setParseError(null);
-      // Try the dieline-parser path first — these formats are
-      // text-based ASCII; we read as text and route to the matching
-      // parser. PDF / image still flows through the legacy `onFile`
-      // → preflight path.
-      const dielineParser = dielineParserFor(file.name);
-      if (dielineParser) {
-        if (!onDieline) {
-          setParseError("Dieline files aren't supported by this editor instance.");
-          return;
-        }
+      // Try the dieline-parser path first when the host supports it
+      // (onDieline provided). PDF / image still flows through the
+      // legacy `onFile` → preflight path. When dielines aren't
+      // supported, .cf2 / .ddes / .ard files fall through to the
+      // PDF/image check below and are silently rejected.
+      const dielineParser = dielineSupported ? dielineParserFor(file.name) : null;
+      if (dielineParser && onDieline) {
         try {
           const text = await file.text();
           const dieline = dielineParser(text);
@@ -68,7 +67,7 @@ export function FileDropZone({ onFile, onDieline }: Props) {
         onFile(file);
       }
     },
-    [onFile, onDieline],
+    [onFile, onDieline, dielineSupported],
   );
 
   return (
@@ -103,7 +102,7 @@ export function FileDropZone({ onFile, onDieline }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.cf2,.ddes,.ard,image/*"
+        accept={dielineSupported ? ".pdf,.cf2,.ddes,.ard,image/*" : ".pdf,image/*"}
         style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -119,10 +118,12 @@ export function FileDropZone({ onFile, onDieline }: Props) {
           fontSize: "1rem",
         }}
       >
-        Drop artwork or dieline file here
+        {dielineSupported ? "Drop artwork or dieline file here" : "Drop artwork file here"}
       </span>
       <span style={{ display: "block", color: "#666", fontSize: "0.82rem" }}>
-        PDF / raster image (runs preflight) — or CF2 / DDES / ARD (seeds the canvas directly)
+        {dielineSupported
+          ? "PDF / raster image (runs preflight) — or CF2 / DDES / ARD (seeds the canvas directly)"
+          : "PDF or raster image — preflight checks run before the canvas opens"}
       </span>
       {parseError && (
         <span
