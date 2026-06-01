@@ -22,7 +22,8 @@ import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
 import { LayersPanel } from "./LayersPanel";
-import { isPanelVisible } from "../lib/editor-config";
+import { TacOverlay } from "./TacOverlay";
+import { isPanelVisible, showFeature } from "../lib/editor-config";
 import {
   type EditorSeparation,
   findSpotByColor,
@@ -1333,6 +1334,16 @@ export function EditorCanvas({
               )}
             </Layer>
           </Stage>
+
+          {/* C4 live total-area-coverage heatmap + readout */}
+          {showFeature(config, "total_ink_coverage_live") && (
+            <TacOverlay
+              stage={stageRef.current}
+              width={containerSize.width}
+              height={containerSize.height}
+              trigger={objects}
+            />
+          )}
 
           {/* empty state hint */}
           {objects.length === 0 && (

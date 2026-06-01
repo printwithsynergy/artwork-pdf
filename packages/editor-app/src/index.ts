@@ -19,6 +19,7 @@ export type { CanvasObj } from "./components/EditorCanvas";
 export { TopBar, ArtworkPdfLogo, type TopBarProps, type TopBarButton } from "./components/TopBar";
 export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/MobileToolDrawer";
 export { HistoryPanel, type HistoryPanelProps } from "./components/HistoryPanel";
+export { TacOverlay, type TacOverlayProps } from "./components/TacOverlay";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   SwatchesPicker,
