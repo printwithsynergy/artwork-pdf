@@ -3,6 +3,26 @@ import { CompilePdfClient } from "./compile-pdf-client.js";
 import { getBoss } from "./db/boss.js";
 import { makeRenderJob } from "./handlers/render.js";
 
+/**
+ * Boot the artwork-pdf pg-boss worker.
+ *
+ * Constructs a single shared {@link CompilePdfClient} and registers
+ * the same render handler against three queues:
+ *
+ * - `artwork.render` — compose a `DocumentModel` to PDF/X-4
+ * - `artwork.thumbnail` — rasterize a preview
+ * - `artwork.preview-separations` — emit per-separation PNGs
+ *
+ * All three currently route through compile-pdf's `compose` producer;
+ * the queue split exists so the synergy engine can prioritize render
+ * vs. thumbnail batches independently and so future producers
+ * (thumbnail-specific, separations-specific) can attach without a
+ * queue migration.
+ *
+ * Resolves with no-op (warning logged) when `DATABASE_URL` is unset —
+ * apps/service can boot HTTP-only in environments without a database
+ * for `/healthz` and synergy-node descriptor checks.
+ */
 export async function startWorker(): Promise<void> {
   const boss = await getBoss();
   if (!boss) {

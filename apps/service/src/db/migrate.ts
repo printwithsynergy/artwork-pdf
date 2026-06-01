@@ -2,6 +2,22 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "./client.js";
 
+/**
+ * Idempotent boot-time schema bootstrap.
+ *
+ * Runs `CREATE TABLE IF NOT EXISTS` for the three application tables
+ * (`jobs`, `preflight_rules`, `assets`). Intentionally not using a
+ * proper migration framework — apps/service owns a tiny, append-only
+ * schema and the synergy engine treats artworkPDF as ephemeral
+ * (state-of-record lives in platform), so the "create on boot if
+ * missing" model is enough. Re-running is safe.
+ *
+ * Resolves with no-op when `DATABASE_URL` is unset.
+ *
+ * pg-boss owns its own schema (`pgboss` by default; see
+ * {@link getBoss}) and runs its own migrations internally — those
+ * tables are not managed here.
+ */
 export async function runMigrations(): Promise<void> {
   const db = getDb();
   if (!db) return;

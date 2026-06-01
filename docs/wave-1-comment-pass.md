@@ -15,8 +15,8 @@ cycles tight; CI/typecheck/test must stay green at every step.
 
 | # | PR | Area | Scope | Status |
 |---|----|------|-------|--------|
-| 1 | Wave 1 PR-1 | _meta_ | `CLAUDE.md` policy + this plan doc | **in flight** |
-| 2 | Wave 1 PR-2 | `apps/service/src/` | Hono handlers, routes, pg-boss worker, `CompilePdfClient`, DB client, schema | queued |
+| 1 | Wave 1 PR-1 | _meta_ | `CLAUDE.md` policy + this plan doc | **merged** |
+| 2 | Wave 1 PR-2 | `apps/service/src/` | Hono handlers, routes, pg-boss worker, `CompilePdfClient`, DB client, schema | **in flight** |
 | 3 | Wave 1 PR-3 | `packages/document-model/src/` | DocumentModel TS schema, JSON-Schema emitter | queued |
 | 4 | Wave 1 PR-4 | `packages/editor-app/src/` | `EditorApp`, `TopBar`, `MobileToolDrawer`, `EditorConfig`, lens plugin pack, dieline/bleed helpers | queued |
 | 5 | Wave 1 PR-5 | `packages/compose/src/` | compose-producer renderer (DocumentV3 → PDF via pdf-lib) | queued |

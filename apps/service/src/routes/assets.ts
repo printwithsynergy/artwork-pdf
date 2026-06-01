@@ -6,6 +6,26 @@ import { Hono } from "hono";
 import { getDb } from "../db/client.js";
 import { assets } from "../db/schema.js";
 
+/**
+ * `/assets` — upload + serve asset bytes referenced by document models.
+ *
+ * Two endpoints:
+ *
+ * - `POST /assets` — multipart form upload, field `file`. Writes
+ *   bytes to disk under `ASSET_DIR` (default `./uploads`) at
+ *   `{uuid}.{ext}`, inserts a metadata row, returns
+ *   `201 { id, url: "/assets/:id" }`. Returns `400 { error: "no_file" }`
+ *   if the `file` field is missing or not a `File`.
+ * - `GET /assets/:id` — stream the bytes with the stored MIME type
+ *   and an `inline; filename="<original>"` Content-Disposition. The
+ *   `Cache-Control: public, max-age=31536000, immutable` header is
+ *   intentional: asset IDs are UUIDs allocated at upload time, so
+ *   the bytes-for-a-given-id never change. `404` if the row is
+ *   missing; `503 { error: "no_db" }` when `DATABASE_URL` is unset
+ *   (we *could* still read from disk for `POST`-then-`GET` round-trips
+ *   in a single process, but without the DB row the MIME type is
+ *   unknown — safer to fail loudly).
+ */
 export const assetsRouter = new Hono();
 
 const assetDir = (): string => process.env.ASSET_DIR ?? "./uploads";

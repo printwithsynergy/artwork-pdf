@@ -7,6 +7,34 @@ import { getBoss } from "../db/boss.js";
 import { getDb } from "../db/client.js";
 import { jobs } from "../db/schema.js";
 
+/**
+ * `/jobs` — the render-orchestration HTTP surface.
+ *
+ * Four endpoints make up the job lifecycle:
+ *
+ * - `POST /jobs` — submit a {@link JobSubmitRequest}; returns
+ *   `202 { id, status: "queued" }`. Inserts a `jobs` row and enqueues
+ *   onto the queue matching `output.format`
+ *   (`thumbnail` → `artwork.thumbnail`,
+ *    `preview-separations` → `artwork.preview-separations`,
+ *    else → `artwork.render`).
+ * - `GET /jobs/:id` — poll status. Returns `{ id, status }` or
+ *   `404 { error: "not_found" }`.
+ * - `GET /jobs/:id/events` — SSE stream emitting `status` events
+ *   only when the status *changes* (deduped against `lastStatus`),
+ *   plus heartbeats every `SSE_HEARTBEAT_MS` (default 5000) to keep
+ *   intermediaries from closing the connection. Stream closes on
+ *   terminal status (`done` | `failed`) or client abort.
+ * - `GET /jobs/:id/result` — fetch the job result. `404` if the row
+ *   doesn't exist, `202 { status }` if not yet `done`, else the
+ *   result JSON. For render jobs that's
+ *   `{ format, pdfBase64, filename, cacheKey }`.
+ *
+ * All four degrade gracefully when `DATABASE_URL` is unset —
+ * `POST` returns a synthetic queued response, `GET` calls return
+ * `not_found` / `pending`. This lets `/healthz`-only deployments
+ * boot and pass smoke tests without Postgres.
+ */
 export const jobsRouter = new Hono();
 
 jobsRouter.post("/", async (c) => {
