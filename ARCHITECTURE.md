@@ -9,9 +9,7 @@ It sits on top of two shared PWS packages:
 
 - **`pws/compile-pdf`** (Python / FastAPI) — every PDF → PDF transform
   (compose, marks, trap, impose, rewrite). artwork-pdf calls it over
-  HTTP via `apps/service/src/compile-pdf-client.ts`. The local
-  `pdf-writer` package is being phased out in favor of compile-pdf's
-  forthcoming `/v1/compose/apply` producer.
+  HTTP via `apps/service/src/compile-pdf-client.ts`.
 - **`pws/lens-pdf`** — host-agnostic React PDF viewer used after a
   successful render. artwork-pdf ships two first-party lens plugins
   from `@printwithsynergy/artwork-pdf-editor/lens`: a dieline overlay
@@ -32,8 +30,6 @@ artwork-pdf/
     document-model/    TypeScript document schema; emits a JSON Schema at
                        `dist/schema/document-model.schema.json` for cross-language
                        consumers (compile-pdf).
-    pdf-writer/        [deprecated] pdf-lib + Ghostscript PDF/X-4 composer.
-                       Being replaced by compile-pdf's `compose` producer.
     dieline-parser/    CF2/DDES/ARD structural dieline import
     flexo-distortion/  Flexo distortion compensation
     synergy-client/    Typed HTTP client for @synergy/client
