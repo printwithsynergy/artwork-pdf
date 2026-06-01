@@ -45,10 +45,20 @@ export type ComplianceFinding = {
  * Job-Setup panel) and returns the compliance findings. Rejects on
  * transport errors; the panel surfaces the message inline.
  *
+ * `documentB64` is required — the panel never invokes the loader
+ * without a rendered PDF in hand, so hosts shouldn't have to handle
+ * a `undefined`-input case.
+ *
+ * **Identity matters.** The panel re-fetches whenever the `loader`
+ * reference changes (the standard React-effect dependency rule);
+ * hosts that build the adapter inline should memoize it with
+ * `useCallback` so an unrelated parent re-render doesn't trigger a
+ * spurious `POST /v1/preflight/process` round-trip.
+ *
  * @public
  */
 export type ComplianceLoaderFn = (input: {
-  documentB64?: string;
+  documentB64: string;
   process: string;
   substrate: string;
 }) => Promise<readonly ComplianceFinding[]>;
@@ -153,12 +163,18 @@ export function ComplianceFindingsPanel({
     <div data-testid="compliance-findings-panel" style={{ padding: "0.5rem" }}>
       <h3 style={{ margin: "0 0 0.5rem 0" }}>Compliance ({findings.length})</h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {findings.map((f) => (
-          <li key={`${f.ruleId}-${f.pageIndex ?? "doc"}-${f.objectId ?? ""}`}>
+        {findings.map((f, i) => (
+          // Append the array index so duplicate (ruleId, pageIndex,
+          // objectId) tuples — which the lint-pdf wire format allows
+          // when the same rule fires twice on the same target with
+          // different messages — still get unique React keys.
+          <li key={`${f.ruleId}-${f.pageIndex ?? "doc"}-${f.objectId ?? ""}-${i}`}>
             <button
               type="button"
               onClick={() => onSelect?.(f)}
-              aria-label={`Select finding ${f.ruleId}`}
+              aria-label={`Compliance finding: ${f.message} (${f.ruleId}${
+                f.pageIndex !== undefined ? `, page ${f.pageIndex + 1}` : ""
+              })`}
               style={{
                 display: "flex",
                 alignItems: "baseline",
