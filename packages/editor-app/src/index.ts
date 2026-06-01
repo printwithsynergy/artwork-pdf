@@ -51,6 +51,7 @@ export {
   type TemplateSet,
   TEMPLATES,
   TEMPLATE_SETS,
+  dielineToPage,
   getDefaultTemplate,
   getTemplateById,
   getTemplateSetById,

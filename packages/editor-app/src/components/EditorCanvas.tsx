@@ -9,6 +9,7 @@ import {
   Image as KonvaImage,
   Layer,
   Line,
+  Path,
   Rect,
   Stage,
   Text,
@@ -48,7 +49,7 @@ type ProductionExportRequest = {
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "image";
 
-type ObjType = "rect" | "ellipse" | "text" | "image";
+type ObjType = "rect" | "ellipse" | "text" | "image" | "path";
 
 /**
  * One renderable object on the editor canvas.
@@ -255,6 +256,22 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
         height={obj.height}
         stroke={selected ? BRAND : obj.stroke}
         strokeWidth={selected ? 1 : obj.strokeWidth}
+      />
+    );
+  }
+
+  if (obj.type === "path" && obj.pathData) {
+    // Konva.Path renders the SVG `d` string directly. Used by S2 for
+    // imported CF2/DDES/ARD dieline paths (cut/crease/perf/bleed lines
+    // emitted by `dielineToPage`); the locked flag keeps users from
+    // dragging the structural reference geometry.
+    return (
+      <Path
+        {...sharedProps}
+        data={obj.pathData}
+        stroke={selected ? BRAND : obj.stroke}
+        strokeWidth={obj.strokeWidth}
+        fill={obj.fill === "transparent" ? "" : obj.fill}
       />
     );
   }

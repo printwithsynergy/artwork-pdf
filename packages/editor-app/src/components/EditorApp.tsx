@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
+import type { Dieline } from "@artworkpdf/dieline-parser";
 import { useEffect, useState } from "react";
 import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { usePreflight } from "../hooks/usePreflight";
 import { DEFAULT_BLEED_MM } from "../lib/bleed";
-import type { Page } from "../lib/dieline-template";
+import { dielineToPage, type Page } from "../lib/dieline-template";
 import {
   type EditorConfig,
   type PaletteId,
@@ -194,6 +195,18 @@ export function EditorApp({
     }
   }
 
+  function handleDieline(dieline: Dieline) {
+    // S2 ingress: a parsed CF2 / DDES / ARD dieline skips the PDF
+    // preflight phase (there's nothing to preflight — a dieline file
+    // has no rasters, fonts, or color spaces to validate). Seed the
+    // pages array directly from `dielineToPage` and jump to the
+    // editor.
+    const seeded = dielineToPage(dieline, bleedMm);
+    setPages([seeded]);
+    setCurrentPageIndex(0);
+    setPhase("editor");
+  }
+
   function handleSendToLint() {
     alert("Job queued for lint node analysis.");
   }
@@ -228,7 +241,7 @@ export function EditorApp({
               gap: "1.25rem",
             }}
           >
-            <FileDropZone onFile={handleFile} />
+            <FileDropZone onFile={handleFile} onDieline={handleDieline} />
             {!demo && (
               <a
                 href="/demo"

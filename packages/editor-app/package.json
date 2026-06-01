@@ -24,6 +24,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@artworkpdf/dieline-parser": "workspace:*",
     "pdf-lib": "^1.17.1"
   },
   "peerDependencies": {
