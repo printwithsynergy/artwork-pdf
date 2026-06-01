@@ -119,6 +119,11 @@ export interface EditorConfig {
    *  whether the editor surfaces the "Anchor to panel" affordance —
    *  the wire model already carries `anchorPanelId` regardless. */
   enable_panel_anchored_objects: boolean;
+  /** P3 — compliance findings panel. Surfaces substrate / market /
+   *  regulation findings from lint-pdf's `P3_compliance_v1` profile
+   *  separately from the existing generic preflight panel. Hosts
+   *  that don't run lint-pdf opt out via this flag. */
+  enable_compliance_panel: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -235,6 +240,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_dieline_parameters: true,
   enable_inks_panel: true,
   enable_panel_anchored_objects: true,
+  enable_compliance_panel: true,
   // Job setup
   enable_print_context: true,
   // Canvas
