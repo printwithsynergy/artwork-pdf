@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { CompilePdfClient } from "./compile-pdf-client.js";
 import { getBoss } from "./db/boss.js";
-import { renderJob } from "./handlers/render.js";
+import { makeRenderJob } from "./handlers/render.js";
 
 export async function startWorker(): Promise<void> {
   const boss = await getBoss();
@@ -9,6 +10,7 @@ export async function startWorker(): Promise<void> {
     return;
   }
 
+  const renderJob = makeRenderJob(new CompilePdfClient());
   await boss.work<Record<string, unknown>>("artwork.render", renderJob);
   await boss.work<Record<string, unknown>>("artwork.thumbnail", renderJob);
   await boss.work<Record<string, unknown>>("artwork.preview-separations", renderJob);

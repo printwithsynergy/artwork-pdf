@@ -66,10 +66,7 @@ jobsRouter.get("/:id/events", (c) => {
         await stream.writeSSE({ data: JSON.stringify({ id, status: "pending" }), event: "status" });
         return false;
       }
-      const [row] = await db
-        .select({ status: jobs.status })
-        .from(jobs)
-        .where(eq(jobs.id, id));
+      const [row] = await db.select({ status: jobs.status }).from(jobs).where(eq(jobs.id, id));
       const status = row?.status ?? "pending";
       if (status !== lastStatus) {
         lastStatus = status;

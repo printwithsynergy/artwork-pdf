@@ -21,7 +21,11 @@ preflightRulesRouter.get("/", async (c) => {
 
   const db = getDb();
   if (!db) {
-    return c.json({ rules: DEFAULT_PREFLIGHT_RULES, context: { labelClass, labelType, tenantId }, source: "defaults" });
+    return c.json({
+      rules: DEFAULT_PREFLIGHT_RULES,
+      context: { labelClass, labelType, tenantId },
+      source: "defaults",
+    });
   }
 
   const rows = await db
@@ -36,7 +40,11 @@ preflightRulesRouter.get("/", async (c) => {
     );
 
   if (rows.length === 0) {
-    return c.json({ rules: DEFAULT_PREFLIGHT_RULES, context: { labelClass, labelType, tenantId }, source: "defaults" });
+    return c.json({
+      rules: DEFAULT_PREFLIGHT_RULES,
+      context: { labelClass, labelType, tenantId },
+      source: "defaults",
+    });
   }
 
   const merged: PreflightRule[] = DEFAULT_PREFLIGHT_RULES.map((rule) => {
