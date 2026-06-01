@@ -39,9 +39,15 @@ export type EditorDielinePanel = {
 
 /**
  * Point-in-bbox test for a single panel. Returns `true` when the
- * point falls strictly inside (right + bottom edges are inclusive of
- * the inside, exclusive of neighbouring panels — matches Konva's
- * default hit-target semantics).
+ * point lies within the bbox with all four edges inclusive — so a
+ * point on a seam between two adjacent panels matches both, and
+ * disambiguation is left to {@link findPanelAt}'s declaration-order
+ * first-match.
+ *
+ * Degenerate bboxes (`width <= 0` or `height <= 0`) never match —
+ * upstream dieline parsers occasionally emit collapsed cut/crease
+ * loops with zero-sized boxes, and silently swallowing those keeps
+ * the panel picker quiet on broken templates.
  *
  * @public
  */
@@ -50,6 +56,7 @@ export function isPointInPanel(
   panel: EditorDielinePanel,
 ): boolean {
   const { x, y, width, height } = panel.bbox;
+  if (width <= 0 || height <= 0) return false;
   return point.x >= x && point.x <= x + width && point.y >= y && point.y <= y + height;
 }
 

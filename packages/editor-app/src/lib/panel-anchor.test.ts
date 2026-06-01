@@ -55,8 +55,23 @@ describe("findPanelAt", () => {
     expect(findPanelAt({ x: 150, y: 75 }, panels)?.id).toBe("back");
   });
 
+  it("resolves shared-seam hits to the earlier-declared panel", () => {
+    // x:100 is on the front/back seam; both bboxes match (edges are
+    // inclusive), so declaration order wins → front.
+    expect(findPanelAt({ x: 100, y: 75 }, panels)?.id).toBe("front");
+  });
+
   it("returns undefined when the point falls outside every panel", () => {
     expect(findPanelAt({ x: 500, y: 500 }, panels)).toBeUndefined();
+  });
+
+  it("skips degenerate panels (zero or negative bbox)", () => {
+    const collapsed: EditorDielinePanel = {
+      id: "collapsed",
+      pathData: "",
+      bbox: { x: 50, y: 50, width: 0, height: 0 },
+    };
+    expect(findPanelAt({ x: 50, y: 50 }, [collapsed])).toBeUndefined();
   });
 });
 

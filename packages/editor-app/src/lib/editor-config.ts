@@ -22,6 +22,7 @@ export type PaletteId =
   | "dieline-library"
   | "dieline-parameters"
   | "swatches"
+  | "inks"
   | "graphic-styles"
   | "history"
   | "fold-preview"
@@ -106,6 +107,11 @@ export interface EditorConfig {
    *  regen step. Disable for hosts that only ship the bundled
    *  static library. */
   enable_dieline_parameters: boolean;
+  /** C1 — inks palette. Surfaces the live ink list extracted from the
+   *  most recently rendered PDF, alongside the existing swatches
+   *  palette (which still handles PANTONE search). Hosts can disable
+   *  to avoid the `/v1/separations/list` round-trip on every export. */
+  enable_inks_panel: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -220,6 +226,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_palettes: true,
   enable_separations: true,
   enable_dieline_parameters: true,
+  enable_inks_panel: true,
   enable_panel_anchored_objects: true,
   // Job setup
   enable_print_context: true,
