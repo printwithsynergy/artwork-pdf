@@ -167,6 +167,13 @@ export interface EditorConfig {
    *  manifest and POSTs it to the synergy `mis.estimate` workflow
    *  node. Hosts that don't run a MIS bridge opt out via this flag. */
   enable_mis_estimate: boolean;
+  /** P1 — process-aware preflight. Gating is at the *call site* —
+   *  hosts check this flag before mounting the substrate-class
+   *  dropdown and before forwarding the helper output to lint-pdf's
+   *  `/v1/preflight/process`. `preflightContextOf` itself is
+   *  unconditional (a pure projection), so the flag controls the UI
+   *  surface and the host's outbound wiring, not the helper. */
+  enable_process_preflight: boolean;
   /** V2 — variant matrix UI for variable-data overrides. When
    *  enabled, the editor surfaces a rows-times-columns table of
    *  variants and token keys that writes into `document.variants`.
@@ -252,6 +259,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_3d_fold_preview: true,
   enable_fold_editor: true,
   enable_mis_estimate: true,
+  enable_process_preflight: true,
   enable_variant_matrix: true,
 };
 

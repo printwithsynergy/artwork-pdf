@@ -19,6 +19,19 @@ export type PrintProcess = "offset" | "flexo" | "gravure" | "digital" | "screen"
 export type SubstrateFinish = "matte" | "gloss" | "satin" | "uncoated";
 
 /**
+ * Substrate compositional class — collapses the long tail of named
+ * stocks into the four rule-relevant buckets that lint-pdf's
+ * `substrate_is` matcher (Wave 2 PR-C) operates on. Distinct from
+ * {@link SubstrateFinish}: a `coated` stock can be `gloss` or `matte`;
+ * `newsprint` is always `uncoated`. Mirrors `SubstrateClass` in
+ * `@artworkpdf/document-model/preflight`; duplicated here so this
+ * package stays consumable without the document-model peer dep.
+ *
+ * @public
+ */
+export type SubstrateClass = "coated" | "uncoated" | "newsprint" | "synthetic";
+
+/**
  * Editable shape consumed by {@link JobSetupPanel}. Mirrors
  * `PrintContext` in `@artworkpdf/document-model`; kept structural so
  * this UI package stays consumable by hosts that don't import the
@@ -36,6 +49,15 @@ export type JobSetupValue = {
     color: string;
     opacity: number;
     finish: SubstrateFinish;
+    /**
+     * Rule-relevant substrate class (P1). When set, the value flows
+     * through {@link preflightContextOf} to lint-pdf's
+     * `/v1/preflight/process` `substrate` query parameter, narrowing
+     * the rule set to substrate-aware checks. Optional because legacy
+     * jobs predate the field — hosts that omit it get the
+     * substrate-agnostic ruleset.
+     */
+    class?: SubstrateClass;
   };
   /** ISO 3166-1 alpha-2 codes, e.g. `["US", "CA", "GB"]`. */
   targetMarkets?: string[];
@@ -44,6 +66,43 @@ export type JobSetupValue = {
   /** Total Area Coverage limit, percent (e.g. `300` for offset, `260` for newsprint). */
   tacLimit?: number;
 };
+
+/**
+ * Narrow projection of {@link JobSetupValue} that drives
+ * process-aware preflight. Returned by {@link preflightContextOf};
+ * the two fields map 1:1 to lint-pdf's `?process=&substrate=` query
+ * parameters on `/v1/preflight/process` (Wave 2 PR-E).
+ *
+ * `substrate` is *optional* (not `SubstrateClass | undefined`) so a
+ * `JSON.stringify` / `URLSearchParams.append` round-trip on the
+ * client side omits the parameter entirely instead of serializing
+ * `substrate=undefined` — lint-pdf reads the absence as "run the
+ * substrate-agnostic ruleset".
+ *
+ * @public
+ */
+export type PreflightContext = {
+  process: PrintProcess;
+  substrate?: SubstrateClass;
+};
+
+/**
+ * Project a {@link JobSetupValue} onto the two fields lint-pdf's
+ * process-aware preflight endpoint cares about. Pure function — call
+ * site decides whether to debounce, memoize, or feed straight into
+ * the preflight client.
+ *
+ * Omits the `substrate` key entirely when the host hasn't set
+ * `value.substrate.class`, so callers can spread the return value
+ * straight into a query-param builder without filtering `undefined`s.
+ *
+ * @public
+ */
+export function preflightContextOf(value: JobSetupValue): PreflightContext {
+  const ctx: PreflightContext = { process: value.process };
+  if (value.substrate.class !== undefined) ctx.substrate = value.substrate.class;
+  return ctx;
+}
 
 /**
  * Props for the print-context modal.
@@ -88,6 +147,7 @@ const inputStyle: CSSProperties = {
 
 const PROCESSES: PrintProcess[] = ["offset", "flexo", "gravure", "digital", "screen"];
 const FINISHES: SubstrateFinish[] = ["matte", "gloss", "satin", "uncoated"];
+const SUBSTRATE_CLASSES: SubstrateClass[] = ["coated", "uncoated", "newsprint", "synthetic"];
 
 /**
  * Modal panel for editing a document's print context (F2).
@@ -251,22 +311,53 @@ export function JobSetupPanel({ value, onChange, onClose }: JobSetupPanelProps) 
                   />
                 </div>
               </div>
-              <div>
-                <label htmlFor="js-substrate-finish" style={labelStyle}>
-                  Finish
-                </label>
-                <select
-                  id="js-substrate-finish"
-                  value={value.substrate.finish}
-                  onChange={(e) => patchSubstrate({ finish: e.target.value as SubstrateFinish })}
-                  style={inputStyle}
-                >
-                  {FINISHES.map((f) => (
-                    <option key={f} value={f}>
-                      {f}
-                    </option>
-                  ))}
-                </select>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.55rem" }}>
+                <div>
+                  <label htmlFor="js-substrate-finish" style={labelStyle}>
+                    Finish
+                  </label>
+                  <select
+                    id="js-substrate-finish"
+                    value={value.substrate.finish}
+                    onChange={(e) => patchSubstrate({ finish: e.target.value as SubstrateFinish })}
+                    style={inputStyle}
+                  >
+                    {FINISHES.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="js-substrate-class" style={labelStyle}>
+                    Class (preflight)
+                  </label>
+                  <select
+                    id="js-substrate-class"
+                    // Empty option == "no class set" — passed to lint-pdf as
+                    // a missing query param, which falls back to the
+                    // substrate-agnostic ruleset rather than failing.
+                    value={value.substrate.class ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") {
+                        const { class: _, ...rest } = value.substrate;
+                        onChange({ ...value, substrate: rest });
+                      } else {
+                        patchSubstrate({ class: v as SubstrateClass });
+                      }
+                    }}
+                    style={inputStyle}
+                  >
+                    <option value="">— none —</option>
+                    {SUBSTRATE_CLASSES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </fieldset>
