@@ -73,6 +73,9 @@ export type ImposePanelProps = {
 
 const MM_PER_PT = 25.4 / 72;
 
+/** Convert a PDF-points dimension to millimeters for human-readable
+ *  display. Storage stays in points so the value can be POSTed to
+ *  compile-pdf without rescaling. */
 function ptToMm(pt: number): number {
   return pt * MM_PER_PT;
 }
@@ -93,9 +96,19 @@ function parseIntOr(value: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/** Same NaN-safe contract as {@link parseIntOr} but for floats —
+ *  used by the gutter / margin spinners which accept 0.1 mm steps. */
 function parseFloatOr(value: string, fallback: number): number {
   const n = Number.parseFloat(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+/** Two-sided clamp: ensure `value` is in `[min, max]`. Used to keep
+ *  the input handlers honest — the `<input min/max>` attributes only
+ *  guide the spinner; users can still type out-of-range values
+ *  directly, and we don't want those to propagate to the wire. */
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 /**
@@ -203,7 +216,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={1}
             value={current.rows}
             onChange={(e) =>
-              update({ rows: Math.max(1, parseIntOr(e.target.value, current.rows)) })
+              update({ rows: clamp(parseIntOr(e.target.value, current.rows), 1, 32) })
             }
             style={numberStyle}
           />
@@ -221,7 +234,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={1}
             value={current.cols}
             onChange={(e) =>
-              update({ cols: Math.max(1, parseIntOr(e.target.value, current.cols)) })
+              update({ cols: clamp(parseIntOr(e.target.value, current.cols), 1, 32) })
             }
             style={numberStyle}
           />
@@ -242,7 +255,9 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={0.1}
             value={current.gutterMm ?? 0}
             onChange={(e) =>
-              update({ gutterMm: Math.max(0, parseFloatOr(e.target.value, current.gutterMm ?? 0)) })
+              update({
+                gutterMm: clamp(parseFloatOr(e.target.value, current.gutterMm ?? 0), 0, 100),
+              })
             }
             style={numberStyle}
           />
@@ -260,7 +275,9 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={0.1}
             value={current.marginMm ?? 0}
             onChange={(e) =>
-              update({ marginMm: Math.max(0, parseFloatOr(e.target.value, current.marginMm ?? 0)) })
+              update({
+                marginMm: clamp(parseFloatOr(e.target.value, current.marginMm ?? 0), 0, 100),
+              })
             }
             style={numberStyle}
           />
