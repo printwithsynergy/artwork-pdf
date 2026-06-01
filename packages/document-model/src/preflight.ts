@@ -161,4 +161,15 @@ export const DEFAULT_PREFLIGHT_RULES: PreflightRule[] = [
     clientSide: false,
     params: { allowedModes: ["CMYK", "Spot", "DeviceN", "Gray"] },
   },
+  {
+    // G2v — detect barcodes in raster uploads and flag ones whose
+    // check digit / structure fails their format spec. Client-side
+    // because the editor already rasterizes for the live TAC overlay
+    // (PR-9) and reuses the same path here.
+    checkName: "barcode_validation",
+    enabled: true,
+    severity: "warn",
+    clientSide: true,
+    params: {},
+  },
 ];

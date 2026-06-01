@@ -69,6 +69,16 @@ export {
   tacForHex,
 } from "./lib/rasterize";
 export {
+  type BarcodeDetection,
+  type BarcodeFormat,
+  type BarcodeValidation,
+  scanBarcodes,
+  validateBarcode,
+  validateEAN13,
+  validateGS1128,
+  validateUPCA,
+} from "./lib/barcode-scan";
+export {
   type PaletteRegistryEntry,
   PALETTE_REGISTRY,
   PALETTE_IDS,
