@@ -94,6 +94,13 @@ export {
 } from "./lib/editor-config";
 export { markUnwired, isUnwired } from "./lib/unwired";
 export {
+  type EditorDielinePanel,
+  isPointInPanel,
+  findPanelAt,
+  getPanelById,
+  resolveAnchorPanel,
+} from "./lib/panel-anchor";
+export {
   type EditorSeparation,
   type RegisterSpotOptions,
   registerSpot,
