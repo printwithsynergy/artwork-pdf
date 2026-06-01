@@ -81,6 +81,51 @@ export type PreflightReport = {
 export type LabelClass = "flexo" | "offset" | "digital" | "screen" | "gravure";
 
 /**
+ * Substrate category for process-aware preflight gating.
+ *
+ * Mirrors lint-pdf's `substrate` matcher vocabulary (see Wave 2 PR-B
+ * on `printwithsynergy/lint-pdf`). The categories collapse the long
+ * tail of named stocks into rule-relevant buckets:
+ *
+ * - `coated` — clay-coated, gloss/matte/satin; tolerates the highest
+ *   TAC (typically 300%) and the finest line weights.
+ * - `uncoated` — fiber-felt papers; lower TAC (typically 240%) due to
+ *   dot gain.
+ * - `newsprint` — high absorbency; aggressively low TAC (typically
+ *   220%).
+ * - `synthetic` — film / synthetic-paper substrates (BOPP, PET, etc.)
+ *   where ink lay-down is closer to coated behaviour.
+ *
+ * Passed as a `substrate` query parameter to lint-pdf's
+ * `/v1/preflight/process` endpoint (Wave 2 PR-E) and carried on the
+ * job-level `PrintContext.substrate` for client-side rule filtering.
+ */
+export type SubstrateClass = "coated" | "uncoated" | "newsprint" | "synthetic";
+
+/**
+ * A {@link PreflightRule} extended with optional process / substrate
+ * matchers — only applies when the job's `PrintContext` satisfies the
+ * declared matchers, falls through (does not run) otherwise.
+ *
+ * Mirrors lint-pdf's `ConditionBlock.when` vocabulary (Wave 2 PR-C)
+ * so the same rule set evaluated client-side and server-side produces
+ * identical findings. Matchers are *additive* — when neither is set
+ * the rule applies universally (identity behaviour with `PreflightRule`).
+ *
+ * Empty-array contract: `[]` means "no match possible" — the rule is
+ * effectively disabled. `undefined`/absent means "match all". Callers
+ * that want "any of {a, b}" must pass the array.
+ */
+export type ProcessAwareRule = PreflightRule & {
+  /** When set, rule applies iff the job's process matches one of the
+   *  listed values. Single value is sugar for a one-element array. */
+  process?: LabelClass | LabelClass[];
+  /** When set, rule applies iff the job's substrate matches one of
+   *  the listed values. Same semantics as `process`. */
+  substrate?: SubstrateClass | SubstrateClass[];
+};
+
+/**
  * The compiled default preflight ruleset — the floor that
  * tenant/label overrides in the `preflight_rules` table merge on top
  * of. Order is not significant; consumers match by `checkName`.

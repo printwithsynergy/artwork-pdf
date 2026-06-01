@@ -53,6 +53,13 @@ export type Separation = {
  * preflight rule selection (e.g. flexo gets distortion compensation,
  * digital tolerates RGB inputs), color-profile selection, and TAC
  * limit enforcement.
+ *
+ * `colorProfileIccB64` carries an embedded ICC profile inline as
+ * base64 — used by C5's soft-proof producer when the job needs a
+ * destination profile not in compile-pdf's bundled set (e.g. a
+ * tenant-measured press condition). Inline base64 is appropriate for
+ * small profiles (< 100 KB); larger profiles should ride a separate
+ * upload channel and be referenced by `colorProfile` name instead.
  */
 export type PrintContext = {
   process: "offset" | "flexo" | "gravure" | "digital" | "screen";
@@ -64,6 +71,7 @@ export type PrintContext = {
   };
   targetMarkets?: string[];
   colorProfile?: string;
+  colorProfileIccB64?: string;
   tacLimit?: number;
 };
 
@@ -295,6 +303,19 @@ export type ArtworkObject = {
   arcStartAngle?: number;
   arcEndAngle?: number;
   arcClosed?: boolean;
+
+  /**
+   * S3 — when set, references a {@link DielinePanel} id on the host
+   * page's `panelMetadata.panels`. The object follows that panel
+   * through dieline rotations / fold transformations so logos stay
+   * locked to their physical surface across reflows.
+   *
+   * Absent / unknown ids fall back to free-floating page coordinates
+   * (identity behaviour). Renderers that don't understand panel
+   * anchoring (older compile-pdf versions) ignore the field; the
+   * editor preserves it on round-trip.
+   */
+  anchorPanelId?: string;
 };
 
 /**
