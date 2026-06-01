@@ -55,8 +55,17 @@ type ProductionExportRequest = {
   /** AI4 — editor's registered spot inks. When non-empty, threaded
    *  through compile-pdf as the source-of-truth separation list
    *  (bypasses what the renderer would infer from document content). */
-  separationsOverride?: unknown[];
+  separationsOverride?: WireSeparation[];
 };
+
+/**
+ * Wire shape sent to compile-pdf as `separationsOverride`. Mirrors
+ * `EditorSeparation` minus the editor-only `hex` lookup key — the
+ * remaining fields are structurally identical to document-model's
+ * `Separation`, so this satisfies the apps/service shape on the wire
+ * without pulling document-model as a dep.
+ */
+type WireSeparation = Omit<EditorSeparation, "hex">;
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "image";
 
@@ -130,7 +139,14 @@ type Props = {
   /** Fired whenever the bleed value changes (drawer input or URL prop sync). */
   onBleedMmChange?: (bleedMm: number) => void;
   /** AI4: initial spots registered on this page. Threads through to
-   *  compile-pdf's `separationsOverride` at export time. */
+   *  compile-pdf's `separationsOverride` at export time.
+   *
+   *  **Seed-only semantic:** like `initialObjects` and
+   *  `initialPageSize`, this prop is read once at mount. EditorApp's
+   *  multi-page wrapper re-mounts EditorCanvas on each page switch
+   *  (via `key={activePage.id}`), so the per-page seed flows
+   *  naturally. Hosts that mutate this prop on the live component
+   *  without changing the `key` will not see the change reflected. */
   initialSeparations?: EditorSeparation[];
   /** Fired whenever the spot registry changes (register/unregister via
    *  the fill/stroke pickers' "as spot" affordance). */
