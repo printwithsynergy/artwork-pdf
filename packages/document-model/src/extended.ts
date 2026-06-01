@@ -452,6 +452,17 @@ export type JobOutputFormat = "pdf-x4" | "thumbnail" | "preview-separations";
  * `preflightConfig` carries the scope keys
  * (`labelClass`/`labelType`/`tenantId`) used to resolve the
  * effective ruleset against the `preflight_rules` table.
+ *
+ * The optional producer fields (`marksTemplate`, `trapPolicy`,
+ * `imposeTemplate`) request that the render handler chain those
+ * producers after compose; absent fields skip the producer. See
+ * {@link "./producer-plans"} for the wire shapes.
+ *
+ * `separationsOverride`, when present, gives the editor full control
+ * over the declared `Separation[]` for this job — bypasses any
+ * separations the renderer would have inferred from the document.
+ * Used by the editor's "register as spot" flow to thread named spot
+ * inks (with Lab / Pantone) into compile-pdf.
  */
 export type JobSubmitRequest = {
   document: DocumentModel;
@@ -467,6 +478,10 @@ export type JobSubmitRequest = {
       bleedMm: number;
     };
   };
+  marksTemplate?: import("./producer-plans.js").MarksPlan;
+  trapPolicy?: import("./producer-plans.js").TrapPolicy;
+  imposeTemplate?: import("./producer-plans.js").ImposeTemplate;
+  separationsOverride?: Separation[];
 };
 
 /**

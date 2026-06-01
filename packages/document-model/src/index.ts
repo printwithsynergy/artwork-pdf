@@ -14,8 +14,12 @@
 // - {@link "./migrate"} — `upgradeV2ToV3`, `isV3`, `ensureV3`.
 // - {@link "./preflight"} — preflight rule/issue/report types and
 //   `DEFAULT_PREFLIGHT_RULES`.
+// - {@link "./producer-plans"} — `MarksPlan`, `TrapPolicy`,
+//   `ImposeTemplate` wire shapes for the compose → marks → trap →
+//   impose pipeline.
 
 export * from "./preflight.js";
 export * from "./extended.js";
 export * from "./v3.js";
 export * from "./migrate.js";
+export * from "./producer-plans.js";
