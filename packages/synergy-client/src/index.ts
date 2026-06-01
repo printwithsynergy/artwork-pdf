@@ -69,6 +69,13 @@ export type WorkflowRun = {
  * skeleton client surfaces only the status code — richer error
  * shapes can land later without breaking the constructor signature).
  *
+ * **Response-shape trust:** the 2xx JSON is cast directly to
+ * {@link WorkflowRun} without runtime validation. Downstream code
+ * is type-safe relative to the synergy contract, not relative to
+ * arbitrary network bytes — if the engine ships an incompatible
+ * shape, errors surface at the consumer site, not here. Runtime
+ * validation (zod) is a future follow-up.
+ *
  * The client is stateless apart from `baseUrl` + `apiKey` and is
  * safe to reuse across requests; instantiate once per process.
  */
