@@ -77,6 +77,27 @@ function ptToMm(pt: number): number {
   return pt * MM_PER_PT;
 }
 
+/** Tolerance for matching a preset by sheet dimensions. PDF-points
+ *  fractions arise easily — SRA3 is 907.09 / 1275.59 pt — so strict
+ *  equality breaks against hosts that compute from mm. 0.5 pt is
+ *  smaller than half a hairline rule, well below user-visible. */
+const PRESET_MATCH_TOLERANCE_PT = 0.5;
+
+/** Parse a numeric input safely. Returns `fallback` for empty,
+ *  whitespace-only, or non-finite input (e.g. when the user has
+ *  typed only `-` mid-edit). Without this guard `Number.parseInt`
+ *  would surface `NaN` and `Math.max` would propagate it, leaving
+ *  the panel stuck in an unrecoverable state. */
+function parseIntOr(value: string, fallback: number): number {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function parseFloatOr(value: string, fallback: number): number {
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 /**
  * O1 sheet-imposition builder.
  *
@@ -117,12 +138,16 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
 
   const update = (patch: Partial<ImposePanelValue>) => onChange({ ...current, ...patch });
 
-  // Match the currently-selected preset by exact point dimensions;
-  // falls back to "custom" when the user has edited away from a
-  // preset (e.g. via a host-injected custom sheet).
+  // Match the currently-selected preset by tolerance — hosts that
+  // round-trip through mm can produce sub-point fractional drift
+  // that strict equality would reject, dropping the dropdown into
+  // the "custom" fallback even though the user picked SRA3.
   const selectedPresetId =
-    presets.find((p) => p.widthPt === current.sheetWidthPt && p.heightPt === current.sheetHeightPt)
-      ?.id ?? "custom";
+    presets.find(
+      (p) =>
+        Math.abs(p.widthPt - current.sheetWidthPt) <= PRESET_MATCH_TOLERANCE_PT &&
+        Math.abs(p.heightPt - current.sheetHeightPt) <= PRESET_MATCH_TOLERANCE_PT,
+    )?.id ?? "custom";
 
   return (
     <div
@@ -178,7 +203,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={1}
             value={current.rows}
             onChange={(e) =>
-              update({ rows: Math.max(1, Number.parseInt(e.target.value || "1", 10)) })
+              update({ rows: Math.max(1, parseIntOr(e.target.value, current.rows)) })
             }
             style={numberStyle}
           />
@@ -196,7 +221,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={1}
             value={current.cols}
             onChange={(e) =>
-              update({ cols: Math.max(1, Number.parseInt(e.target.value || "1", 10)) })
+              update({ cols: Math.max(1, parseIntOr(e.target.value, current.cols)) })
             }
             style={numberStyle}
           />
@@ -217,7 +242,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={0.1}
             value={current.gutterMm ?? 0}
             onChange={(e) =>
-              update({ gutterMm: Math.max(0, Number.parseFloat(e.target.value || "0")) })
+              update({ gutterMm: Math.max(0, parseFloatOr(e.target.value, current.gutterMm ?? 0)) })
             }
             style={numberStyle}
           />
@@ -235,7 +260,7 @@ export function ImposePanel({ value, onChange, presets = DEFAULT_PRESETS }: Impo
             step={0.1}
             value={current.marginMm ?? 0}
             onChange={(e) =>
-              update({ marginMm: Math.max(0, Number.parseFloat(e.target.value || "0")) })
+              update({ marginMm: Math.max(0, parseFloatOr(e.target.value, current.marginMm ?? 0)) })
             }
             style={numberStyle}
           />
