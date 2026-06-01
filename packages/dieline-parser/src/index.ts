@@ -21,6 +21,11 @@ export type DielineFormat = "CF2" | "DDES" | "ARD";
  * data string suitable for `<path d="...">` — the parsers emit
  * `M`/`L`/`A` commands in dieline-native coordinates (mm,
  * Y-down).
+ *
+ * **Source type-code mapping** (shared by all three parsers): `1 →
+ * crease`, `2 → perf`, `3 → bleed`, anything else → `cut`. This is
+ * the contract for the leading numeric code in `LINE`/`ARC`/bare
+ * statements across CF2, DDES, and ARD.
  */
 export type DielinePath = {
   id: string;
@@ -34,8 +39,10 @@ export type DielinePath = {
  * `widthMm`/`heightMm` are the bounding-box dimensions derived from
  * the union of all path coordinates (not declared in the source —
  * the formats vary on whether they declare dimensions, so we compute
- * for consistency). `paths` is grouped by `type`; empty groups are
- * dropped so downstream code can iterate without checking lengths.
+ * for consistency). `paths` is a flat array; the parsers emit one
+ * entry per non-empty path type (so a dieline with only cuts and
+ * creases produces a 2-element `paths` array), with each entry's
+ * `d` field concatenating all `M`/`L`/`A` segments of that type.
  */
 export type Dieline = {
   format: DielineFormat;
@@ -130,15 +137,16 @@ function emptySegments(): Map<PathType, string[]> {
  *
  * Recognized forms:
  * - `LAYER N [TYPE N]` / `LAYERBEGIN ...` — switches the active path
- *   type (1 = crease, 2 = perf, 3 = bleed, anything else = cut).
+ *   type by code (see {@link DielinePath} for the mapping).
  * - `TYPE N` — same as above without a layer wrapper.
  * - `LINE x1 y1 x2 y2`
  * - `ARC cx cy r startDeg endDeg`
  * - Bare `<typeCode> x1 y1 x2 y2` lines (some CF2 dialects)
  *
- * `#` and `//` start line comments. Unrecognized lines are ignored
- * (CF2 has dialect variants; failing closed makes round-tripping
- * unfamiliar files easier).
+ * `#` and `//` start line comments. Unrecognized lines are silently
+ * skipped — this is *fail-open* permissive parsing on purpose,
+ * because CF2 has dialect variants in the wild and we'd rather
+ * partial-import an unfamiliar file than reject it outright.
  */
 export function parseCF2(content: string): Dieline {
   const lines = content.split(/\r?\n/);
@@ -211,9 +219,9 @@ export function parseCF2(content: string): Dieline {
  * - `ARC <typeCode> cx cy r startDeg endDeg`
  * - Bare `<typeCode> x1 y1 x2 y2`
  *
- * `DDES`, `UNIT`, and `//`-prefixed header lines are skipped.
- * Type codes share the same {@link DielinePath} mapping as CF2:
- * 1 = crease, 2 = perf, 3 = bleed, else cut.
+ * `DDES`, `UNIT`, and `//`-prefixed header lines are skipped. Type
+ * codes use the same mapping documented on {@link DielinePath}.
+ * Unrecognized lines fail open (see {@link parseCF2}).
  */
 export function parseDDES(content: string): Dieline {
   const lines = content.split(/\r?\n/);
@@ -274,8 +282,7 @@ export function parseDDES(content: string): Dieline {
  * - Outside sections, a bare `<typeCode> x1 y1 x2 y2` is treated as
  *   a line (some ARD dialects emit lines without a wrapping section).
  *
- * Type codes share the same mapping as CF2 / DDES (1 = crease,
- * 2 = perf, 3 = bleed, else cut).
+ * Type codes use the same mapping documented on {@link DielinePath}.
  */
 export function parseARD(content: string): Dieline {
   const lines = content.split(/\r?\n/);
