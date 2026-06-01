@@ -20,16 +20,17 @@ describe("producer-plan types", () => {
     expect(full.mode).toBe("spread");
   });
 
-  it("ImposeTemplate carries sheet + grid + pageMapping", () => {
+  it("ImposeTemplate carries sheet + grid + pageMapping with Pt-suffixed sheet dims", () => {
     const tpl: ImposeTemplate = {
-      sheetWidth: 1684,
-      sheetHeight: 2384,
+      sheetWidthPt: 1684,
+      sheetHeightPt: 2384,
       rows: 3,
       cols: 3,
       pageMapping: "repeat",
     };
     expect(tpl.cols).toBe(3);
     expect(tpl.pageMapping).toBe("repeat");
+    expect(tpl.sheetWidthPt).toBe(1684);
   });
 });
 
@@ -61,7 +62,7 @@ describe("JobSubmitRequest — producer-field additions", () => {
       ...baseReq(),
       marksTemplate: { trim: true, bleed: true },
       trapPolicy: { widthMm: 0.1, mode: "auto" },
-      imposeTemplate: { sheetWidth: 1684, sheetHeight: 2384, rows: 2, cols: 2 },
+      imposeTemplate: { sheetWidthPt: 1684, sheetHeightPt: 2384, rows: 2, cols: 2 },
       separationsOverride: [
         { name: "PANTONE 185 C", colorSpace: "Spot", pantone: "PANTONE 185 C" },
       ],

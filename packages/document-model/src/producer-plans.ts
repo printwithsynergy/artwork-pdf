@@ -59,10 +59,15 @@ export type TrapPolicy = {
 /**
  * Sheet-imposition request.
  *
- * `sheetWidth`/`sheetHeight` are in PDF points. `rows`×`cols` cells
- * tile the sheet; `pageMapping` controls how source pages map to
- * cells (`sequential`: page N → cell N; `repeat`: every cell shows
- * page 0).
+ * `sheetWidthPt`/`sheetHeightPt` are in PDF points (1 pt = 1/72 in).
+ * The `Pt` suffix is intentional — the rest of the codebase uses
+ * unit-suffixed names (`widthMm`, `bleedMm`, `factorX`); explicit
+ * units here prevent point/mm confusion in the editor's Impose panel
+ * (Wave 1 PR-15) and the compile-pdf Pydantic mirror (Wave 1 PR-14).
+ *
+ * `rows`×`cols` cells tile the sheet; `pageMapping` controls how
+ * source pages map to cells (`sequential`: page N → cell N; `repeat`:
+ * every cell shows page 0).
  *
  * Wave 1 ships the minimum viable layout. A Wave 1 cross-repo
  * follow-up extends this with `gutterMm`, `marginMm`, and per-sheet
@@ -71,8 +76,8 @@ export type TrapPolicy = {
  * @public
  */
 export type ImposeTemplate = {
-  sheetWidth: number;
-  sheetHeight: number;
+  sheetWidthPt: number;
+  sheetHeightPt: number;
   rows: number;
   cols: number;
   pageMapping?: "sequential" | "repeat";
