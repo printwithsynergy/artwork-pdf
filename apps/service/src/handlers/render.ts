@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import type { DocumentModel } from "@artworkpdf/document-model";
+import type {
+  DocumentModel,
+  ImposeTemplate,
+  MarksPlan,
+  TrapPolicy,
+} from "@artworkpdf/document-model";
 import { eq } from "drizzle-orm";
 import type { Job } from "pg-boss";
 import type { CompilePdfClient } from "../compile-pdf-client.js";
@@ -17,6 +22,10 @@ import { jobs } from "../db/schema.js";
  *   table (inserted by `POST /jobs`). When present, the handler
  *   writes `status: done | failed` and the result/error back to that
  *   row on completion.
+ * - `marksTemplate` / `trapPolicy` / `imposeTemplate` request the
+ *   corresponding producers downstream of compose. Absent fields
+ *   skip the producer; present fields chain in declaration order:
+ *   compose → marks → trap → impose.
  *
  * Producers (the `/jobs` route, the synergy engine worker) put the
  * caller's full submit request on the queue spread into this shape.
@@ -24,6 +33,9 @@ import { jobs } from "../db/schema.js";
 type RenderJobData = Record<string, unknown> & {
   dbJobId?: string;
   document?: DocumentModel;
+  marksTemplate?: MarksPlan;
+  trapPolicy?: TrapPolicy;
+  imposeTemplate?: ImposeTemplate;
 };
 
 /**
@@ -31,16 +43,24 @@ type RenderJobData = Record<string, unknown> & {
  *
  * Returns a function with the `(batch) => Promise<void>` signature
  * pg-boss `work()` expects. The handler iterates the batch and, per
- * job, calls `client.compose(document)` against compile-pdf, then
- * writes the base64-encoded PDF + lineage cache key to the
- * correlated `jobs` row (if a DB is configured and `dbJobId` is set).
+ * job, runs the producer chain (compose → marks → trap → impose,
+ * conditional on the corresponding request fields), then writes the
+ * base64-encoded final PDF + the *last producer's* lineage cache key
+ * to the correlated `jobs` row (if a DB is configured and `dbJobId`
+ * is set).
+ *
+ * **Cache-key threading:** the `cacheKey` returned to the host is
+ * always from the *last* producer in the chain — compose alone when
+ * only compose ran; impose's key when impose ran last; etc. This
+ * lets downstream consumers cache on the final output identity, not
+ * an intermediate step.
  *
  * Error handling is per-job and intentionally swallowing: a single
  * failure does not abort the batch — pg-boss expects no throw, so we
  * log the failure, write `status: "failed"` to the DB row, and move
  * on to the next job. The same handler is registered against three
- * queues (render, thumbnail, preview-separations); the producer is
- * compile-pdf and its compose path covers all three.
+ * queues (render, thumbnail, preview-separations); the producer
+ * chain covers all three.
  *
  * `client` is taken as a parameter (rather than module-level) so
  * tests can inject a stub via {@link CompilePdfClient}'s `fetch`
@@ -51,7 +71,8 @@ export function makeRenderJob(
 ): (batch: Job<Record<string, unknown>>[]) => Promise<void> {
   return async (batch) => {
     for (const job of batch) {
-      const { dbJobId, document } = job.data as RenderJobData;
+      const { dbJobId, document, marksTemplate, trapPolicy, imposeTemplate } =
+        job.data as RenderJobData;
       const db = getDb();
 
       try {
@@ -59,7 +80,23 @@ export function makeRenderJob(
           throw new Error("render job missing 'document' field");
         }
 
-        const { bytes, cacheKey } = await client.compose(document);
+        // Chain: compose → marks → trap → impose. Each step only
+        // runs when its request field is present; absent fields fall
+        // through with the previous step's output unchanged.
+        let bytes: ArrayBuffer;
+        let cacheKey: string;
+        ({ bytes, cacheKey } = await client.compose(document));
+
+        if (marksTemplate) {
+          ({ bytes, cacheKey } = await client.marks(marksTemplate, bytes));
+        }
+        if (trapPolicy) {
+          ({ bytes, cacheKey } = await client.trap(trapPolicy, bytes));
+        }
+        if (imposeTemplate) {
+          ({ bytes, cacheKey } = await client.impose(imposeTemplate, bytes));
+        }
+
         const result = {
           format: "pdf-x4",
           pdfBase64: Buffer.from(bytes).toString("base64"),
