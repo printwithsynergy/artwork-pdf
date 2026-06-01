@@ -57,6 +57,17 @@ export {
   listSpots,
 } from "./lib/separations-registry";
 export {
+  hexToCmyk,
+  parseHex,
+  rgbToCmyk,
+  tacPercent,
+} from "./lib/color-math";
+export {
+  rasterizeStage,
+  sampleTACFromImageData,
+  tacForHex,
+} from "./lib/rasterize";
+export {
   type PaletteRegistryEntry,
   PALETTE_REGISTRY,
   PALETTE_IDS,
