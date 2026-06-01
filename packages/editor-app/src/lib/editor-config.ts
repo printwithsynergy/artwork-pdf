@@ -121,6 +121,11 @@ export interface EditorConfig {
    *  overrides will follow when the compile-pdf trap producer
    *  exposes them. */
   enable_trap_editor: boolean;
+  /** O1 — sheet-imposition builder (modal panel). When enabled, the
+   *  editor surfaces sheet size, rows × cols, gutter / margin in mm,
+   *  and registration / crop-mark toggles that flow into the
+   *  compile-pdf impose producer at submission. */
+  enable_impose: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -192,6 +197,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_total_ink_coverage_live: true,
   enable_trap_preview: true,
   enable_trap_editor: true,
+  enable_impose: true,
 };
 
 /**
