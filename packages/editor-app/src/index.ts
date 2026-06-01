@@ -47,6 +47,12 @@ export {
   type FoldPreviewOverlayProps,
 } from "./components/FoldPreviewOverlay";
 export {
+  FoldEditorPanel,
+  type FoldEditorEdge,
+  type FoldEditorPanelProps,
+  type FoldEditorPanelValue,
+} from "./components/FoldEditorPanel";
+export {
   VariantMatrixPanel,
   type VariantMatrixPanelProps,
   type VariantMatrixPanelValue,
