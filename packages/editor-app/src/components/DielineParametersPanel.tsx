@@ -109,6 +109,18 @@ export function DielineParametersPanel({
     onChange({ ...value, ...patch });
   };
 
+  // Parse a numeric input, clamping to [min, max]. Empty / `NaN`
+  // returns `null` so callers can decide what to do — width/height/
+  // bleed treat that as a no-op (host keeps the last good value
+  // while the user is mid-edit), so `Number("")` no longer leaks
+  // `NaN` through `onChange`.
+  const parseClamped = (raw: string, min: number, max: number): number | null => {
+    if (raw === "") return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return null;
+    return Math.min(Math.max(n, min), max);
+  };
+
   return (
     <div data-testid="dieline-parameters-panel" style={{ padding: "0.5rem" }}>
       <h3 style={{ margin: "0 0 0.5rem 0" }}>Dieline parameters</h3>
@@ -121,7 +133,10 @@ export function DielineParametersPanel({
           min={bounds.width.min}
           max={bounds.width.max}
           value={value.widthMm}
-          onChange={(e) => set({ widthMm: Number(e.target.value) })}
+          onChange={(e) => {
+            const next = parseClamped(e.target.value, bounds.width.min, bounds.width.max);
+            if (next !== null) set({ widthMm: next });
+          }}
           aria-label="Width in millimetres"
         />
         <label htmlFor="dieline-height">Height (mm)</label>
@@ -132,7 +147,10 @@ export function DielineParametersPanel({
           min={bounds.height.min}
           max={bounds.height.max}
           value={value.heightMm}
-          onChange={(e) => set({ heightMm: Number(e.target.value) })}
+          onChange={(e) => {
+            const next = parseClamped(e.target.value, bounds.height.min, bounds.height.max);
+            if (next !== null) set({ heightMm: next });
+          }}
           aria-label="Height in millimetres"
         />
         {!hideDepth && (
@@ -154,7 +172,8 @@ export function DielineParametersPanel({
                   onChange(rest);
                   return;
                 }
-                set({ depthMm: Number(raw) });
+                const next = parseClamped(raw, bounds.depth.min, bounds.depth.max);
+                if (next !== null) set({ depthMm: next });
               }}
               aria-label="Depth in millimetres"
               placeholder="—"
@@ -169,7 +188,10 @@ export function DielineParametersPanel({
           min={0}
           max={20}
           value={value.bleedMm}
-          onChange={(e) => set({ bleedMm: Number(e.target.value) })}
+          onChange={(e) => {
+            const next = parseClamped(e.target.value, 0, 20);
+            if (next !== null) set({ bleedMm: next });
+          }}
           aria-label="Bleed in millimetres"
         />
       </div>
