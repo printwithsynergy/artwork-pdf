@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { PDFArray, PDFDict, PDFDocument, PDFName } from "pdf-lib";
+import { scanBarcodes, validateBarcode } from "../barcode-scan";
 import type { PreflightIssue, PreflightRule } from "./types";
 
 const KNOWN_SPOT_PREFIXES = ["PANTONE", "HKS ", "TOYO", "DIC ", "Reflex Blue", "Rhodamine"];
@@ -50,6 +51,16 @@ export async function runClientChecks(file: File, rules: PreflightRule[]): Promi
         break;
       case "spot_color_validation":
         if (doc) issues.push(...checkPdfSpotColors(doc, rule));
+        break;
+      case "barcode_validation":
+        if (isRaster) {
+          issues.push(...(await checkRasterBarcodes(file, rule)));
+        } else {
+          // PDF barcode scanning needs the PDF-to-raster pipeline
+          // (deferred); mark the check as skipped so the server-side
+          // preflight knows it's still owed for PDF uploads.
+          skippedChecks.push(rule.checkName);
+        }
         break;
     }
   }
@@ -217,6 +228,64 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
       detail: { fonts: unique },
     },
   ];
+}
+
+async function checkRasterBarcodes(file: File, rule: PreflightRule): Promise<PreflightIssue[]> {
+  // Load the file into an ImageBitmap → 2d-canvas → ImageData so the
+  // barcode scanner can read raw pixels. Wrapped in a try so an
+  // unsupported image format fails open (no false negatives —
+  // server-side preflight catches what the editor can't).
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return [];
+  }
+
+  // OffscreenCanvas was Safari-only as of 16.4 and is still missing
+  // from some embedded webviews; feature-detect and fall back to a
+  // regular HTMLCanvasElement so this never throws ReferenceError.
+  let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
+  if (typeof OffscreenCanvas !== "undefined") {
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    ctx = canvas.getContext("2d");
+  } else if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    ctx = canvas.getContext("2d");
+  }
+  if (!ctx) {
+    bitmap.close();
+    return [];
+  }
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+  bitmap.close();
+
+  // Fail-open: a real detector library (jsqr, quagga, zbar) can
+  // reject for many reasons (decode failure, WASM init crash, malformed
+  // input). We don't want a scanner bug to take out the whole preflight
+  // pass, so we swallow and emit no findings.
+  let detections: Awaited<ReturnType<typeof scanBarcodes>>;
+  try {
+    detections = await scanBarcodes(imageData);
+  } catch {
+    return [];
+  }
+  const issues: PreflightIssue[] = [];
+  for (const d of detections) {
+    const v = validateBarcode(d);
+    if (!v.valid) {
+      issues.push({
+        checkName: rule.checkName,
+        severity: rule.severity,
+        message: `${d.format} barcode ${d.code} is invalid: ${v.reason ?? "unknown"}`,
+        detail: { code: d.code, format: d.format, bounds: d.bounds },
+      });
+    }
+  }
+  return issues;
 }
 
 function checkPdfSpotColors(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] {
