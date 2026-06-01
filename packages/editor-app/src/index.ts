@@ -42,6 +42,14 @@ export {
 } from "./lib/editor-config";
 export { markUnwired, isUnwired } from "./lib/unwired";
 export {
+  type EditorSeparation,
+  type RegisterSpotOptions,
+  registerSpot,
+  unregisterSpot,
+  findSpotByColor,
+  listSpots,
+} from "./lib/separations-registry";
+export {
   type PaletteRegistryEntry,
   PALETTE_REGISTRY,
   PALETTE_IDS,

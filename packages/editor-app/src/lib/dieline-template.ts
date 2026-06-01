@@ -16,6 +16,7 @@
 import type { Dieline, DielinePath } from "@artworkpdf/dieline-parser";
 import type { CanvasObj } from "../components/EditorCanvas";
 import library from "../data/dielines.json";
+import type { EditorSeparation } from "./separations-registry";
 
 /**
  * One packaging structure — geometry + metadata for a known dieline
@@ -167,6 +168,11 @@ export type Page = {
   templateId?: string;
   /** Human label shown in the page navigator (e.g. "Front", "Back"). */
   name?: string;
+  /** AI4 separations registry — spot inks the user has registered
+   *  on this page. Threads through to compile-pdf via the
+   *  job request's `separationsOverride`. Absent → no overrides;
+   *  empty array → explicit composite-only render. */
+  separations?: EditorSeparation[];
 };
 
 /**

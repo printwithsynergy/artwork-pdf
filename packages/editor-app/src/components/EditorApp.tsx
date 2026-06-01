@@ -316,9 +316,13 @@ export function EditorApp({
               onMenuOpenChange={setMenuOpen}
               initialObjects={activePage.objects}
               initialPageSize={activePage.pageSize}
+              {...(activePage.separations !== undefined
+                ? { initialSeparations: activePage.separations }
+                : {})}
               onObjectsChange={(objects) => updateActivePage({ objects })}
               onPageSizeChange={(pageSize) => updateActivePage({ pageSize })}
               onBleedMmChange={(bleedMmValue) => updateActivePage({ bleedMm: bleedMmValue })}
+              onSeparationsChange={(separations) => updateActivePage({ separations })}
               prependDrawerSections={
                 pages.length > 1 || isMobile
                   ? [
