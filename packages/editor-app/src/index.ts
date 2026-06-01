@@ -79,6 +79,12 @@ export {
   type InksPanelProps,
 } from "./components/InksPanel";
 export {
+  ComplianceFindingsPanel,
+  type ComplianceFinding,
+  type ComplianceFindingsPanelProps,
+  type ComplianceLoaderFn,
+} from "./components/ComplianceFindingsPanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
