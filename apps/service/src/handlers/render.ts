@@ -6,11 +6,46 @@ import type { CompilePdfClient } from "../compile-pdf-client.js";
 import { getDb } from "../db/client.js";
 import { jobs } from "../db/schema.js";
 
+/**
+ * pg-boss job payload for the `artwork.render` / `artwork.thumbnail` /
+ * `artwork.preview-separations` queues.
+ *
+ * - `document` is the {@link DocumentModel} to compose. Required at
+ *   runtime even though typed as optional — the handler rejects jobs
+ *   that omit it.
+ * - `dbJobId` correlates the pg-boss job back to a row in the `jobs`
+ *   table (inserted by `POST /jobs`). When present, the handler
+ *   writes `status: done | failed` and the result/error back to that
+ *   row on completion.
+ *
+ * Producers (the `/jobs` route, the synergy engine worker) put the
+ * caller's full submit request on the queue spread into this shape.
+ */
 type RenderJobData = Record<string, unknown> & {
   dbJobId?: string;
   document?: DocumentModel;
 };
 
+/**
+ * Build the pg-boss batch handler for artwork render queues.
+ *
+ * Returns a function with the `(batch) => Promise<void>` signature
+ * pg-boss `work()` expects. The handler iterates the batch and, per
+ * job, calls `client.compose(document)` against compile-pdf, then
+ * writes the base64-encoded PDF + lineage cache key to the
+ * correlated `jobs` row (if a DB is configured and `dbJobId` is set).
+ *
+ * Error handling is per-job and intentionally swallowing: a single
+ * failure does not abort the batch — pg-boss expects no throw, so we
+ * log the failure, write `status: "failed"` to the DB row, and move
+ * on to the next job. The same handler is registered against three
+ * queues (render, thumbnail, preview-separations); the producer is
+ * compile-pdf and its compose path covers all three.
+ *
+ * `client` is taken as a parameter (rather than module-level) so
+ * tests can inject a stub via {@link CompilePdfClient}'s `fetch`
+ * seam without a running compile-pdf instance.
+ */
 export function makeRenderJob(
   client: CompilePdfClient,
 ): (batch: Job<Record<string, unknown>>[]) => Promise<void> {
