@@ -1,4 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// Marketing landing page for `/`.
+//
+// Inline-styled for two reasons: (1) the marketing surface ships
+// before any CSS framework choice was made, and inlining keeps the
+// `/` route's bundle tiny (no Tailwind / no styled-components); (2)
+// the marketing copy is brand-controlled and shouldn't be DRYed via
+// component abstractions that obscure the per-section content.
+//
+// Color palette is the artwork-pdf brand (orange `#fc5102` on dark
+// brown). `FEATURES` is the per-card content; keep entries short —
+// the marketing copy reads as a tight pitch, not a feature checklist.
+
 import type { CSSProperties } from "react";
 
 const BRAND = "#fc5102";
@@ -42,6 +55,10 @@ const sectionWrap: CSSProperties = {
   width: "100%",
 };
 
+/**
+ * The `/` route component. Static, server-rendered, no client JS.
+ * See module header for the styling rationale.
+ */
 export function MarketingPage() {
   return (
     <main style={{ background: BG, color: TEXT, minHeight: "100vh" }}>
@@ -61,11 +78,11 @@ export function MarketingPage() {
             padding: "0.85rem 1.25rem",
           }}
         >
-          <span style={{ fontWeight: 700, color: BRAND, fontSize: "1.05rem" }}>
-            artworkPDF
-          </span>
+          <span style={{ fontWeight: 700, color: BRAND, fontSize: "1.05rem" }}>artworkPDF</span>
           <span style={{ flex: 1 }} />
-          <a href="/demo" style={navLink}>Demo</a>
+          <a href="/demo" style={navLink}>
+            Demo
+          </a>
           <a
             href="https://github.com/printwithsynergy/artwork-pdf"
             target="_blank"
@@ -335,7 +352,9 @@ curl -X POST http://localhost:3001/jobs \\
         >
           <span>© Print with Synergy · AGPL-3.0-or-later</span>
           <div style={{ display: "flex", gap: "1rem" }}>
-            <a href="/source" style={navLink}>Source</a>
+            <a href="/source" style={navLink}>
+              Source
+            </a>
             <a
               href="https://github.com/printwithsynergy/artwork-pdf"
               target="_blank"
@@ -344,7 +363,9 @@ curl -X POST http://localhost:3001/jobs \\
             >
               GitHub
             </a>
-            <a href="/demo" style={navLink}>Demo</a>
+            <a href="/demo" style={navLink}>
+              Demo
+            </a>
           </div>
         </div>
       </footer>

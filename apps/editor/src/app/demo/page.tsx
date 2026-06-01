@@ -1,4 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// `/demo` — try-before-you-host editor route.
+//
+// Mounts `EditorApp` in demo mode (no destructive actions, client-only
+// export path). Accepts two query params:
+//
+//   ?dieline=<id|set-id|csv>   seed the canvas with a known dieline
+//   ?bleed=<mm|in|number>      override the per-page bleed
+//
+// Server component — the URL drives initial state on the server, so
+// the first paint already has the chosen dieline loaded. Subsequent
+// navigation inside the editor is client-side.
+
 import {
   DEFAULT_BLEED_MM,
   EditorApp,
@@ -23,13 +36,17 @@ export const metadata = {
  *  • a template-set id         → `?dieline=carton-6x4x2-set`
  *  • a comma-separated list of template ids → `?dieline=foo,bar,baz`
  *
- * Unknown ids silently fall back to the default template.
+ * Unknown ids silently fall back to the default template (fail-open
+ * so a stale link from social or email doesn't 500).
  */
 function resolveDielineSeed(raw: string | undefined, bleedMm: number) {
   if (raw) {
     const set = getTemplateSetById(raw);
     if (set) return templateSetToPages(set, bleedMm);
-    const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    const ids = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (ids.length > 1) {
       const pages = ids
         .map((id) => getTemplateById(id))
