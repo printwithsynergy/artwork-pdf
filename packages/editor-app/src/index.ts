@@ -20,6 +20,12 @@ export { TopBar, ArtworkPdfLogo, type TopBarProps, type TopBarButton } from "./c
 export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/MobileToolDrawer";
 export { HistoryPanel, type HistoryPanelProps } from "./components/HistoryPanel";
 export { TacOverlay, type TacOverlayProps } from "./components/TacOverlay";
+export {
+  TrapPreviewOverlay,
+  type TrapPreviewFn,
+  type TrapPreviewOperation,
+  type TrapPreviewOverlayProps,
+} from "./components/TrapPreviewOverlay";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   SwatchesPicker,

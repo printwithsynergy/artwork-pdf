@@ -53,6 +53,48 @@ export type TrapPolicy = {
   mode?: "auto" | "spread" | "choke";
 };
 
+/**
+ * One trap operation as returned by {@link CompilePdfClient.trapPreview}.
+ *
+ * Mirrors compile-pdf's `trap_diff.operations[i]` shape: a 1-indexed
+ * page number, a pixel-space bounding rectangle, and the ink-pair
+ * direction. Used by the editor's D1 background trap-preview overlay
+ * to draw where traps would land on the canvas.
+ */
+export type TrapOperation = {
+  page_index: number;
+  rect_pt: [number, number, number, number];
+  from_ink: string;
+  to_ink: string;
+  width_pt: number;
+  direction: "spread" | "choke" | "auto";
+};
+
+/**
+ * Wire shape of `POST /v1/trap/preview`. Same trap-analysis fields as
+ * {@link ProducerResponse}'s producer-specific body, but without the
+ * `output_pdf_b64` / `pdf_sha256` — the preview endpoint returns
+ * metadata only so the D1 overlay can re-fire on every editor change
+ * without paying PDF egress.
+ */
+export type TrapPreviewResponse = {
+  input_sha256: string;
+  policy_sha256: string;
+  cache_key: string;
+  engine: string;
+  engine_fingerprint: string;
+  operations_count: number;
+  trap_diff: {
+    schema_version: string;
+    engine: string;
+    operations: TrapOperation[];
+    [key: string]: unknown;
+  };
+  trap_findings: Array<Record<string, unknown>>;
+  schema_version: string;
+  compile_version: string;
+};
+
 export type ImposeTemplate = {
   /** Sheet size in PDF points (1 pt = 1/72 in). The `Pt` suffix
    *  matches the document-model wire shape; see producer-plans.ts. */
@@ -161,6 +203,35 @@ export class CompilePdfClient {
       input_pdf_b64: toBase64(pdfBytes),
       policy,
     });
+  }
+
+  /**
+   * D1 background trap preview — runs the same trap-policy analysis
+   * as {@link trap} but returns metadata only (no `output_pdf_b64`).
+   *
+   * Used by the editor's `TrapPreviewOverlay` to show where trap
+   * regions would land without the egress cost of a full PDF
+   * rewrite. Cache-key is distinct from `trap()` so the two paths
+   * don't collide server-side.
+   */
+  async trapPreview(
+    policy: TrapPolicy,
+    pdfBytes: ArrayBuffer | Uint8Array,
+  ): Promise<TrapPreviewResponse> {
+    const res = await this.fetcher(`${this.baseUrl}/v1/trap/preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input_pdf_b64: toBase64(pdfBytes), policy }),
+    });
+    if (!res.ok) {
+      const detail = await safeReadText(res);
+      throw new CompilePdfError(
+        `compile-pdf /v1/trap/preview ${res.status}: ${detail || res.statusText}`,
+        res.status,
+        "/v1/trap/preview",
+      );
+    }
+    return (await res.json()) as TrapPreviewResponse;
   }
 
   /** Multi-up sheet imposition. */
