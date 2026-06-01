@@ -115,6 +115,12 @@ export interface EditorConfig {
    *  and renders the predicted trap regions on top of the canvas.
    *  Hosts can disable to avoid network chatter on every edit. */
   enable_trap_preview: boolean;
+  /** D2 — interactive trap policy editor (modal panel). When
+   *  enabled, the editor surfaces width / mode controls that write
+   *  into the active page's `trapConfig`. Per-edge and per-color-pair
+   *  overrides will follow when the compile-pdf trap producer
+   *  exposes them. */
+  enable_trap_editor: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -185,6 +191,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_bleed_visualization: true,
   enable_total_ink_coverage_live: true,
   enable_trap_preview: true,
+  enable_trap_editor: true,
 };
 
 /**
