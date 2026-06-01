@@ -17,7 +17,7 @@
  *
  * @public
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Manifest payload — the shape the synergy `mis.estimate` node
@@ -78,18 +78,43 @@ export type MisEstimateButtonProps = {
   /** Optional callback fired on successful submission with the
    *  workflow id so the host can show a confirmation / link. */
   onSuccess?: (workflowId: string) => void;
+  /** Optional mapper that turns a submit error into a user-facing
+   *  message. The default (`"Couldn't send to MIS."`) avoids leaking
+   *  internal `Error.message` strings; hosts that want richer
+   *  surfaces (e.g. validation-error toasts) pass their own mapper.
+   *  The original error is still passed in so hosts can log it. */
+  errorMessage?: (err: unknown) => string;
 };
 
 /**
  * @public
  */
-export function MisEstimateButton({ manifest, submit, label, onSuccess }: MisEstimateButtonProps) {
+export function MisEstimateButton({
+  manifest,
+  submit,
+  label,
+  onSuccess,
+  errorMessage,
+}: MisEstimateButtonProps) {
   const [state, setState] = useState<
     | { kind: "idle" }
     | { kind: "submitting" }
     | { kind: "ok"; workflowId: string }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
+
+  // Clear any lingering success/error chip when the host swaps in a
+  // new manifest — the previous submission's outcome doesn't apply to
+  // a different payload. Identity comparison only; hosts that mutate
+  // the same object reference get the chip preserved (rare; almost
+  // every host returns a new object on each edit).
+  const lastManifestRef = useRef(manifest);
+  useEffect(() => {
+    if (lastManifestRef.current !== manifest) {
+      lastManifestRef.current = manifest;
+      setState((prev) => (prev.kind === "submitting" ? prev : { kind: "idle" }));
+    }
+  }, [manifest]);
 
   const disabled = !manifest || state.kind === "submitting";
 
@@ -101,7 +126,10 @@ export function MisEstimateButton({ manifest, submit, label, onSuccess }: MisEst
       setState({ kind: "ok", workflowId });
       onSuccess?.(workflowId);
     } catch (err) {
-      setState({ kind: "error", message: err instanceof Error ? err.message : String(err) });
+      setState({
+        kind: "error",
+        message: errorMessage ? errorMessage(err) : "Couldn't send to MIS.",
+      });
     }
   };
 
