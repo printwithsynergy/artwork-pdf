@@ -226,9 +226,9 @@ function checkPdfFonts(doc: PDFDocument, rule: PreflightRule): PreflightIssue[] 
 }
 
 async function checkRasterBarcodes(file: File, rule: PreflightRule): Promise<PreflightIssue[]> {
-  // Load the file into an ImageBitmap → off-screen canvas → ImageData
-  // so the barcode scanner can read raw pixels. Wrapped in a try so
-  // an unsupported image format fails open (no false negatives —
+  // Load the file into an ImageBitmap → 2d-canvas → ImageData so the
+  // barcode scanner can read raw pixels. Wrapped in a try so an
+  // unsupported image format fails open (no false negatives —
   // server-side preflight catches what the editor can't).
   let bitmap: ImageBitmap;
   try {
@@ -236,8 +236,20 @@ async function checkRasterBarcodes(file: File, rule: PreflightRule): Promise<Pre
   } catch {
     return [];
   }
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-  const ctx = canvas.getContext("2d");
+
+  // OffscreenCanvas was Safari-only as of 16.4 and is still missing
+  // from some embedded webviews; feature-detect and fall back to a
+  // regular HTMLCanvasElement so this never throws ReferenceError.
+  let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
+  if (typeof OffscreenCanvas !== "undefined") {
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    ctx = canvas.getContext("2d");
+  } else if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    ctx = canvas.getContext("2d");
+  }
   if (!ctx) {
     bitmap.close();
     return [];
@@ -254,7 +266,7 @@ async function checkRasterBarcodes(file: File, rule: PreflightRule): Promise<Pre
       issues.push({
         checkName: rule.checkName,
         severity: rule.severity,
-        message: `${d.format} barcode ${JSON.stringify(d.code)} is invalid: ${v.reason ?? "unknown"}`,
+        message: `${d.format} barcode ${d.code} is invalid: ${v.reason ?? "unknown"}`,
         detail: { code: d.code, format: d.format, bounds: d.bounds },
       });
     }

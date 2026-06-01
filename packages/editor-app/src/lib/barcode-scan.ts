@@ -177,6 +177,11 @@ export function validateBarcode(detection: BarcodeDetection): BarcodeValidation 
       return detection.code.length > 0
         ? { valid: true }
         : { valid: false, reason: "QR payload is empty" };
+    default:
+      // Defensive: detectors that return formats outside our union
+      // (e.g. a future library reporting "Code128" before we add it
+      // to BarcodeFormat) would otherwise return undefined.
+      return { valid: false, reason: "Unsupported barcode format" };
   }
 }
 
