@@ -164,6 +164,27 @@ export type SpotLibrariesResponse = {
 };
 
 /**
+ * One named ink found in an input PDF via `POST /v1/separations/list`
+ * (Wave 2 PR-F). Wire mirror of compile-pdf's `SeparationEntry`
+ * Pydantic model.
+ *
+ * Process colors (DeviceCMYK / DeviceGray / ICCBased) are NOT
+ * enumerated by the server — only named `Separation` / `DeviceN`
+ * colorants. `occurs_on_pages` is 0-indexed.
+ */
+export type SeparationEntry = {
+  name: string;
+  color_space: "Separation" | "DeviceN";
+  occurs_on_pages: number[];
+};
+
+/** Wire shape of `POST /v1/separations/list`. */
+export type SeparationsListResponse = {
+  separations: SeparationEntry[];
+  total: number;
+};
+
+/**
  * Minimal HTTP client for the compile-pdf service.
  *
  * Usage:
@@ -322,6 +343,31 @@ export class CompilePdfClient {
    */
   async spotLibraries(): Promise<SpotLibrariesResponse> {
     return this.getJson("/v1/spots/libraries");
+  }
+
+  /**
+   * Enumerate every named separation found in `inputPdfB64` — used
+   * by the editor's C1 inks palette (Wave 2 PR-5). Backed by
+   * `POST /v1/separations/list`. Process colors (DeviceCMYK /
+   * DeviceGray / ICCBased) are NOT enumerated; only named
+   * `Separation` / `DeviceN` colorants surface.
+   */
+  async separationsList(inputPdfB64: string): Promise<SeparationsListResponse> {
+    const path = "/v1/separations/list";
+    const res = await this.fetcher(`${this.baseUrl}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input_pdf_b64: inputPdfB64 }),
+    });
+    if (!res.ok) {
+      const detail = await safeReadText(res);
+      throw new CompilePdfError(
+        `compile-pdf ${path} ${res.status}: ${detail || res.statusText}`,
+        res.status,
+        path,
+      );
+    }
+    return (await res.json()) as SeparationsListResponse;
   }
 
   private async getJson<T>(path: string): Promise<T> {
