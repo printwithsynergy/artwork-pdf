@@ -79,9 +79,7 @@ export function preflightFindingsPlugin(opts: {
               }}
               aria-hidden
             />
-            <span style={{ fontWeight: 600 }}>
-              {report.passed ? "Passed" : "Issues found"}
-            </span>
+            <span style={{ fontWeight: 600 }}>{report.passed ? "Passed" : "Issues found"}</span>
             <span style={{ marginLeft: "auto", color: MUTED, fontSize: "0.7rem" }}>
               {report.issues.length} issue{report.issues.length === 1 ? "" : "s"}
             </span>
@@ -100,10 +98,7 @@ export function preflightFindingsPlugin(opts: {
               <li style={{ padding: "0.75rem", color: MUTED }}>No issues.</li>
             )}
             {report.issues.map((issue, i) => (
-              <li
-                key={`${issue.checkName}-${i}`}
-                style={{ borderBottom: `1px solid ${BORDER}` }}
-              >
+              <li key={`${issue.checkName}-${i}`} style={{ borderBottom: `1px solid ${BORDER}` }}>
                 <button
                   type="button"
                   onClick={() => opts.onIssueClick?.(issue)}
@@ -140,9 +135,7 @@ export function preflightFindingsPlugin(opts: {
                       </span>
                     )}
                   </div>
-                  <div style={{ marginTop: "0.2rem", lineHeight: 1.4 }}>
-                    {issue.message}
-                  </div>
+                  <div style={{ marginTop: "0.2rem", lineHeight: 1.4 }}>{issue.message}</div>
                 </button>
               </li>
             ))}

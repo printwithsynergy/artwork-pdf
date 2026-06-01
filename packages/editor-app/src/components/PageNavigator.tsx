@@ -44,7 +44,14 @@ export function PageNavigator({
 
   if (variant === "stack") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", padding: "0.4rem 0.65rem" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.2rem",
+          padding: "0.4rem 0.65rem",
+        }}
+      >
         <div
           role="tablist"
           aria-label="Pages"
@@ -76,7 +83,10 @@ export function PageNavigator({
                   textAlign: "left",
                 }}
               >
-                <span aria-hidden style={{ fontFamily: "monospace", color: MUTED, fontSize: "0.7rem" }}>
+                <span
+                  aria-hidden
+                  style={{ fontFamily: "monospace", color: MUTED, fontSize: "0.7rem" }}
+                >
                   {i + 1}
                 </span>
                 <span style={{ flex: 1 }}>{p.name ?? `Page ${i + 1}`}</span>

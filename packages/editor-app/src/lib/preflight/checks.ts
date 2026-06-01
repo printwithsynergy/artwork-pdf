@@ -1,6 +1,6 @@
+import { PDFArray, PDFDict, PDFDocument, PDFName } from "pdf-lib";
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { PreflightIssue, PreflightRule } from "./types";
-import { PDFArray, PDFDict, PDFDocument, PDFName } from "pdf-lib";
 
 const KNOWN_SPOT_PREFIXES = ["PANTONE", "HKS ", "TOYO", "DIC ", "Reflex Blue", "Rhodamine"];
 

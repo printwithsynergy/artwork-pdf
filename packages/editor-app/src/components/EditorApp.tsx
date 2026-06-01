@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { PreflightReport } from "../lib/preflight/types";
 import { useEffect, useState } from "react";
 import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { usePreflight } from "../hooks/usePreflight";
 import { DEFAULT_BLEED_MM } from "../lib/bleed";
 import type { Page } from "../lib/dieline-template";
-import { type EditorConfig, resolveConfig } from "../lib/editor-config";
+import {
+  type EditorConfig,
+  type PaletteId,
+  isPanelVisible,
+  resolveConfig,
+} from "../lib/editor-config";
+import type { PreflightReport } from "../lib/preflight/types";
 import { type CanvasObj, EditorCanvas } from "./EditorCanvas";
-import { PageNavigator } from "./PageNavigator";
 import { FileDropZone } from "./FileDropZone";
+import { PageNavigator } from "./PageNavigator";
 import { PreflightPanel } from "./PreflightPanel";
 import { TopBar, type TopBarProps } from "./TopBar";
 
@@ -59,6 +64,21 @@ export type EditorAppProps = {
   bleedMm?: number;
   /** Host-supplied top bar configuration (logo, extra CTAs, etc.). */
   topBar?: Partial<TopBarProps>;
+  /**
+   * Initial palette-visibility map. Each {@link PaletteId} entry is
+   * `true` (visible) or `false` (hidden); absent ids default to
+   * visible. Merged into `config.panelVisibility` once at mount; the
+   * host's `onPanelVisibilityChange` callback receives the merged
+   * next-state on every toggle.
+   */
+  initialPanelVisibility?: Partial<Record<PaletteId, boolean>>;
+  /**
+   * Fires whenever the user toggles a palette via `PaletteManager`
+   * (desktop) or the mobile drawer's "Panels" section. The host is
+   * responsible for persisting (e.g. localStorage keyed by user +
+   * document) — the editor doesn't own this state.
+   */
+  onPanelVisibilityChange?: (next: Partial<Record<PaletteId, boolean>>) => void;
 };
 
 export function EditorApp({
@@ -71,6 +91,8 @@ export function EditorApp({
   config: configOverrides,
   bleedMm = DEFAULT_BLEED_MM,
   topBar,
+  initialPanelVisibility,
+  onPanelVisibilityChange,
 }: EditorAppProps) {
   // Multi-page seed wins over the single-page convenience props. We
   // wrap legacy `initialObjects` / `initialPageSize` into a single-page
@@ -100,9 +122,7 @@ export function EditorApp({
   const activePage = pages[clampedPageIndex]!;
 
   function updateActivePage(patch: Partial<Page>) {
-    setPages((prev) =>
-      prev.map((p, i) => (i === clampedPageIndex ? { ...p, ...patch } : p)),
-    );
+    setPages((prev) => prev.map((p, i) => (i === clampedPageIndex ? { ...p, ...patch } : p)));
   }
 
   function handleAddPage() {
@@ -139,9 +159,28 @@ export function EditorApp({
   const [report, setReport] = useState<PreflightReport | null>(null);
   const { state: preflightState, run: runPreflight } = usePreflight();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [panelVisibility, setPanelVisibility] = useState<Partial<Record<PaletteId, boolean>>>(
+    initialPanelVisibility ?? {},
+  );
 
   const isMobile = useIsMobile();
-  const config = resolveConfig(mode, configOverrides);
+  // Per-instance overrides merge config.panelVisibility (if set) on
+  // top of the editor's mutable panelVisibility state. The mutable
+  // state wins so user toggles outlive a config-override prop change.
+  const baseConfig = resolveConfig(mode, configOverrides);
+  const config: EditorConfig = {
+    ...baseConfig,
+    panelVisibility: { ...baseConfig.panelVisibility, ...panelVisibility },
+  };
+
+  function updatePanelVisibility(next: Partial<Record<PaletteId, boolean>>) {
+    setPanelVisibility(next);
+    onPanelVisibilityChange?.(next);
+  }
+  // Silence "unused" — kept for the upcoming PaletteManager + mobile
+  // "Panels" section wire-up; safe to expose now so hosts can preload
+  // visibility from a callback round-trip without later refactors.
+  void updatePanelVisibility;
 
   async function handleFile(f: File) {
     setFile(f);
@@ -213,16 +252,21 @@ export function EditorApp({
           <p style={{ color: "#995b30" }}>Running preflight checks&hellip;</p>
         )}
 
-        {phase === "preflight" && report && config.enable_preflight_banner && (
-          <PreflightPanel
-            report={report}
-            onProceed={() => setPhase("editor")}
-            onSendToLint={handleSendToLint}
-          />
-        )}
-        {phase === "preflight" && report && !config.enable_preflight_banner && (
-          <AutoAdvance onContinue={() => setPhase("editor")} />
-        )}
+        {phase === "preflight" &&
+          report &&
+          config.enable_preflight_banner &&
+          isPanelVisible(config, "preflight") && (
+            <PreflightPanel
+              report={report}
+              onProceed={() => setPhase("editor")}
+              onSendToLint={handleSendToLint}
+            />
+          )}
+        {phase === "preflight" &&
+          report &&
+          (!config.enable_preflight_banner || !isPanelVisible(config, "preflight")) && (
+            <AutoAdvance onContinue={() => setPhase("editor")} />
+          )}
 
         {phase === "editor" && activePage && (
           <div
