@@ -148,6 +148,13 @@ export interface EditorConfig {
    *  fold edge. Hosts on bandwidth-constrained networks can opt out;
    *  the Three.js code path stays cold when the flag is `false`. */
   enable_3d_fold_preview: boolean;
+  /** S4 (PR-4) — interactive fold editor panel. When enabled,
+   *  hosts surface an angle slider per fold edge that writes into
+   *  `document.pages[i].foldConfig`. The {@link FoldPreviewOverlay}
+   *  re-renders the 3D scene on every commit. Pairs with
+   *  `enable_3d_fold_preview` — hosts that only want the read-only
+   *  overlay (no editing) leave this `false`. */
+  enable_fold_editor: boolean;
   /** V2 — variant matrix UI for variable-data overrides. When
    *  enabled, the editor surfaces a rows-times-columns table of
    *  variants and token keys that writes into `document.variants`.
@@ -230,6 +237,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_trap_editor: true,
   enable_impose: true,
   enable_3d_fold_preview: true,
+  enable_fold_editor: true,
   enable_variant_matrix: true,
 };
 
