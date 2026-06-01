@@ -10,12 +10,13 @@
 ## Naming note
 
 This pass was originally labeled "Wave 1" in PRs #50-#59, but that
-conflicted with the **canonical Wave 1** of the program plan
-(`/root/.claude/plans/context-do-not-assume-cozy-sky.md`,
-§"Program sequencing"), which is the 9-feature feature wave
-(S2 dieline import wire-up, C3 spot library, C4 live TAC, D1 bg trap
-preview, D2 interactive trap editor, G2v barcode validate, O1
-impose builder, X2 history scrubber, AI4 palette→spot).
+conflicted with the **canonical Wave 1** of the artworkPDF program
+sequence (held outside this repo as the planning brief that gates the
+broader 42-feature build). Canonical Wave 1 is a 9-feature *feature*
+wave — S2 (dieline import wire-up), C3 (spot library), C4 (live TAC),
+D1 (background trap preview), D2 (interactive trap editor), G2v
+(barcode validate), O1 (impose builder), X2 (history scrubber), AI4
+(palette → spot).
 
 The comment pass sits between Wave 0 and the canonical Wave 1 —
 foundation work in its own right, but not part of the numbered wave
@@ -79,16 +80,35 @@ node scripts/check-license-boundary.mjs
 
 ## What's next
 
-The canonical wave sequence resumes from the program plan:
+The canonical wave sequence resumes from the program brief:
 
-- **Wave 0** — foundation. Mostly shipped (PR-A, PR-B, PR-D, PR-F).
-  **PR-E is still outstanding** — editor F0 (palettes) + capabilities
-  layer + `JobSetupPanel` (F2 UI). A "Wave 0 PR-E retro" PR will
-  backfill it.
-- **Wave 1** (canonical) — 9-feature feature wave per the plan
-  (`§"Program sequencing"`). Triggered by a fresh plan-mode prompt.
-- **Waves 2-4** — gated strictly behind Wave 1, each in its own
-  plan-mode session.
-- **Post-Wave 4** — full docs sweep + `synergy-mcp` repo update
-  (cross-repo via curl + `$GITHUB_PAT`, since the GitHub MCP scope
-  is restricted to `artwork-pdf` only).
+- **Wave 0** — foundation. Mostly shipped (PR-A compile-pdf compose
+  scaffold; PR-B `document-model` v3 + F1 Separation + F2
+  PrintContext; PR-D service → `CompilePdfClient` HTTP pipeline; PR-F
+  delete `pdf-writer`). **PR-E is still outstanding** — editor F0
+  (palettes) + capabilities layer + `JobSetupPanel` (F2 UI). A
+  "Wave 0 PR-E retro" PR will backfill it.
+- **Wave 1** (canonical) — 9-feature feature wave (S2 / C3 / C4 / D1
+  / D2 / G2v / O1 / X2 / AI4). Triggered by a fresh plan-mode prompt.
+  Most depend on Wave 0's compose; D1/D2 also need compile-pdf's trap
+  producer extensions (cross-repo).
+- **Wave 2** — 9 features (S1 / S3 / S4 / C1 / C5 / P1 / P3 / V2 /
+  O2). Parametric dielines, panel-anchored objects, 3D fold preview,
+  inks panel, ICC soft proof, process-aware preflight, compliance
+  engine, variant matrix, estimate-manifest → MIS via synergy.
+- **Wave 3** — 7 features (C2 / P5 / G1 / G2g / G3 / V1 / O3).
+  Auto-white/underbase, Braille layout, nutrition generator, barcode
+  generate, GS1 Digital Link QR, variable-data merge, streaming
+  render. All write new bytes — strictly require a stable compose.
+- **Wave 4** — long tail, ~16 features (S5/S6, P2/P4, B1/B2, X1, X3,
+  AI1/2/3/5, V3, I1/2/3, M1). Can interleave once started.
+- **Post-Wave 4** — full docs sweep across `README.md`,
+  `ARCHITECTURE.md`, `SYMBOLS.md`, this doc, plus per-package
+  READMEs; reconcile against the final shipped state. Then update
+  the `synergy-mcp` repo (cross-repo via curl +
+  `$GITHUB_PAT` env var, since the GitHub MCP scope is restricted to
+  `artwork-pdf` only).
+
+Each wave runs in its own plan-mode session because the codebase
+will drift between waves, and lessons from earlier waves materially
+change later designs.
