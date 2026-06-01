@@ -23,7 +23,8 @@ export type PaletteId =
   | "swatches"
   | "graphic-styles"
   | "history"
-  | "fold-preview";
+  | "fold-preview"
+  | "variant-matrix";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -133,6 +134,13 @@ export interface EditorConfig {
    *  fold edge. Hosts on bandwidth-constrained networks can opt out;
    *  the Three.js code path stays cold when the flag is `false`. */
   enable_3d_fold_preview: boolean;
+  /** V2 — variant matrix UI for variable-data overrides. When
+   *  enabled, the editor surfaces a rows-times-columns table of
+   *  variants and token keys that writes into `document.variants`.
+   *  The actual merge pipeline (one rendered page-instance per
+   *  variant) lands in Wave 3 V1; this flag just gates the editing
+   *  surface. */
+  enable_variant_matrix: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -206,6 +214,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_trap_editor: true,
   enable_impose: true,
   enable_3d_fold_preview: true,
+  enable_variant_matrix: true,
 };
 
 /**
