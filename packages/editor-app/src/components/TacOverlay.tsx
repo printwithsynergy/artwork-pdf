@@ -3,7 +3,7 @@
 
 import type Konva from "konva";
 import { useEffect, useRef, useState } from "react";
-import { rasterizeStage, sampleTACFromImageData } from "../lib/rasterize";
+import { rasterizeStage } from "../lib/rasterize";
 
 /**
  * C4 live total-area-coverage overlay.
@@ -80,8 +80,6 @@ export function TacOverlay({
         // try again.
         return;
       }
-      const { maxPct, avgPct, perPixelPct } = sampleTACFromImageData(image);
-      setReadout({ maxPct, avgPct });
 
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -91,27 +89,57 @@ export function TacOverlay({
       canvas.height = image.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      // Paint a red overlay only where TAC ≥ threshold. Below
-      // threshold = fully transparent so the artwork shows through.
+
+      // One fused pass: sample TAC per pixel inline AND paint the
+      // overlay where TAC crosses the threshold. We can't reuse the
+      // shared sampler's `perPixelPct` for the threshold check
+      // because that array clamps the 0-400 % range to a byte
+      // (255 = ≥255 %), which collapses every pixel above the
+      // default 300 % threshold to a single bucket; honest threshold
+      // checks need the un-truncated percentage here.
+      const src = image.data;
       const overlay = ctx.createImageData(image.width, image.height);
-      const data = overlay.data;
-      // perPixelPct is 0-255 (clamped); convert threshold to the
-      // same scale once outside the hot loop.
-      const thresholdByte = Math.min(255, Math.max(0, Math.round(thresholdPct)));
-      for (let i = 0; i < perPixelPct.length; i++) {
-        const v = perPixelPct[i] ?? 0;
-        if (v >= thresholdByte) {
+      const dst = overlay.data;
+      const pixelCount = image.width * image.height;
+      let maxPct = 0;
+      let sumPct = 0;
+      for (let p = 0, i = 0; p < src.length; p += 4, i++) {
+        // Pre-multiply with opaque white background so semi-
+        // transparent pixels reflect printable ink. Mirrors the
+        // canonical sampler's composite step.
+        const a = (src[p + 3] ?? 255) / 255;
+        const inv = 1 - a;
+        const r = ((src[p] ?? 0) * a + 255 * inv) / 255;
+        const g = ((src[p + 1] ?? 0) * a + 255 * inv) / 255;
+        const b = ((src[p + 2] ?? 0) * a + 255 * inv) / 255;
+        const k = 1 - Math.max(r, g, b);
+        let c = 0;
+        let m = 0;
+        let y = 0;
+        if (k < 1) {
+          const scale = 1 - k;
+          c = (1 - r - k) / scale;
+          m = (1 - g - k) / scale;
+          y = (1 - b - k) / scale;
+        }
+        const tac = (c + m + y + k) * 100;
+        if (tac > maxPct) maxPct = tac;
+        sumPct += tac;
+        if (tac >= thresholdPct) {
           const j = i * 4;
-          data[j] = 220; // R
-          data[j + 1] = 38; // G
-          data[j + 2] = 38; // B
-          // Alpha scales from 64 (at threshold) to 192 (at 4x ink),
-          // so a 305% pixel barely glows but a 380% pixel screams.
-          const intensity = Math.min(192, 64 + (v - thresholdByte) * 2);
-          data[j + 3] = intensity;
+          dst[j] = 220; // R
+          dst[j + 1] = 38; // G
+          dst[j + 2] = 38; // B
+          // Alpha scales linearly from 64 at threshold to 192 at
+          // (threshold + 100 %), so a 305 % pixel barely glows but
+          // a 400 % pixel screams. Clamped to keep the red readable
+          // over busy artwork.
+          const intensity = Math.min(192, 64 + (tac - thresholdPct) * 1.28);
+          dst[j + 3] = intensity;
         }
       }
       ctx.putImageData(overlay, 0, 0);
+      setReadout({ maxPct, avgPct: pixelCount > 0 ? sumPct / pixelCount : 0 });
     }, debounceMs);
     return () => clearTimeout(handle);
   }, [stage, width, height, trigger, thresholdPct, debounceMs]);
