@@ -40,9 +40,10 @@ function makeClient(
 
 describe("makeRenderJob", () => {
   beforeEach(() => {
-    delete process.env.DATABASE_URL;
+    vi.stubEnv("DATABASE_URL", "");
   });
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 

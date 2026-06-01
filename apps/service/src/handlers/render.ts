@@ -2,7 +2,7 @@
 import type { DocumentModel } from "@artworkpdf/document-model";
 import { eq } from "drizzle-orm";
 import type { Job } from "pg-boss";
-import { CompilePdfClient } from "../compile-pdf-client.js";
+import type { CompilePdfClient } from "../compile-pdf-client.js";
 import { getDb } from "../db/client.js";
 import { jobs } from "../db/schema.js";
 
