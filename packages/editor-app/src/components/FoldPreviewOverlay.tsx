@@ -87,7 +87,16 @@ export function FoldPreviewOverlay({
     (async () => {
       const three = await import("three");
       if (disposed) return;
-      runtime = await createScene(three, container, width, height, backgroundColor);
+      const created = await createScene(three, container, width, height, backgroundColor);
+      // Re-check after the second await — cleanup may have fired
+      // during `await createScene(...)`. At that point `runtime` was
+      // still null in the cleanup closure, so it couldn't dispose;
+      // do it here ourselves before the renderer / canvas escape.
+      if (disposed) {
+        disposeScene(created);
+        return;
+      }
+      runtime = created;
       sceneRef.current = runtime;
       const { panelMetadata: pm, foldConfig: fc } = propsRef.current;
       const spec = pm ? buildFoldScene(pm, fc) : EMPTY_SCENE;
