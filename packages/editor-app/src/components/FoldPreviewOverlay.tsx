@@ -84,21 +84,26 @@ export function FoldPreviewOverlay({
     let runtime: FoldSceneRuntime | null = null;
     let disposed = false;
 
-    void (async () => {
+    (async () => {
       const three = await import("three");
       if (disposed) return;
       runtime = await createScene(three, container, width, height, backgroundColor);
       sceneRef.current = runtime;
       const { panelMetadata: pm, foldConfig: fc } = propsRef.current;
-      if (pm) {
-        applyScene(three, runtime, buildFoldScene(pm, fc));
-      }
+      const spec = pm ? buildFoldScene(pm, fc) : EMPTY_SCENE;
+      applyScene(three, runtime, spec);
       // Render-on-change: PR-3's scaffold is static, so one draw per
       // mutation is enough. PR-4 swaps this for a RAF loop driven by
       // user interaction (drag-to-fold), so the loop machinery isn't
       // worth keeping cold here.
       runtime.renderer.render(runtime.scene, runtime.camera);
-    })();
+    })().catch((err) => {
+      // Swallow rejections after unmount; surface real errors during
+      // mount (chunk-load failures from `import("three")`, WebGL
+      // context creation failure, etc.) via console so devtools can
+      // catch them.
+      if (!disposed) console.error("[FoldPreviewOverlay] scene init failed", err);
+    });
 
     return () => {
       disposed = true;
@@ -109,14 +114,20 @@ export function FoldPreviewOverlay({
 
   useEffect(() => {
     const runtime = sceneRef.current;
-    if (!runtime || !panelMetadata) return;
+    if (!runtime) return;
     let disposed = false;
-    void (async () => {
+    (async () => {
       const three = await import("three");
       if (disposed) return;
-      applyScene(three, runtime, buildFoldScene(panelMetadata, foldConfig));
+      // When panelMetadata becomes undefined, apply an empty scene
+      // so previously rendered meshes / hinges clear off the canvas —
+      // matches the documented no-op behaviour for absent metadata.
+      const spec = panelMetadata ? buildFoldScene(panelMetadata, foldConfig) : EMPTY_SCENE;
+      applyScene(three, runtime, spec);
       runtime.renderer.render(runtime.scene, runtime.camera);
-    })();
+    })().catch((err) => {
+      if (!disposed) console.error("[FoldPreviewOverlay] scene update failed", err);
+    });
     return () => {
       disposed = true;
     };
@@ -136,32 +147,41 @@ export function FoldPreviewOverlay({
   );
 }
 
+/** Empty scene spec used to clear the canvas when `panelMetadata`
+ *  is absent. Keeps the meshes / hinges from a previous render off
+ *  the screen. */
+const EMPTY_SCENE: FoldSceneSpec = {
+  panels: [],
+  hinges: [],
+  bounds: { min: [0, 0, 0], max: [0, 0, 0] },
+};
+
+/**
+ * Three.js module type, derived from the dynamic import so we don't
+ * leak `three` into the editor package's public type surface but
+ * still get full type-checking inside this file.
+ */
+type ThreeModule = typeof import("three");
+
 /**
  * Loaded Three.js scene state. Held in a ref so React re-renders
- * don't recreate the renderer.
+ * don't recreate the renderer. Each handle is typed against the
+ * dynamically-imported `three` module so the runtime stays type-safe
+ * without exporting any of the `three` types.
  */
 type FoldSceneRuntime = {
-  // Use `any` here so the editor package doesn't have to leak the
-  // entire `three` type surface through its own public types — the
-  // Three.js module is dynamically imported and these handles stay
-  // private to this file.
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  renderer: any;
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  scene: any;
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  camera: any;
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  panelGroup: any;
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  hingeGroup: any;
-  // biome-ignore lint/suspicious/noExplicitAny: see above.
-  resources: any[];
+  renderer: InstanceType<ThreeModule["WebGLRenderer"]>;
+  scene: InstanceType<ThreeModule["Scene"]>;
+  camera: InstanceType<ThreeModule["PerspectiveCamera"]>;
+  panelGroup: InstanceType<ThreeModule["Group"]>;
+  hingeGroup: InstanceType<ThreeModule["Group"]>;
+  /** Disposable resources accumulated by `applyScene` (geometries,
+   *  materials); cleared on each apply pass and on unmount. */
+  resources: Array<{ dispose?: () => void }>;
 };
 
 async function createScene(
-  // biome-ignore lint/suspicious/noExplicitAny: see FoldSceneRuntime.
-  three: any,
+  three: ThreeModule,
   container: HTMLDivElement,
   width: number,
   height: number,
@@ -199,12 +219,7 @@ async function createScene(
   return runtime;
 }
 
-function applyScene(
-  // biome-ignore lint/suspicious/noExplicitAny: see FoldSceneRuntime.
-  three: any,
-  runtime: FoldSceneRuntime,
-  spec: FoldSceneSpec,
-): void {
+function applyScene(three: ThreeModule, runtime: FoldSceneRuntime, spec: FoldSceneSpec): void {
   // Tear down previous geometry without disposing the renderer.
   runtime.panelGroup.clear();
   runtime.hingeGroup.clear();
