@@ -143,7 +143,6 @@ export function templateSetToPages(set: TemplateSet, bleedMmOverride?: number): 
     .filter((p): p is Page => p !== null);
 }
 
-
 /**
  * One page of a multi-page artwork document. Carries the dieline rect
  * + any user-drawn objects, plus the per-page geometry (pageSize, bleed).

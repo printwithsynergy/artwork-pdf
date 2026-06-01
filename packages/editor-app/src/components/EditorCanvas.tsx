@@ -120,7 +120,11 @@ type Props = {
   /** Extra collapsible sections added to the *top* of the mobile drawer
    *  (used by `EditorApp` to insert the `PageNavigator` stack when the
    *  document is multi-page). */
-  prependDrawerSections?: Array<{ title: string; content: import("react").ReactNode; defaultOpen?: boolean }>;
+  prependDrawerSections?: Array<{
+    title: string;
+    content: import("react").ReactNode;
+    defaultOpen?: boolean;
+  }>;
 };
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -1196,7 +1200,6 @@ export function EditorCanvas({
             </div>
           )}
         </div>
-
       </div>
 
       {/* ── selected properties footer ── */}

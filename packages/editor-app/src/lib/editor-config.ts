@@ -1,5 +1,50 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { isUnwired } from "./unwired";
+
+/**
+ * The palettes the editor can host. Each id maps to a registered
+ * panel via {@link import("./palette-registry").PALETTE_REGISTRY}.
+ * Visibility is controlled by `EditorConfig.panelVisibility` (an
+ * absent / `true` entry means "show"); the `PaletteManager`
+ * component renders an overflow toggle on desktop, and
+ * `MobileToolDrawer` renders the same toggles in a "Panels" section.
+ *
+ * `layers` and `preflight` are wired today. The remaining ids are
+ * registered for forward compatibility — Wave 1+ components will
+ * mount them.
+ *
+ * @public
+ */
+export type PaletteId =
+  | "layers"
+  | "preflight"
+  | "dieline-library"
+  | "swatches"
+  | "graphic-styles"
+  | "history";
+
+/**
+ * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
+ * (the optional gating-layer keys are filtered out).
+ */
+type EnableKey = Extract<keyof EditorConfig, `enable_${string}`>;
+
+/**
+ * Derived feature-key alphabet — every `enable_<feature>` flag becomes
+ * a `<feature>` key. Used as the *intended* shape for
+ * {@link EditorConfig}'s `capabilities` / `plan_gates` keys and as the
+ * parameter type for {@link showFeature}'s lookup.
+ *
+ * The maps below are typed `Record<string, boolean>` to break the
+ * circular type dependency (the keys-of-EditorConfig derivation
+ * referencing EditorConfig itself); hosts should still pass
+ * `FeatureKey`-shaped strings for compile-time-via-the-helper safety.
+ *
+ * @public
+ */
+export type FeatureKey = EnableKey extends `enable_${infer F}` ? F : never;
+
 /**
  * Programmer-facing feature-flag layer for the editor. Modeled on
  * `lens-pdf`'s `ViewerConfig`: every host-visible feature is a typed
@@ -11,6 +56,10 @@
  *   2. {@link BASIC_MODE_OVERRIDES} or {@link PRO_MODE_OVERRIDES} (per
  *      the `mode` argument)
  *   3. Per-instance overrides passed by the host
+ *
+ * The `panelVisibility`, `capabilities`, and `plan_gates` layers are
+ * optional — absent entries preserve identity behaviour, so existing
+ * consumers don't have to set them.
  *
  * @public
  */
@@ -40,10 +89,50 @@ export interface EditorConfig {
   // ── Panels (pro-tier by default) ─────────────────────────────────
   enable_layers_panel: boolean;
   enable_preflight_banner: boolean;
+  /** F0 — host-toggleable palette overflow menu (desktop) + mobile
+   *  drawer "Panels" section. When false, all palettes render
+   *  regardless of their per-id `panelVisibility` entry. */
+  enable_palettes: boolean;
+  /** F1 plumb — separation-aware UI surface. UI ships in Wave 1+;
+   *  flag prepares the surface so hosts can opt out preemptively. */
+  enable_separations: boolean;
+
+  // ── Job setup (F2) ───────────────────────────────────────────────
+  /** F2 — Print-context modal (process, substrate, ICC, TAC, target
+   *  markets). When false, hosts get a `printContext`-less wire model. */
+  enable_print_context: boolean;
 
   // ── Canvas overlays ──────────────────────────────────────────────
   enable_canvas_grid: boolean;
   enable_bleed_visualization: boolean;
+
+  // ── Optional gating layers (host or backend supplied) ────────────
+  /**
+   * Per-palette visibility. Absent or `true` means visible; `false`
+   * hides without removing the toggle from the {@link PaletteId}
+   * registry. Hosts that want sticky visibility persist this object
+   * keyed by user + document.
+   */
+  panelVisibility?: Partial<Record<PaletteId, boolean>>;
+
+  /**
+   * Runtime capability declarations from the backend (e.g. "this
+   * tenant's compile-pdf instance has /v1/impose/apply enabled").
+   * Absent entry defaults to `true`. `false` hides the feature.
+   * Separate from `plan_gates` so the UI can distinguish "capability
+   * absent" from "plan doesn't include this".
+   *
+   * Keys are {@link FeatureKey}-shaped (typed `string` to break a
+   * circular dep — hosts should pass `FeatureKey` values).
+   */
+  capabilities?: Record<string, boolean>;
+
+  /**
+   * Plan-tier gating (e.g. "spot library is paid"). Same shape as
+   * `capabilities` but conceptually orthogonal — a feature can be
+   * capable + plan-gated, in which case both must be true.
+   */
+  plan_gates?: Record<string, boolean>;
 }
 
 /**
@@ -77,6 +166,10 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   // Panels
   enable_layers_panel: true,
   enable_preflight_banner: true,
+  enable_palettes: true,
+  enable_separations: true,
+  // Job setup
+  enable_print_context: true,
   // Canvas
   enable_canvas_grid: true,
   enable_bleed_visualization: true,
@@ -113,4 +206,48 @@ export function resolveConfig(
 ): EditorConfig {
   const modeOverrides = mode === "basic" ? BASIC_MODE_OVERRIDES : PRO_MODE_OVERRIDES;
   return { ...DEFAULT_EDITOR_CONFIG, ...modeOverrides, ...instanceOverrides };
+}
+
+/**
+ * Resolve whether a feature should be visible right now.
+ *
+ * Evaluates four gates and returns true iff *all* are open:
+ *   1. `enable_<f>` is not explicitly `false`.
+ *   2. `plan_gates[f]` is not explicitly `false` (absent = open).
+ *   3. `capabilities[f]` is not explicitly `false` (absent = open).
+ *   4. `f` hasn't been marked unwired via
+ *      {@link import("./unwired").markUnwired}.
+ *
+ * Use this at every render site that gates a feature; the four-layer
+ * separation lets hosts distinguish "we hid it" from "the plan
+ * doesn't include it" from "the backend can't do it right now" from
+ * "the editor build doesn't ship this UI yet" without losing the
+ * underlying boolean flag.
+ *
+ * @public
+ */
+export function showFeature(cfg: EditorConfig, f: FeatureKey): boolean {
+  const enabled = cfg[`enable_${f}` as keyof EditorConfig] !== false;
+  const plan = cfg.plan_gates?.[f] !== false;
+  const capable = cfg.capabilities?.[f] !== false;
+  const wired = !isUnwired(f);
+  return enabled && plan && capable && wired;
+}
+
+/**
+ * Resolve whether a palette should render.
+ *
+ * Two gates:
+ *   1. `enable_palettes` is not explicitly `false`. When the
+ *      palettes feature is off, *all* palettes are forced visible —
+ *      the visibility map is a UI toggle, not a kill switch, so
+ *      hiding the toggle UI must not silently hide content.
+ *   2. `panelVisibility[id]` is not explicitly `false` (absent or
+ *      `true` means visible).
+ *
+ * @public
+ */
+export function isPanelVisible(cfg: EditorConfig, id: PaletteId): boolean {
+  if (cfg.enable_palettes === false) return true;
+  return cfg.panelVisibility?.[id] !== false;
 }
