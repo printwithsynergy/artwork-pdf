@@ -76,6 +76,11 @@ export function FoldPreviewOverlay({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    // Guard zero / negative dimensions — `setSize(0, 0)` produces a
+    // degenerate canvas and `width / height` on the camera becomes
+    // NaN/Infinity. Layout transitions can briefly hit this during
+    // mount; defer scene creation until both dims are positive.
+    if (width <= 0 || height <= 0) return;
     let runtime: FoldSceneRuntime | null = null;
     let disposed = false;
 
@@ -88,6 +93,11 @@ export function FoldPreviewOverlay({
       if (pm) {
         applyScene(three, runtime, buildFoldScene(pm, fc));
       }
+      // Render-on-change: PR-3's scaffold is static, so one draw per
+      // mutation is enough. PR-4 swaps this for a RAF loop driven by
+      // user interaction (drag-to-fold), so the loop machinery isn't
+      // worth keeping cold here.
+      runtime.renderer.render(runtime.scene, runtime.camera);
     })();
 
     return () => {
@@ -105,6 +115,7 @@ export function FoldPreviewOverlay({
       const three = await import("three");
       if (disposed) return;
       applyScene(three, runtime, buildFoldScene(panelMetadata, foldConfig));
+      runtime.renderer.render(runtime.scene, runtime.camera);
     })();
     return () => {
       disposed = true;
@@ -146,7 +157,6 @@ type FoldSceneRuntime = {
   hingeGroup: any;
   // biome-ignore lint/suspicious/noExplicitAny: see above.
   resources: any[];
-  raf: number | null;
 };
 
 async function createScene(
@@ -184,14 +194,7 @@ async function createScene(
     panelGroup,
     hingeGroup,
     resources: [],
-    raf: null,
   };
-
-  const animate = () => {
-    runtime.raf = requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-  };
-  animate();
 
   return runtime;
 }
@@ -247,7 +250,6 @@ function applyScene(
 }
 
 function disposeScene(runtime: FoldSceneRuntime): void {
-  if (runtime.raf !== null) cancelAnimationFrame(runtime.raf);
   for (const r of runtime.resources) r.dispose?.();
   runtime.resources = [];
   runtime.renderer.dispose?.();
