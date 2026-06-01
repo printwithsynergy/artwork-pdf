@@ -7,6 +7,13 @@ import { makeRenderJob } from "./render.js";
 
 const DUMMY_PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
 const DUMMY_PDF_B64 = btoa(String.fromCharCode(...DUMMY_PDF_BYTES));
+const BASE = "http://test.local";
+const ENDPOINT = {
+  compose: `${BASE}/v1/compose/apply`,
+  marks: `${BASE}/v1/marks/apply`,
+  trap: `${BASE}/v1/trap/apply`,
+  impose: `${BASE}/v1/impose/apply`,
+} as const;
 
 const SAMPLE_DOC: DocumentModel = {
   version: "2",
@@ -35,7 +42,7 @@ function makeClient(
     calls.push(call);
     return respond(call);
   }) as typeof globalThis.fetch;
-  return new CompilePdfClient({ baseUrl: "http://test.local", fetch: fetcher });
+  return new CompilePdfClient({ baseUrl: BASE, fetch: fetcher });
 }
 
 describe("makeRenderJob", () => {
@@ -61,7 +68,7 @@ describe("makeRenderJob", () => {
     await renderJob([makeJob({ document: SAMPLE_DOC })]);
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.url).toBe("http://test.local/v1/compose/apply");
+    expect(calls[0]?.url).toBe(ENDPOINT.compose);
     expect(calls[0]?.body).toMatchObject({
       document: { version: "2", width: 105, height: 148 },
       options: { embed_fonts: true, color_profile: "ISOcoated_v2_eci" },
@@ -144,5 +151,101 @@ describe("makeRenderJob", () => {
     ]);
 
     expect(nthCall).toBe(3);
+  });
+});
+
+describe("makeRenderJob — producer chaining", () => {
+  beforeEach(() => {
+    vi.stubEnv("DATABASE_URL", "");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  function okResponse(cacheKey: string): Response {
+    return new Response(
+      JSON.stringify({ output_pdf_b64: DUMMY_PDF_B64, cache_key: cacheKey }),
+      { status: 200 },
+    );
+  }
+
+  it("chains compose → marks when marksTemplate is present", async () => {
+    const calls: FetchCall[] = [];
+    let n = 0;
+    const client = makeClient(() => okResponse(`step-${++n}`), calls);
+    const renderJob = makeRenderJob(client);
+
+    await renderJob([
+      makeJob({ document: SAMPLE_DOC, marksTemplate: { trim: true, bleed: true } }),
+    ]);
+
+    expect(calls.map((c) => c.url)).toEqual([
+      ENDPOINT.compose,
+      ENDPOINT.marks,
+    ]);
+    expect(calls[1]?.body).toMatchObject({ plan: { trim: true, bleed: true } });
+  });
+
+  it("chains compose → trap when trapPolicy is present (skips marks)", async () => {
+    const calls: FetchCall[] = [];
+    let n = 0;
+    const client = makeClient(() => okResponse(`step-${++n}`), calls);
+    const renderJob = makeRenderJob(client);
+
+    await renderJob([
+      makeJob({ document: SAMPLE_DOC, trapPolicy: { widthMm: 0.15, mode: "spread" } }),
+    ]);
+
+    expect(calls.map((c) => c.url)).toEqual([
+      ENDPOINT.compose,
+      ENDPOINT.trap,
+    ]);
+    expect(calls[1]?.body).toMatchObject({ policy: { widthMm: 0.15, mode: "spread" } });
+  });
+
+  it("chains compose → impose when imposeTemplate is present (skips marks + trap)", async () => {
+    const calls: FetchCall[] = [];
+    let n = 0;
+    const client = makeClient(() => okResponse(`step-${++n}`), calls);
+    const renderJob = makeRenderJob(client);
+
+    await renderJob([
+      makeJob({
+        document: SAMPLE_DOC,
+        imposeTemplate: { sheetWidthPt: 1684, sheetHeightPt: 2384, rows: 2, cols: 2 },
+      }),
+    ]);
+
+    expect(calls.map((c) => c.url)).toEqual([
+      ENDPOINT.compose,
+      ENDPOINT.impose,
+    ]);
+    expect(calls[1]?.body).toMatchObject({
+      template: { sheetWidthPt: 1684, sheetHeightPt: 2384, rows: 2, cols: 2 },
+    });
+  });
+
+  it("runs the full chain in order — compose → marks → trap → impose — when all four fields are present", async () => {
+    const calls: FetchCall[] = [];
+    let n = 0;
+    const client = makeClient(() => okResponse(`step-${++n}`), calls);
+    const renderJob = makeRenderJob(client);
+
+    await renderJob([
+      makeJob({
+        document: SAMPLE_DOC,
+        marksTemplate: { trim: true },
+        trapPolicy: { widthMm: 0.1 },
+        imposeTemplate: { sheetWidthPt: 1000, sheetHeightPt: 1500, rows: 1, cols: 2 },
+      }),
+    ]);
+
+    expect(calls.map((c) => c.url)).toEqual([
+      ENDPOINT.compose,
+      ENDPOINT.marks,
+      ENDPOINT.trap,
+      ENDPOINT.impose,
+    ]);
   });
 });
