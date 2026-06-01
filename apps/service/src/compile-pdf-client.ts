@@ -95,7 +95,6 @@ export class CompilePdfClient {
 
   /**
    * Render a DocumentModel to PDF via compile-pdf's `compose` producer.
-   * This replaces the local `@artworkpdf/pdf-writer` package.
    *
    * @throws when the response is not 200 or the JSON is missing
    *         `output_pdf_b64`.

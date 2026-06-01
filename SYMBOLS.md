@@ -14,10 +14,6 @@ _placeholder_
 
 _placeholder — re-exports EditorApp, TopBar, MobileToolDrawer, EditorConfig, dieline-template helpers, bleed helpers. See packages/editor-app/README.md._
 
-## @artworkpdf/pdf-writer
-
-_placeholder_
-
 ## @artworkpdf/dieline-parser
 
 _placeholder_
