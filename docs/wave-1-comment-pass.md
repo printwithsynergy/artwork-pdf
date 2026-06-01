@@ -22,8 +22,8 @@ cycles tight; CI/typecheck/test must stay green at every step.
 | 5 | Wave 1 PR-5 | `packages/compose/src/` | compose-producer renderer (DocumentV3 → PDF via pdf-lib) | **merged** |
 | 6 | Wave 1 PR-6 | `packages/dieline-parser/src/` | CF2 / DDES / ARD parsers | **merged** |
 | 7 | Wave 1 PR-7 | `packages/flexo-distortion/src/` | flexo distortion compensation math | **merged** |
-| 8 | Wave 1 PR-8 | `packages/synergy-client/src/` | typed HTTP client for the synergy engine (`@printwithsynergy/artwork-pdf` package — synergy workflow API) | **in flight** |
-| 9 | Wave 1 PR-9 | `apps/editor/src/` | Next.js host, `MarketingPage`, `EditorCanvas`, route handlers | queued |
+| 8 | Wave 1 PR-8 | `packages/synergy-client/src/` | typed HTTP client for the synergy engine (`@printwithsynergy/artwork-pdf` package — synergy workflow API) | **merged** |
+| 9 | Wave 1 PR-9 | `apps/editor/src/` | Next.js host, `MarketingPage`, `EditorCanvas`, route handlers | **in flight** |
 
 ## Per-PR checklist
 
