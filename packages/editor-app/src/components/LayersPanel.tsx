@@ -22,6 +22,7 @@ const ICONS: Record<CanvasObj["type"], string> = {
   ellipse: "◯",
   text: "T",
   image: "▣",
+  path: "↯",
 };
 
 function label(o: CanvasObj): string {

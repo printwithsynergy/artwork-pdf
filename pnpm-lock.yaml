@@ -148,6 +148,9 @@ importers:
 
   packages/editor-app:
     dependencies:
+      '@artworkpdf/dieline-parser':
+        specifier: workspace:*
+        version: link:../dieline-parser
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1

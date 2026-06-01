@@ -6,7 +6,14 @@
 // so server components (Next.js RSC, Astro frontmatter) can pick a
 // template and produce initial Page state without touching the
 // browser-only editor bundle.
+//
+// `dielineToPage()` is the parallel ingress for user-supplied CF2 /
+// DDES / ARD files (parsed via `@artworkpdf/dieline-parser`'s
+// `parseCF2` / `parseDDES` / `parseARD`) — each parsed `Dieline`
+// becomes a single-page `Page` seeded with one locked path per
+// `DielinePath`.
 
+import type { Dieline, DielinePath } from "@artworkpdf/dieline-parser";
 import type { CanvasObj } from "../components/EditorCanvas";
 import library from "../data/dielines.json";
 
@@ -247,4 +254,128 @@ export function templateToInitialState(
     locked: true,
   };
   return { objects: [dielineObj], pageSize };
+}
+
+/**
+ * Stroke color per DielinePath type. Chosen to match the
+ * print-industry conventions our preview uses elsewhere:
+ *
+ * - cut    — orange (brand, same as bundled DIELINE_STROKE)
+ * - crease — blue (folding score)
+ * - perf   — red (perforation)
+ * - bleed  — cyan (bleed edge / safety boundary)
+ */
+const DIELINE_PATH_STROKES: Record<DielinePath["type"], string> = {
+  cut: DIELINE_STROKE,
+  crease: "#1e90ff",
+  perf: "#ef4444",
+  bleed: "#0ea5e9",
+};
+
+/**
+ * Scale every coordinate in an SVG `d` string from millimeters to
+ * PDF points (multiply by `MM_TO_PT`).
+ *
+ * The dieline-parser emits absolute `M` / `L` / `A` commands in
+ * dieline-native millimeters. The editor's Konva Stage is configured
+ * in PDF points (the canvas / pageSize math is all in points), so
+ * the raw `d` string would render at ~35% of intended size if used
+ * directly. We pre-scale here so `pathData` matches the canvas unit
+ * system end-to-end (no Konva.Path `scaleX` / `scaleY` shenanigans
+ * that would also scale stroke width).
+ *
+ * Per-command coordinate slots:
+ * - `M x,y` / `L x,y` → both coordinates are positions; scale all.
+ * - `A rx,ry,xRot,largeArc,sweep,x,y` → rx and ry are radii (scale),
+ *   xRot is degrees (pass through), the two flags are 0/1 (pass
+ *   through), the trailing x,y are positions (scale).
+ *
+ * Unknown commands pass through unchanged. The parser's output only
+ * uses M / L / A so the full SVG-path alphabet doesn't need handling.
+ */
+function scalePathMmToPt(d: string): string {
+  return d.replace(/([MLA])\s*([\d.,\s-]+)/g, (_, cmd: string, args: string) => {
+    const nums = args
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+      .filter((n) => !Number.isNaN(n));
+    if (cmd === "A") {
+      // Arc: rx, ry, xRot, largeArc, sweep, x, y — scale rx, ry, x, y; pass others.
+      const out: number[] = [];
+      for (let i = 0; i + 6 < nums.length; i += 7) {
+        out.push(
+          (nums[i] ?? 0) * MM_TO_PT,
+          (nums[i + 1] ?? 0) * MM_TO_PT,
+          nums[i + 2] ?? 0,
+          nums[i + 3] ?? 0,
+          nums[i + 4] ?? 0,
+          (nums[i + 5] ?? 0) * MM_TO_PT,
+          (nums[i + 6] ?? 0) * MM_TO_PT,
+        );
+      }
+      return `${cmd}${out.join(",")}`;
+    }
+    // M / L: alternating x,y pairs.
+    return `${cmd}${nums.map((n) => n * MM_TO_PT).join(",")}`;
+  });
+}
+
+/**
+ * Build a {@link Page} from a parsed {@link Dieline} (CF2 / DDES /
+ * ARD import).
+ *
+ * Each `DielinePath` becomes one locked `CanvasObj` of type `"path"`
+ * rendered as a Konva `Path` (the `Path` import was added to
+ * `EditorCanvas` for this case). Type-specific stroke colors come
+ * from {@link DIELINE_PATH_STROKES}. The whole page is locked so
+ * users can't accidentally drag the structural reference geometry —
+ * same invariant as the bundled-template dieline rect.
+ *
+ * Coordinate units: the parser emits SVG path `d` strings in
+ * **dieline-native millimeters** (Y-down). We position each path
+ * object at `(bleedMm * MM_TO_PT, bleedMm * MM_TO_PT)` so the dieline
+ * trim sits inside the bleed margin. The path data itself is in
+ * mm — Konva renders it without further conversion because the
+ * containing Stage is configured in points and the relative offsets
+ * align (the Stage's own scale handles the mm→pt for display).
+ *
+ * `bleedMmOverride`: pass a host-supplied bleed (URL param, UI
+ * input) instead of the default. Defaults to 0 for parsed dielines —
+ * the source files don't carry their own bleed convention and the
+ * caller is the right place to decide.
+ *
+ * @public
+ */
+export function dielineToPage(dieline: Dieline, bleedMmOverride?: number): Page {
+  const bleedMm = bleedMmOverride ?? 0;
+  const pageSize = {
+    width: (dieline.widthMm + bleedMm * 2) * MM_TO_PT,
+    height: (dieline.heightMm + bleedMm * 2) * MM_TO_PT,
+  };
+  const bleedOffsetPt = bleedMm * MM_TO_PT;
+
+  const objects: CanvasObj[] = dieline.paths.map((p: DielinePath) => ({
+    id: `dieline-${dieline.format.toLowerCase()}-${p.id}`,
+    type: "path" as const,
+    x: bleedOffsetPt,
+    y: bleedOffsetPt,
+    width: 0,
+    height: 0,
+    fill: "transparent",
+    stroke: DIELINE_PATH_STROKES[p.type],
+    strokeWidth: 1,
+    opacity: 1,
+    // Pre-scale mm → pt so pathData matches the canvas unit system.
+    pathData: scalePathMmToPt(p.d),
+    name: `${dieline.format} ${p.type}`,
+    locked: true,
+  }));
+
+  return {
+    id: `page-${dieline.format.toLowerCase()}-${Math.random().toString(36).slice(2, 8)}`,
+    objects,
+    pageSize,
+    bleedMm,
+  };
 }
