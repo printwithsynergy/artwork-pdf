@@ -40,6 +40,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "graphic-styles": { slot: "panel.right", label: "Graphic Styles" },
   history: { slot: "panel.right", label: "History" },
   "fold-preview": { slot: "panel.modal", label: "3D Fold Preview" },
+  "variant-matrix": { slot: "panel.modal", label: "Variants" },
 };
 
 /**

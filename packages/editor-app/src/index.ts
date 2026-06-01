@@ -42,6 +42,12 @@ export {
   type FoldPreviewOverlayProps,
 } from "./components/FoldPreviewOverlay";
 export {
+  VariantMatrixPanel,
+  type VariantMatrixPanelProps,
+  type VariantMatrixPanelValue,
+  type VariantMatrixPanelVariant,
+} from "./components/VariantMatrixPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
