@@ -7,6 +7,13 @@ import { makeRenderJob } from "./render.js";
 
 const DUMMY_PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]); // %PDF-
 const DUMMY_PDF_B64 = btoa(String.fromCharCode(...DUMMY_PDF_BYTES));
+const BASE = "http://test.local";
+const ENDPOINT = {
+  compose: `${BASE}/v1/compose/apply`,
+  marks: `${BASE}/v1/marks/apply`,
+  trap: `${BASE}/v1/trap/apply`,
+  impose: `${BASE}/v1/impose/apply`,
+} as const;
 
 const SAMPLE_DOC: DocumentModel = {
   version: "2",
@@ -35,7 +42,7 @@ function makeClient(
     calls.push(call);
     return respond(call);
   }) as typeof globalThis.fetch;
-  return new CompilePdfClient({ baseUrl: "http://test.local", fetch: fetcher });
+  return new CompilePdfClient({ baseUrl: BASE, fetch: fetcher });
 }
 
 describe("makeRenderJob", () => {
@@ -61,7 +68,7 @@ describe("makeRenderJob", () => {
     await renderJob([makeJob({ document: SAMPLE_DOC })]);
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.url).toBe("http://test.local/v1/compose/apply");
+    expect(calls[0]?.url).toBe(ENDPOINT.compose);
     expect(calls[0]?.body).toMatchObject({
       document: { version: "2", width: 105, height: 148 },
       options: { embed_fonts: true, color_profile: "ISOcoated_v2_eci" },
@@ -174,8 +181,8 @@ describe("makeRenderJob — producer chaining", () => {
     ]);
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://test.local/v1/compose/apply",
-      "http://test.local/v1/marks/apply",
+      ENDPOINT.compose,
+      ENDPOINT.marks,
     ]);
     expect(calls[1]?.body).toMatchObject({ plan: { trim: true, bleed: true } });
   });
@@ -191,8 +198,8 @@ describe("makeRenderJob — producer chaining", () => {
     ]);
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://test.local/v1/compose/apply",
-      "http://test.local/v1/trap/apply",
+      ENDPOINT.compose,
+      ENDPOINT.trap,
     ]);
     expect(calls[1]?.body).toMatchObject({ policy: { widthMm: 0.15, mode: "spread" } });
   });
@@ -211,8 +218,8 @@ describe("makeRenderJob — producer chaining", () => {
     ]);
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://test.local/v1/compose/apply",
-      "http://test.local/v1/impose/apply",
+      ENDPOINT.compose,
+      ENDPOINT.impose,
     ]);
     expect(calls[1]?.body).toMatchObject({
       template: { sheetWidthPt: 1684, sheetHeightPt: 2384, rows: 2, cols: 2 },
@@ -235,10 +242,10 @@ describe("makeRenderJob — producer chaining", () => {
     ]);
 
     expect(calls.map((c) => c.url)).toEqual([
-      "http://test.local/v1/compose/apply",
-      "http://test.local/v1/marks/apply",
-      "http://test.local/v1/trap/apply",
-      "http://test.local/v1/impose/apply",
+      ENDPOINT.compose,
+      ENDPOINT.marks,
+      ENDPOINT.trap,
+      ENDPOINT.impose,
     ]);
   });
 });
