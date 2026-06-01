@@ -34,7 +34,7 @@ describe("HistoryPanel — JSX shape", () => {
       onSelect: () => {},
     });
     const children = (el as { props: { children: unknown } }).props.children as unknown[];
-    const rowButtons = (children[1] as unknown[]) as Array<{
+    const rowButtons = children[1] as unknown[] as Array<{
       key: string;
       props: { "aria-current"?: string };
     }>;
@@ -51,7 +51,7 @@ describe("HistoryPanel — JSX shape", () => {
       onSelect: () => {},
     });
     const children = (el as { props: { children: unknown } }).props.children as unknown[];
-    const rowButtons = (children[1] as unknown[]) as Array<{
+    const rowButtons = children[1] as unknown[] as Array<{
       props: { children: unknown[] };
     }>;
     // Each row's second child is the object-count span; its children are
