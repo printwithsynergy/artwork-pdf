@@ -111,17 +111,24 @@ export function ComplianceFindingsPanel({
     let disposed = false;
     setLoading(true);
     setError(null);
-    loader({ documentB64, process, substrate })
-      .then((next) => {
+    // Wrap the loader call in an async IIFE so a *synchronous*
+    // throw from the adapter (e.g. a host that validates inputs
+    // before constructing the fetch Promise) flows through the
+    // same `setError` path as a rejected Promise — otherwise the
+    // throw would escape the effect and leave the panel stuck on
+    // "Checking compliance…".
+    void (async () => {
+      try {
+        const next = await loader({ documentB64, process, substrate });
         if (disposed) return;
         setFindings(next);
-        setLoading(false);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (disposed) return;
         setError(err instanceof Error ? err.message : String(err));
-        setLoading(false);
-      });
+      } finally {
+        if (!disposed) setLoading(false);
+      }
+    })();
     return () => {
       disposed = true;
     };
@@ -163,30 +170,14 @@ export function ComplianceFindingsPanel({
     <div data-testid="compliance-findings-panel" style={{ padding: "0.5rem" }}>
       <h3 style={{ margin: "0 0 0.5rem 0" }}>Compliance ({findings.length})</h3>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {findings.map((f, i) => (
+        {findings.map((f, i) => {
           // Append the array index so duplicate (ruleId, pageIndex,
           // objectId) tuples — which the lint-pdf wire format allows
           // when the same rule fires twice on the same target with
           // different messages — still get unique React keys.
-          <li key={`${f.ruleId}-${f.pageIndex ?? "doc"}-${f.objectId ?? ""}-${i}`}>
-            <button
-              type="button"
-              onClick={() => onSelect?.(f)}
-              aria-label={`Compliance finding: ${f.message} (${f.ruleId}${
-                f.pageIndex !== undefined ? `, page ${f.pageIndex + 1}` : ""
-              })`}
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "0.5rem",
-                width: "100%",
-                padding: "0.25rem 0.5rem",
-                background: "transparent",
-                border: "none",
-                cursor: onSelect ? "pointer" : "default",
-                textAlign: "left",
-              }}
-            >
+          const key = `${f.ruleId}-${f.pageIndex ?? "doc"}-${f.objectId ?? ""}-${i}`;
+          const rowContents = (
+            <>
               <span
                 aria-hidden="true"
                 style={{
@@ -203,9 +194,44 @@ export function ComplianceFindingsPanel({
                 {f.ruleId}
                 {f.pageIndex !== undefined ? ` · p${f.pageIndex + 1}` : ""}
               </small>
-            </button>
-          </li>
-        ))}
+            </>
+          );
+          const rowStyle = {
+            display: "flex",
+            alignItems: "baseline",
+            gap: "0.5rem",
+            width: "100%",
+            padding: "0.25rem 0.5rem",
+          } as const;
+          // When the host wires no `onSelect`, rendering a `<button>`
+          // would announce an interactive control to screen-reader
+          // users that does nothing on activation — render a plain
+          // div instead so the finding is read as static content.
+          return (
+            <li key={key}>
+              {onSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(f)}
+                  aria-label={`Compliance finding: ${f.message} (${f.ruleId}${
+                    f.pageIndex !== undefined ? `, page ${f.pageIndex + 1}` : ""
+                  })`}
+                  style={{
+                    ...rowStyle,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {rowContents}
+                </button>
+              ) : (
+                <div style={rowStyle}>{rowContents}</div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
