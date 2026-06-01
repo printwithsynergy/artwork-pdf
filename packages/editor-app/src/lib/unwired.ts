@@ -13,6 +13,13 @@
  * call {@link markUnwired} at module-init time; {@link showFeature}
  * reads via {@link isUnwired} to suppress UI for features whose flag
  * is on but whose implementation hasn't landed.
+ *
+ * **Wave 1 status (current build):** every flag introduced through
+ * Wave 1 (`enable_separations`, `enable_print_context`,
+ * `enable_total_ink_coverage_live`, `enable_trap_preview`,
+ * `enable_trap_editor`, `enable_impose`, `enable_palettes`) ships
+ * with a live UI — no `markUnwired(...)` calls live in the tree.
+ * The helpers stay in place for the next wave's plumb-only flags.
  */
 
 const UNWIRED = new Set<string>();
