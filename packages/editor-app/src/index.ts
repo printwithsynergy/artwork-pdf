@@ -56,6 +56,12 @@ export {
   type SpotLibrary,
 } from "./components/SwatchesPicker";
 export {
+  InksPanel,
+  type Ink,
+  type InksLoaderFn,
+  type InksPanelProps,
+} from "./components/InksPanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,

@@ -37,6 +37,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   preflight: { slot: "panel.right", label: "Preflight" },
   "dieline-library": { slot: "panel.modal", label: "Dieline Library" },
   swatches: { slot: "panel.right", label: "Swatches" },
+  inks: { slot: "panel.right", label: "Inks" },
   "graphic-styles": { slot: "panel.right", label: "Graphic Styles" },
   history: { slot: "panel.right", label: "History" },
   "fold-preview": { slot: "panel.modal", label: "3D Fold Preview" },

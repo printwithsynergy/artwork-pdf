@@ -21,6 +21,7 @@ export type PaletteId =
   | "preflight"
   | "dieline-library"
   | "swatches"
+  | "inks"
   | "graphic-styles"
   | "history"
   | "fold-preview";
@@ -97,6 +98,11 @@ export interface EditorConfig {
   /** F1 plumb — separation-aware UI surface. UI ships in Wave 1+;
    *  flag prepares the surface so hosts can opt out preemptively. */
   enable_separations: boolean;
+  /** C1 — inks palette. Surfaces the live ink list extracted from the
+   *  most recently rendered PDF, alongside the existing swatches
+   *  palette (which still handles PANTONE search). Hosts can disable
+   *  to avoid the `/v1/separations/list` round-trip on every export. */
+  enable_inks_panel: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -196,6 +202,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_banner: true,
   enable_palettes: true,
   enable_separations: true,
+  enable_inks_panel: true,
   // Job setup
   enable_print_context: true,
   // Canvas
