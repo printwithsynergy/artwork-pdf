@@ -65,6 +65,10 @@ const rowBaseStyle: CSSProperties = {
  * 100-snapshot ceiling in `commit()`); rendering the entire list
  * here is cheap because the cap keeps the row count bounded.
  *
+ * @returns An `<aside>` element containing the history header and
+ *   one `<button>` per snapshot. Each button is keyed by its
+ *   snapshot index and reports `aria-current="step"` when it is the
+ *   active cursor.
  * @public
  */
 export function HistoryPanel({ cursor, objectCounts, onSelect }: HistoryPanelProps) {

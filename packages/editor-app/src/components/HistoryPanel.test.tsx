@@ -44,13 +44,23 @@ describe("HistoryPanel — JSX shape", () => {
     expect(step0?.props["aria-current"]).toBeUndefined();
   });
 
-  it("guards against missing objectCounts entries (defaults to 0 obj)", () => {
+  it("renders the per-snapshot object-count label", () => {
     const el = HistoryPanel({
       cursor: 1,
-      objectCounts: [0, 0],
+      objectCounts: [0, 5],
       onSelect: () => {},
     });
-    // Doesn't throw — that's the invariant. Shape check kept light.
-    expect(el).toBeDefined();
+    const children = (el as { props: { children: unknown } }).props.children as unknown[];
+    const rowButtons = (children[1] as unknown[]) as Array<{
+      props: { children: unknown[] };
+    }>;
+    // Each row's second child is the object-count span; its children are
+    // [count, " obj"] in JSX-array form (text-as-children doesn't auto-join).
+    const counts = rowButtons.map((b) => {
+      const span = b.props.children[1] as { props: { children: [number, string] } };
+      return span.props.children[0];
+    });
+    // Rows render newest-first → index 1's count first (5), then index 0's (0).
+    expect(counts).toEqual([5, 0]);
   });
 });
