@@ -13,6 +13,13 @@
  * call {@link markUnwired} at module-init time; {@link showFeature}
  * reads via {@link isUnwired} to suppress UI for features whose flag
  * is on but whose implementation hasn't landed.
+ *
+ * **The registry itself is the source of truth.** When no module
+ * calls `markUnwired(...)`, every flagged feature ships live;
+ * adding plumb-only flags in future waves means landing a
+ * `markUnwired("<feature>")` call alongside the flag and removing
+ * it when the UI ships. `grep -rn 'markUnwired(' packages/editor-app/src`
+ * reports the current set without doc maintenance.
  */
 
 const UNWIRED = new Set<string>();
