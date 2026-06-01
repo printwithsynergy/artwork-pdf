@@ -1,0 +1,29 @@
+{
+  "name": "@artworkpdf/compose",
+  "version": "0.1.0",
+  "description": "Compose-producer renderer: DocumentV3 → PDF bytes via pdf-lib. Skeleton (geometry only); layer rendering lands in a follow-up.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@artworkpdf/document-model": "workspace:*",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
+  }
+}
