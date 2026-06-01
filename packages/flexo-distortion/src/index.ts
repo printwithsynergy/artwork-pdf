@@ -28,6 +28,14 @@
  * the factors were measured; informational for downstream consumers
  * that may need to interpolate factors for a different repeat. Not
  * used by the math in this module.
+ *
+ * **Invariant:** `factorX` and `factorY` must be finite and non-zero
+ * (positive in practice — plates physically stretch, they don't
+ * shrink). Both {@link applyFlexoDistortion} and
+ * {@link compensatedDimensions} divide by these values; the
+ * functions do *not* validate, so passing `0` produces `Infinity`,
+ * `NaN` produces `NaN`, etc. Callers are responsible for sourcing
+ * sensible factors (vendor charts, fingerprint measurements).
  */
 export type DistortionParams = {
   factorX: number;
@@ -58,6 +66,11 @@ export type DistortionParams = {
  * (`M L H V C S Q T A Z` and their lowercase forms) is recognized;
  * any other letters are stripped at tokenization time, so callers
  * with non-standard extensions must normalize before calling.
+ *
+ * Requires finite, non-zero `params.factorX` and `params.factorY`
+ * — see the {@link DistortionParams} invariant. The function does
+ * not validate; bad inputs propagate as `Infinity`/`NaN` in the
+ * output coordinates.
  */
 export function applyFlexoDistortion(pathData: string, params: DistortionParams): string {
   if (params.factorX === 1 && params.factorY === 1) return pathData;
@@ -70,7 +83,13 @@ export function applyFlexoDistortion(pathData: string, params: DistortionParams)
     .map((token) => {
       const type = token[0];
       const rest = token.slice(1).trim();
-      const nums = rest === "" ? [] : rest.split(/[\s,]+/).filter(Boolean).map(Number);
+      const nums =
+        rest === ""
+          ? []
+          : rest
+              .split(/[\s,]+/)
+              .filter(Boolean)
+              .map(Number);
 
       const scaleXY = (arr: number[]): number[] =>
         arr.map((n, i) => (i % 2 === 0 ? n / factorX : n / factorY));
@@ -113,15 +132,7 @@ export function applyFlexoDistortion(pathData: string, params: DistortionParams)
             const sweep = nums[i + 4] ?? 0;
             const ex = nums[i + 5] ?? 0;
             const ey = nums[i + 6] ?? 0;
-            out.push(
-              rx / factorX,
-              ry / factorY,
-              xRot,
-              largeArc,
-              sweep,
-              ex / factorX,
-              ey / factorY,
-            );
+            out.push(rx / factorX, ry / factorY, xRot, largeArc, sweep, ex / factorX, ey / factorY);
           }
           return `${type}${out.join(",")}`;
         }
@@ -144,6 +155,10 @@ export function applyFlexoDistortion(pathData: string, params: DistortionParams)
  * case of a rectangular bounding box. Use for plate sizing,
  * imposition cell dimensions, or any other geometry that flows
  * through the distortion pipeline as a pair rather than as a path.
+ *
+ * Requires finite, non-zero `params.factorX` and `params.factorY`
+ * — see the {@link DistortionParams} invariant. No validation; bad
+ * factors yield `Infinity`/`NaN` dimensions.
  */
 export function compensatedDimensions(
   originalWidthMm: number,
