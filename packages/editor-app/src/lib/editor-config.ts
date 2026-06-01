@@ -105,6 +105,11 @@ export interface EditorConfig {
   // ── Canvas overlays ──────────────────────────────────────────────
   enable_canvas_grid: boolean;
   enable_bleed_visualization: boolean;
+  /** C4 — debounced rasterize-and-sample on every commit, surfaces a
+   *  red heatmap over pixels above the TAC threshold plus a chip with
+   *  `max / avg`. Hosts can disable on low-end devices where the
+   *  ~250 ms rasterize is too costly. */
+  enable_total_ink_coverage_live: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -173,6 +178,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   // Canvas
   enable_canvas_grid: true,
   enable_bleed_visualization: true,
+  enable_total_ink_coverage_live: true,
 };
 
 /**
