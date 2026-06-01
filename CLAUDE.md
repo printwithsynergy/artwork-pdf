@@ -45,7 +45,7 @@ Specifically:
   ("added for X", "used by Y"), reference removed code, or duplicate
   type signatures verbatim.
 
-This policy is enforced as part of Wave 1 of the comment-pass effort —
-see [`docs/wave-1-comment-pass.md`](docs/wave-1-comment-pass.md) for
-the per-area schedule and progress tracker. Future edits should
-preserve it.
+This policy was rolled out as a per-area pass across `artwork-pdf` —
+see [`docs/comment-pass.md`](docs/comment-pass.md) for the completed
+tracker and the per-PR recipe (kept as a reference for future
+similar passes). Future edits should preserve the policy.
