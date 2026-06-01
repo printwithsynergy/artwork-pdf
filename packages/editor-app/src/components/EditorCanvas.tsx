@@ -23,6 +23,11 @@ import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
 import { LayersPanel } from "./LayersPanel";
 import { isPanelVisible } from "../lib/editor-config";
+import {
+  type EditorSeparation,
+  findSpotByColor,
+  registerSpot,
+} from "../lib/separations-registry";
 import { MobileToolDrawer } from "./MobileToolDrawer";
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -47,6 +52,10 @@ type ProductionExportRequest = {
   };
   output: { format: "pdf-x4" };
   preflightReport?: PreflightReport;
+  /** AI4 — editor's registered spot inks. When non-empty, threaded
+   *  through compile-pdf as the source-of-truth separation list
+   *  (bypasses what the renderer would infer from document content). */
+  separationsOverride?: unknown[];
 };
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "image";
@@ -120,6 +129,12 @@ type Props = {
   onPageSizeChange?: (pageSize: { width: number; height: number }) => void;
   /** Fired whenever the bleed value changes (drawer input or URL prop sync). */
   onBleedMmChange?: (bleedMm: number) => void;
+  /** AI4: initial spots registered on this page. Threads through to
+   *  compile-pdf's `separationsOverride` at export time. */
+  initialSeparations?: EditorSeparation[];
+  /** Fired whenever the spot registry changes (register/unregister via
+   *  the fill/stroke pickers' "as spot" affordance). */
+  onSeparationsChange?: (separations: EditorSeparation[]) => void;
   /** Extra collapsible sections added to the *top* of the mobile drawer
    *  (used by `EditorApp` to insert the `PageNavigator` stack when the
    *  document is multi-page). */
@@ -306,6 +321,8 @@ export function EditorCanvas({
   onObjectsChange,
   onPageSizeChange,
   onBleedMmChange,
+  initialSeparations,
+  onSeparationsChange,
   prependDrawerSections = [],
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -322,6 +339,16 @@ export function EditorCanvas({
   const [objects, setObjects] = useState<CanvasObj[]>(initialObjects ?? []);
   const [history, setHistory] = useState<CanvasObj[][]>([initialObjects ?? []]);
   const [historyIdx, setHistoryIdx] = useState(0);
+  // AI4 spot registry — per-page; threaded into JobSubmitRequest's
+  // separationsOverride at export time. Pure local state; parent
+  // (EditorApp) round-trips via onSeparationsChange.
+  const [separations, setSeparationsState] = useState<EditorSeparation[]>(
+    initialSeparations ?? [],
+  );
+  function updateSeparations(next: EditorSeparation[]) {
+    setSeparationsState(next);
+    onSeparationsChange?.(next);
+  }
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");
@@ -812,6 +839,20 @@ export function EditorCanvas({
       document: doc,
       output: { format: "pdf-x4" },
       ...(report ? { preflightReport: report } : {}),
+      // AI4: thread the page's registered spots through as
+      // separationsOverride. Strip the editor-only `hex` field on
+      // the wire — compile-pdf's Separation shape doesn't carry it
+      // (the hex is the editor's lookup key, not a wire field). The
+      // remaining fields (name/colorSpace/pantone/lab/type) match
+      // document-model's Separation structurally.
+      ...(separations.length > 0
+        ? {
+            separationsOverride: separations.map((s) => {
+              const { hex: _hex, ...wire } = s;
+              return wire;
+            }),
+          }
+        : {}),
     };
 
     try {
@@ -1032,6 +1073,55 @@ export function EditorCanvas({
               }}
             />
           </label>
+          {/* AI4: "register as spot" affordance. When the current
+              fill color isn't yet a registered spot, prompt for a
+              name and add it; when it already is, show a small badge
+              indicating the existing registration. The full
+              SwatchesPicker (Wave 1 PR-7) replaces the prompt with a
+              library browser; for now this is the manual path. */}
+          {(() => {
+            const existing = findSpotByColor(separations, fillColor);
+            if (existing) {
+              return (
+                <span
+                  title={`Registered as ${existing.name}`}
+                  style={{
+                    fontSize: "0.72rem",
+                    color: BRAND,
+                    padding: "0 0.35rem",
+                  }}
+                >
+                  ✓ {existing.name}
+                </span>
+              );
+            }
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  const name = window.prompt(
+                    `Register ${fillColor} as a spot ink. Name:`,
+                  );
+                  if (name?.trim()) {
+                    updateSeparations(registerSpot(separations, fillColor, name.trim()));
+                  }
+                }}
+                title="Register this color as a spot ink"
+                style={{
+                  fontSize: "0.7rem",
+                  color: MUTED,
+                  background: "transparent",
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: 3,
+                  padding: "0.15rem 0.35rem",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                + spot
+              </button>
+            );
+          })()}
           <label
             style={{
               display: "flex",
