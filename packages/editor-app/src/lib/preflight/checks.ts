@@ -53,9 +53,14 @@ export async function runClientChecks(file: File, rules: PreflightRule[]): Promi
         if (doc) issues.push(...checkPdfSpotColors(doc, rule));
         break;
       case "barcode_validation":
-        if (isRaster) issues.push(...(await checkRasterBarcodes(file, rule)));
-        // PDF barcode scanning needs the PDF-to-raster pipeline (deferred);
-        // for now, raster uploads cover the common artwork-import path.
+        if (isRaster) {
+          issues.push(...(await checkRasterBarcodes(file, rule)));
+        } else {
+          // PDF barcode scanning needs the PDF-to-raster pipeline
+          // (deferred); mark the check as skipped so the server-side
+          // preflight knows it's still owed for PDF uploads.
+          skippedChecks.push(rule.checkName);
+        }
         break;
     }
   }
@@ -258,7 +263,16 @@ async function checkRasterBarcodes(file: File, rule: PreflightRule): Promise<Pre
   const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
   bitmap.close();
 
-  const detections = await scanBarcodes(imageData);
+  // Fail-open: a real detector library (jsqr, quagga, zbar) can
+  // reject for many reasons (decode failure, WASM init crash, malformed
+  // input). We don't want a scanner bug to take out the whole preflight
+  // pass, so we swallow and emit no findings.
+  let detections: Awaited<ReturnType<typeof scanBarcodes>>;
+  try {
+    detections = await scanBarcodes(imageData);
+  } catch {
+    return [];
+  }
   const issues: PreflightIssue[] = [];
   for (const d of detections) {
     const v = validateBarcode(d);
