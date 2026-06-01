@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 /**
  * Wave 2 V2 — variant matrix UI for variable-data overrides.
@@ -75,14 +75,23 @@ export function VariantMatrixPanel({ value, onChange, initialTokenKeys }: Varian
     };
   }, [value, initialTokenKeys]);
 
+  // Monotonic counter to keep variant IDs stable across delete-then-add
+  // cycles. Length-derived ids (`v-${length + 1}`) collide whenever a
+  // middle row is removed and a new one added, which produces duplicate
+  // React keys and mis-targets row-level updates.
+  const nextVariantSuffix = useRef(1);
   const addVariant = () => {
-    const id = `v-${effective.variants.length + 1}`;
+    const used = new Set(effective.variants.map((v) => v.id));
+    let n = nextVariantSuffix.current;
+    let id = `v-${n}`;
+    while (used.has(id)) {
+      n += 1;
+      id = `v-${n}`;
+    }
+    nextVariantSuffix.current = n + 1;
     onChange({
       ...effective,
-      variants: [
-        ...effective.variants,
-        { id, name: `Variant ${effective.variants.length + 1}`, overrides: {} },
-      ],
+      variants: [...effective.variants, { id, name: `Variant ${n}`, overrides: {} }],
     });
   };
 
@@ -103,9 +112,18 @@ export function VariantMatrixPanel({ value, onChange, initialTokenKeys }: Varian
   const setOverride = (id: string, key: string, val: string) => {
     onChange({
       ...effective,
-      variants: effective.variants.map((v) =>
-        v.id === id ? { ...v, overrides: { ...v.overrides, [key]: val } } : v,
-      ),
+      variants: effective.variants.map((v) => {
+        if (v.id !== id) return v;
+        // Empty string means "clear the override" — drop the key so the
+        // variant falls back to the document-level default at merge
+        // time. Storing `""` would pin the override to an empty string,
+        // which is a different (and surprising) semantic.
+        if (val === "") {
+          const { [key]: _removed, ...rest } = v.overrides;
+          return { ...v, overrides: rest };
+        }
+        return { ...v, overrides: { ...v.overrides, [key]: val } };
+      }),
     });
   };
 
