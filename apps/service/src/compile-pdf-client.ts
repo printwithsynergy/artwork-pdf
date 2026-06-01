@@ -54,9 +54,10 @@ export type TrapPolicy = {
 };
 
 export type ImposeTemplate = {
-  /** Sheet size in points. */
-  sheetWidth: number;
-  sheetHeight: number;
+  /** Sheet size in PDF points (1 pt = 1/72 in). The `Pt` suffix
+   *  matches the document-model wire shape; see producer-plans.ts. */
+  sheetWidthPt: number;
+  sheetHeightPt: number;
   /** Cell layout: rows × cols of source pages. */
   rows: number;
   cols: number;

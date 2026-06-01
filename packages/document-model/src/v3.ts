@@ -10,6 +10,7 @@
 // `ensureV3()`; new producers should target v3 directly.
 
 import type { GraphicStyle, Layer, PrintContext, Separation } from "./extended.js";
+import type { TrapPolicy } from "./producer-plans.js";
 
 /**
  * One page of a {@link DocumentV3}.
@@ -20,7 +21,9 @@ import type { GraphicStyle, Layer, PrintContext, Separation } from "./extended.j
  *
  * `dielineTemplateId` and `flexoDistortion` are per-page so multi-up
  * impositions can mix substrates / dies / distortion factors on the
- * same sheet.
+ * same sheet. `trapConfig` is per-page so the interactive trap editor
+ * (Wave 1 D2) can store per-edge / per-color-pair overrides
+ * independently for each page in a multi-page document.
  */
 export type PageV3 = {
   id: string;
@@ -33,6 +36,7 @@ export type PageV3 = {
   layers: Layer[];
   dielineTemplateId?: string;
   flexoDistortion?: { distortionFactorX: number; distortionFactorY: number };
+  trapConfig?: TrapPolicy;
 };
 
 /**
