@@ -94,6 +94,12 @@ export function FoldEditorPanel({
   }
 
   const setEdgeAngle = (id: string, raw: string) => {
+    // In-progress edits ("", "-", "1e") parse to `NaN` / partial
+    // values — silently keep the last good angle so the user can
+    // type through to a valid one. The browser owns its `<input>`
+    // DOM value mid-edit, so the field still shows whatever they
+    // typed even though we haven't propagated it.
+    if (raw === "" || raw === "-" || raw === "+") return;
     const n = Number(raw);
     if (!Number.isFinite(n)) return;
     const clamped = Math.min(Math.max(n, min), max);
@@ -103,10 +109,20 @@ export function FoldEditorPanel({
     });
   };
 
-  const setEdgeDirection = (id: string, direction: "mountain" | "valley") => {
+  const setEdgeDirection = (id: string, direction: "mountain" | "valley" | undefined) => {
     onChange({
       ...value,
-      edges: value.edges.map((e) => (e.id === id ? { ...e, direction } : e)),
+      edges: value.edges.map((e) => {
+        if (e.id !== id) return e;
+        // Clearing the select drops the field entirely — restores the
+        // "no direction declared" state so the renderer can fall back
+        // to its own heuristic.
+        if (direction === undefined) {
+          const { direction: _omit, ...rest } = e;
+          return rest;
+        }
+        return { ...e, direction };
+      }),
     });
   };
 
@@ -164,7 +180,11 @@ export function FoldEditorPanel({
               value={edge.direction ?? ""}
               onChange={(e) => {
                 const v = e.target.value;
-                if (v === "mountain" || v === "valley") setEdgeDirection(edge.id, v);
+                if (v === "mountain" || v === "valley") {
+                  setEdgeDirection(edge.id, v);
+                } else if (v === "") {
+                  setEdgeDirection(edge.id, undefined);
+                }
               }}
               aria-label={`Fold direction for ${edge.id}`}
             >
