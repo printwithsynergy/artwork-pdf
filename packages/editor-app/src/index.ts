@@ -26,6 +26,11 @@ export {
   type TrapPreviewOperation,
   type TrapPreviewOverlayProps,
 } from "./components/TrapPreviewOverlay";
+export {
+  TrapEditorPanel,
+  type TrapEditorPanelProps,
+  type TrapEditorValue,
+} from "./components/TrapEditorPanel";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   SwatchesPicker,
