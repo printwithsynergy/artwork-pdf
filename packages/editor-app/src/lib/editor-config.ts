@@ -22,7 +22,8 @@ export type PaletteId =
   | "dieline-library"
   | "swatches"
   | "graphic-styles"
-  | "history";
+  | "history"
+  | "fold-preview";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -126,6 +127,12 @@ export interface EditorConfig {
    *  and registration / crop-mark toggles that flow into the
    *  compile-pdf impose producer at submission. */
   enable_impose: boolean;
+  /** S4 — 3D fold preview overlay. When enabled and the active page
+   *  carries `panelMetadata`, the editor mounts a Three.js scene
+   *  showing the dieline's panels in 3D with hinge lines along each
+   *  fold edge. Hosts on bandwidth-constrained networks can opt out;
+   *  the Three.js code path stays cold when the flag is `false`. */
+  enable_3d_fold_preview: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -198,6 +205,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_trap_preview: true,
   enable_trap_editor: true,
   enable_impose: true,
+  enable_3d_fold_preview: true,
 };
 
 /**

@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@artworkpdf/dieline-parser": "workspace:*",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "three": "^0.170.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -41,6 +42,7 @@
     "@printwithsynergy/lens-pdf": "^0.4.0-beta.17",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.170.0",
     "konva": "^10.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

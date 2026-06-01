@@ -39,6 +39,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   swatches: { slot: "panel.right", label: "Swatches" },
   "graphic-styles": { slot: "panel.right", label: "Graphic Styles" },
   history: { slot: "panel.right", label: "History" },
+  "fold-preview": { slot: "panel.modal", label: "3D Fold Preview" },
 };
 
 /**

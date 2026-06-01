@@ -37,6 +37,16 @@ export {
   type ImposePanelProps,
   type ImposePanelValue,
 } from "./components/ImposePanel";
+export {
+  FoldPreviewOverlay,
+  type FoldPreviewOverlayProps,
+} from "./components/FoldPreviewOverlay";
+export {
+  buildFoldScene,
+  type FoldHingeAxis,
+  type FoldPanelQuad,
+  type FoldSceneSpec,
+} from "./lib/fold-geometry";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
   SwatchesPicker,
