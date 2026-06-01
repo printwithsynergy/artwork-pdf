@@ -73,6 +73,38 @@ export type RewritePlan = {
 };
 
 /**
+ * One PANTONE catalogue entry. Mirrors `codex_pdf.color.PantoneEntry`
+ * via the `/v1/spots/{search,lookup,libraries}` HTTP surface.
+ */
+export type SpotEntry = {
+  name: string;
+  library?: string | null;
+  lab?: [number, number, number] | null;
+  cmyk_bridge?: [number, number, number, number] | null;
+  lab_source?: string | null;
+  cmyk_source?: string | null;
+};
+
+/** Wire shape of `GET /v1/spots/search`. */
+export type SpotSearchResponse = {
+  results: SpotEntry[];
+  /** Number of catalogue entries that matched the query (pre-limit). */
+  total: number;
+  limit: number;
+};
+
+/** One row from `GET /v1/spots/libraries`. */
+export type SpotLibrary = {
+  id: string;
+  count: number;
+};
+
+/** Wire shape of `GET /v1/spots/libraries`. */
+export type SpotLibrariesResponse = {
+  libraries: SpotLibrary[];
+};
+
+/**
  * Minimal HTTP client for the compile-pdf service.
  *
  * Usage:
@@ -148,6 +180,73 @@ export class CompilePdfClient {
       input_pdf_b64: toBase64(pdfBytes),
       plan,
     });
+  }
+
+  /**
+   * Search compile-pdf's PANTONE catalogue (codex-pdf's
+   * `pantone_reference.json`, ~23k entries, 16 sub-libraries).
+   *
+   * Substring + library filter. Backed by the C3 `GET /v1/spots/search`
+   * endpoint. Empty / missing `q` returns the first `limit` entries
+   * — useful for an initial "browse" view.
+   */
+  async spotSearch(opts: {
+    q?: string;
+    library?: string;
+    limit?: number;
+  }): Promise<SpotSearchResponse> {
+    const params = new URLSearchParams();
+    if (opts.q !== undefined) params.set("q", opts.q);
+    if (opts.library !== undefined) params.set("library", opts.library);
+    if (opts.limit !== undefined) params.set("limit", String(opts.limit));
+    return this.getJson(`/v1/spots/search?${params.toString()}`);
+  }
+
+  /**
+   * Exact lookup by canonical PANTONE name. Codex's
+   * `lookup_pantone_spot` includes alternate-key fallback
+   * (`PANTONE 485 C` ↔ `PANTONE 485C`).
+   *
+   * Resolves `null` on a 404 (unknown name) — this is *not* an
+   * error, just an empty result. Other non-2xx responses throw
+   * {@link CompilePdfError}.
+   */
+  async spotLookup(name: string): Promise<SpotEntry | null> {
+    const path = `/v1/spots/lookup?name=${encodeURIComponent(name)}`;
+    const res = await this.fetcher(`${this.baseUrl}${path}`);
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const detail = await safeReadText(res);
+      throw new CompilePdfError(
+        `compile-pdf ${path} ${res.status}: ${detail || res.statusText}`,
+        res.status,
+        path,
+      );
+    }
+    return (await res.json()) as SpotEntry;
+  }
+
+  /**
+   * Enumerate the catalogue's sub-libraries (Formula Guide Coated,
+   * Color Bridge Uncoated, etc.) with per-library entry counts.
+   * Backed by `GET /v1/spots/libraries`. Returned in declaration
+   * order.
+   */
+  async spotLibraries(): Promise<SpotLibrariesResponse> {
+    return this.getJson("/v1/spots/libraries");
+  }
+
+  private async getJson<T>(path: string): Promise<T> {
+    const res = await this.fetcher(`${this.baseUrl}${path}`);
+    if (!res.ok) {
+      const detail = await safeReadText(res);
+      throw new CompilePdfError(
+        `compile-pdf ${path} ${res.status}: ${detail || res.statusText}`,
+        res.status,
+        path,
+      );
+    }
+    return (await res.json()) as T;
   }
 
   private async postProducer(path: string, body: unknown): Promise<ProducerResponse> {

@@ -21,6 +21,13 @@ export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/Mobil
 export { HistoryPanel, type HistoryPanelProps } from "./components/HistoryPanel";
 export { PaletteManager, type PaletteManagerProps } from "./components/PaletteManager";
 export {
+  SwatchesPicker,
+  type SwatchesPickerProps,
+  type Spot,
+  type SpotSearchFn,
+  type SpotLibrary,
+} from "./components/SwatchesPicker";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
