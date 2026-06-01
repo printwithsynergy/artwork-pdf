@@ -1,19 +1,66 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// `@artworkpdf/flexo-distortion` — pre-press geometry compensation
+// for the flexographic printing process.
+//
+// Flexo plates physically stretch when mounted to the print
+// cylinder. The amount of stretch is anisotropic (different in the
+// machine direction vs. the across-web direction) and depends on
+// plate thickness, mounting tape, and cylinder radius. To get
+// dimensionally-correct print output, artwork is *pre-shrunk* by
+// the inverse of the expected stretch factors before plate-making,
+// so that the on-press stretch lands back at nominal.
+//
+// Public surface:
+// - {@link DistortionParams} — the X/Y factors + optional repeat.
+// - {@link applyFlexoDistortion} — scale an SVG path's coordinates.
+// - {@link compensatedDimensions} — scale a width/height pair.
 
+/**
+ * Flexo distortion compensation parameters.
+ *
+ * `factorX` / `factorY` are the *measured plate-stretch* factors
+ * (e.g. `1.012` means the plate prints 1.2% larger than nominal in
+ * that direction). Use values from a mounting-tape vendor's chart
+ * or measure with a press fingerprint job.
+ *
+ * `repeatLengthMm` documents the cylinder repeat length for which
+ * the factors were measured; informational for downstream consumers
+ * that may need to interpolate factors for a different repeat. Not
+ * used by the math in this module.
+ */
 export type DistortionParams = {
   factorX: number;
   factorY: number;
   repeatLengthMm?: number;
 };
 
-// Scale each coordinate in an SVG path by the reciprocal of the distortion factors.
-// Flexo plates stretch during mounting: factorX/Y > 1 means the plate will be larger
-// than nominal, so we pre-shrink the artwork by dividing by those factors.
+/**
+ * Pre-shrink an SVG path by the inverse of the flexo distortion
+ * factors, so that on-press stretch brings it back to nominal size.
+ *
+ * Every absolute or relative SVG command is handled with its
+ * direction-correct factor:
+ *
+ * - `M`/`L`/`T` (and lowercase) — `(x, y)` pairs scaled by
+ *   `(1/factorX, 1/factorY)`.
+ * - `H` / `h` — x-only, scaled by `1/factorX`.
+ * - `V` / `v` — y-only, scaled by `1/factorY`.
+ * - `C` / `S` / `Q` (and lowercase) — all `(x, y)` pairs, scaled
+ *   alternating.
+ * - `A` / `a` — 7-parameter arc segments; `rx` and the endpoint x
+ *   get `1/factorX`, `ry` and the endpoint y get `1/factorY`, the
+ *   rotation / large-arc / sweep flags pass through.
+ * - `Z` / `z` — close-path, no parameters.
+ *
+ * Identity case (`factorX === factorY === 1`) returns the input
+ * unchanged. Unrecognized command letters are passed through as-is
+ * — fail-open against SVG-path dialect quirks.
+ */
 export function applyFlexoDistortion(pathData: string, params: DistortionParams): string {
   if (params.factorX === 1 && params.factorY === 1) return pathData;
 
   const { factorX, factorY } = params;
-  // Split into individual commands (letter + following numbers/whitespace)
   const tokens = pathData.match(/[MmLlHhVvCcSsQqTtAaZz][^MmLlHhVvCcSsQqTtAaZz]*/g);
   if (!tokens) return pathData;
 
@@ -43,19 +90,16 @@ export function applyFlexoDistortion(pathData: string, params: DistortionParams)
         case "v":
           return `${type}${nums.map((n) => n / factorY).join(",")}`;
 
-        // cubic bezier: x1,y1 x2,y2 x,y (6 params per segment)
         case "C":
         case "c":
           return `${type}${scaleXY(nums).join(",")}`;
 
-        // smooth cubic / quadratic: 4 params per segment, all x,y pairs
         case "S":
         case "s":
         case "Q":
         case "q":
           return `${type}${scaleXY(nums).join(",")}`;
 
-        // arc: rx,ry,x-rot,large-arc,sweep,x,y (7 params per segment)
         case "A":
         case "a": {
           const out: number[] = [];
@@ -91,6 +135,14 @@ export function applyFlexoDistortion(pathData: string, params: DistortionParams)
     .join("");
 }
 
+/**
+ * Pre-shrink a (width, height) pair by the flexo distortion factors.
+ *
+ * Mirrors {@link applyFlexoDistortion}'s arithmetic for the trivial
+ * case of a rectangular bounding box. Use for plate sizing,
+ * imposition cell dimensions, or any other geometry that flows
+ * through the distortion pipeline as a pair rather than as a path.
+ */
 export function compensatedDimensions(
   originalWidthMm: number,
   originalHeightMm: number,
