@@ -155,6 +155,11 @@ export interface EditorConfig {
    *  fold edge. Hosts on bandwidth-constrained networks can opt out;
    *  the Three.js code path stays cold when the flag is `false`. */
   enable_3d_fold_preview: boolean;
+  /** O2 — "Send to MIS" emit. When enabled, hosts surface a button
+   *  that gathers the document's print-relevant metadata into a
+   *  manifest and POSTs it to the synergy `mis.estimate` workflow
+   *  node. Hosts that don't run a MIS bridge opt out via this flag. */
+  enable_mis_estimate: boolean;
   /** V2 — variant matrix UI for variable-data overrides. When
    *  enabled, the editor surfaces a rows-times-columns table of
    *  variants and token keys that writes into `document.variants`.
@@ -238,6 +243,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_trap_editor: true,
   enable_impose: true,
   enable_3d_fold_preview: true,
+  enable_mis_estimate: true,
   enable_variant_matrix: true,
 };
 
