@@ -106,6 +106,13 @@ export interface EditorConfig {
    *  regen step. Disable for hosts that only ship the bundled
    *  static library. */
   enable_dieline_parameters: boolean;
+  /** S3 — panel-anchored objects. When enabled, hosts can bind
+   *  artwork objects to a specific {@link DielinePanel} via
+   *  `anchorPanelId`; objects re-position with their parent panel
+   *  when the dieline is folded or regenerated. The flag controls
+   *  whether the editor surfaces the "Anchor to panel" affordance —
+   *  the wire model already carries `anchorPanelId` regardless. */
+  enable_panel_anchored_objects: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -213,6 +220,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_palettes: true,
   enable_separations: true,
   enable_dieline_parameters: true,
+  enable_panel_anchored_objects: true,
   // Job setup
   enable_print_context: true,
   // Canvas
