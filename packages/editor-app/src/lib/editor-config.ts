@@ -110,6 +110,11 @@ export interface EditorConfig {
    *  `max / avg`. Hosts can disable on low-end devices where the
    *  ~250 ms rasterize is too costly. */
   enable_total_ink_coverage_live: boolean;
+  /** D1 — background trap-preview overlay. When enabled, the editor
+   *  posts trap policies to compile-pdf's `/v1/trap/preview` endpoint
+   *  and renders the predicted trap regions on top of the canvas.
+   *  Hosts can disable to avoid network chatter on every edit. */
+  enable_trap_preview: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -179,6 +184,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_canvas_grid: true,
   enable_bleed_visualization: true,
   enable_total_ink_coverage_live: true,
+  enable_trap_preview: true,
 };
 
 /**
