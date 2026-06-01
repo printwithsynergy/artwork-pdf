@@ -106,6 +106,25 @@ importers:
         specifier: ^3.2.0
         version: 3.2.4(@types/node@22.19.19)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.22.3)
 
+  packages/compose:
+    dependencies:
+      '@artworkpdf/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.4(@types/node@22.19.19)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.22.3)
+
   packages/dieline-parser:
     devDependencies:
       typescript:
