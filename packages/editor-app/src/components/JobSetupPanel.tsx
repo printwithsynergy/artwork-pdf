@@ -73,15 +73,17 @@ export type JobSetupValue = {
  * the two fields map 1:1 to lint-pdf's `?process=&substrate=` query
  * parameters on `/v1/preflight/process` (Wave 2 PR-E).
  *
- * `substrate` is undefined when the host hasn't picked a
- * substrate class yet — callers should treat that as "run the
- * substrate-agnostic ruleset", not as an error.
+ * `substrate` is *optional* (not `SubstrateClass | undefined`) so a
+ * `JSON.stringify` / `URLSearchParams.append` round-trip on the
+ * client side omits the parameter entirely instead of serializing
+ * `substrate=undefined` — lint-pdf reads the absence as "run the
+ * substrate-agnostic ruleset".
  *
  * @public
  */
 export type PreflightContext = {
   process: PrintProcess;
-  substrate: SubstrateClass | undefined;
+  substrate?: SubstrateClass;
 };
 
 /**
@@ -90,10 +92,16 @@ export type PreflightContext = {
  * site decides whether to debounce, memoize, or feed straight into
  * the preflight client.
  *
+ * Omits the `substrate` key entirely when the host hasn't set
+ * `value.substrate.class`, so callers can spread the return value
+ * straight into a query-param builder without filtering `undefined`s.
+ *
  * @public
  */
 export function preflightContextOf(value: JobSetupValue): PreflightContext {
-  return { process: value.process, substrate: value.substrate.class };
+  const ctx: PreflightContext = { process: value.process };
+  if (value.substrate.class !== undefined) ctx.substrate = value.substrate.class;
+  return ctx;
 }
 
 /**

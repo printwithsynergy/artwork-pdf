@@ -167,12 +167,12 @@ export interface EditorConfig {
    *  manifest and POSTs it to the synergy `mis.estimate` workflow
    *  node. Hosts that don't run a MIS bridge opt out via this flag. */
   enable_mis_estimate: boolean;
-  /** P1 — process-aware preflight. When enabled, the JobSetupPanel
-   *  surfaces the substrate-class dropdown and {@link
-   *  preflightContextOf} returns a populated context; hosts thread
-   *  that context into lint-pdf's `/v1/preflight/process` so the
-   *  substrate-narrowed ruleset runs. Disabling reverts to the
-   *  substrate-agnostic preflight pipeline. */
+  /** P1 — process-aware preflight. Gating is at the *call site* —
+   *  hosts check this flag before mounting the substrate-class
+   *  dropdown and before forwarding the helper output to lint-pdf's
+   *  `/v1/preflight/process`. `preflightContextOf` itself is
+   *  unconditional (a pure projection), so the flag controls the UI
+   *  surface and the host's outbound wiring, not the helper. */
   enable_process_preflight: boolean;
   /** V2 — variant matrix UI for variable-data overrides. When
    *  enabled, the editor surfaces a rows-times-columns table of

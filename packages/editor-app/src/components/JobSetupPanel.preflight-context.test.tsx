@@ -40,11 +40,14 @@ describe("preflightContextOf", () => {
     expect(ctx).toEqual({ process: "offset", substrate: "coated" });
   });
 
-  it("returns substrate=undefined when the host hasn't picked a class", () => {
+  it("omits the substrate key entirely when the host hasn't picked a class", () => {
     const value = baseValue();
     const ctx = preflightContextOf(value);
     expect(ctx.process).toBe("offset");
     expect(ctx.substrate).toBeUndefined();
+    // Stronger contract: the key isn't present, so URLSearchParams /
+    // JSON.stringify won't emit `substrate=undefined` on the wire.
+    expect(Object.hasOwn(ctx, "substrate")).toBe(false);
   });
 
   it("is a pure function — does not mutate input", () => {
