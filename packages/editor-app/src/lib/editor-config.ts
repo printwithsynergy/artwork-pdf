@@ -20,11 +20,13 @@ export type PaletteId =
   | "layers"
   | "preflight"
   | "dieline-library"
+  | "dieline-parameters"
   | "swatches"
   | "inks"
   | "graphic-styles"
   | "history"
-  | "fold-preview";
+  | "fold-preview"
+  | "variant-matrix";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -98,6 +100,13 @@ export interface EditorConfig {
   /** F1 plumb — separation-aware UI surface. UI ships in Wave 1+;
    *  flag prepares the surface so hosts can opt out preemptively. */
   enable_separations: boolean;
+  /** S1 — parametric dieline parameter panel. When enabled, hosts can
+   *  surface a width/height/depth/bleed editor on top of a parametric
+   *  dieline template (CF2 or codex-pdf carton macro); the panel
+   *  emits new parameters via `onChange` and the host wires the
+   *  regen step. Disable for hosts that only ship the bundled
+   *  static library. */
+  enable_dieline_parameters: boolean;
   /** C1 — inks palette. Surfaces the live ink list extracted from the
    *  most recently rendered PDF, alongside the existing swatches
    *  palette (which still handles PANTONE search). Hosts can disable
@@ -139,6 +148,13 @@ export interface EditorConfig {
    *  fold edge. Hosts on bandwidth-constrained networks can opt out;
    *  the Three.js code path stays cold when the flag is `false`. */
   enable_3d_fold_preview: boolean;
+  /** V2 — variant matrix UI for variable-data overrides. When
+   *  enabled, the editor surfaces a rows-times-columns table of
+   *  variants and token keys that writes into `document.variants`.
+   *  The actual merge pipeline (one rendered page-instance per
+   *  variant) lands in Wave 3 V1; this flag just gates the editing
+   *  surface. */
+  enable_variant_matrix: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -202,6 +218,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_banner: true,
   enable_palettes: true,
   enable_separations: true,
+  enable_dieline_parameters: true,
   enable_inks_panel: true,
   // Job setup
   enable_print_context: true,
@@ -213,6 +230,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_trap_editor: true,
   enable_impose: true,
   enable_3d_fold_preview: true,
+  enable_variant_matrix: true,
 };
 
 /**
