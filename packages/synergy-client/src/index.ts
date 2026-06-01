@@ -22,7 +22,7 @@
  *
  * `nodeType` is the dotted node identifier the synergy engine routes
  * on (e.g. `"artwork.render"`). `config` is node-specific — for
- * artwork.* nodes it's the {@link JobSubmitRequest} shape from
+ * artwork.* nodes it's the `JobSubmitRequest` shape from
  * `@artworkpdf/document-model`; for other node types it follows that
  * node's own schema. Synergy validates per-node-type at submit time.
  */
