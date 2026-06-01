@@ -82,7 +82,10 @@ export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
+  type PreflightContext,
+  preflightContextOf,
   type PrintProcess,
+  type SubstrateClass,
   type SubstrateFinish,
 } from "./components/JobSetupPanel";
 export {
