@@ -75,6 +75,41 @@ describe("sampleTACFromImageData", () => {
     expect(out.avgPct).toBe(0);
     expect(out.perPixelPct).toHaveLength(0);
   });
+
+  it("semi-transparent red over default white background → ~20% TAC (not 200%)", () => {
+    // (255, 0, 0, alpha=26) — α≈0.1. Composited over white this
+    // produces (252, 230, 230), which is light pink with very low
+    // TAC. Without alpha compositing the same pixel would read as
+    // pure red (200% TAC); with it, the value sits in single-digit %.
+    const data = new Uint8ClampedArray([255, 0, 0, 26]);
+    const img = { data, width: 1, height: 1, colorSpace: "srgb" } as unknown as ImageData;
+    const out = sampleTACFromImageData(img);
+    expect(out.maxPct).toBeLessThan(30);
+    expect(out.maxPct).toBeGreaterThan(0);
+  });
+
+  it("fully-transparent pixel over white background → 0% TAC (paper-white)", () => {
+    const data = new Uint8ClampedArray([255, 0, 0, 0]); // RGB doesn't matter at α=0.
+    const img = { data, width: 1, height: 1, colorSpace: "srgb" } as unknown as ImageData;
+    const out = sampleTACFromImageData(img);
+    expect(out.maxPct).toBe(0);
+  });
+
+  it("opts.background composites onto a non-white substrate", () => {
+    // Same fully-transparent pixel as above, but with a black
+    // substrate — composites to pure black (100% TAC).
+    const data = new Uint8ClampedArray([255, 0, 0, 0]);
+    const img = { data, width: 1, height: 1, colorSpace: "srgb" } as unknown as ImageData;
+    const out = sampleTACFromImageData(img, { background: [0, 0, 0] });
+    expect(out.maxPct).toBe(100);
+  });
+
+  it("throws when data.length doesn't match width*height*4", () => {
+    // Claim 2x2 (16 bytes) but only ship 8.
+    const data = new Uint8ClampedArray(8);
+    const img = { data, width: 2, height: 2, colorSpace: "srgb" } as unknown as ImageData;
+    expect(() => sampleTACFromImageData(img)).toThrow(/data.length=8.*2×2×4=16/);
+  });
 });
 
 describe("tacForHex", () => {

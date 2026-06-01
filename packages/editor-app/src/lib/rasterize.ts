@@ -68,28 +68,57 @@ export function rasterizeStage(
  * range (255 = >=255%, allowing the heatmap shader to render a
  * single-channel raster without scaling).
  *
+ * **Alpha composite**: semi-transparent pixels are pre-blended onto
+ * an opaque white background before the CMYK conversion. This
+ * mirrors what the editor's canvas actually displays (everything
+ * sits on the white page) so an `rgba(255,0,0,0.1)` pixel registers
+ * as the ~20% TAC it'd actually print at, not the 200% full red it
+ * would be without the composite step. Pass an `opts.background`
+ * hex to composite onto a non-white substrate.
+ *
  * **Approximation:** spot ink contribution is not modeled here. A
  * full per-separation pass requires masking pixels by ink (planned
  * for PR-9's UI overlay when the registered-spots map is available).
  *
+ * Throws when `image.data.length !== image.width × image.height × 4`
+ * — defensive against misuse from upstream callers that pass a
+ * partially-constructed or mis-typed ImageData-shaped object.
+ *
  * @public
  */
-export function sampleTACFromImageData(image: ImageData): {
+export function sampleTACFromImageData(
+  image: ImageData,
+  opts: { background?: [number, number, number] } = {},
+): {
   maxPct: number;
   avgPct: number;
   perPixelPct: Uint8ClampedArray;
 } {
   const { data, width, height } = image;
   const pixelCount = width * height;
+  const expected = pixelCount * 4;
+  if (data.length !== expected) {
+    throw new Error(
+      `sampleTACFromImageData: data.length=${data.length} but ${width}×${height}×4=${expected}`,
+    );
+  }
+
+  const [bgR, bgG, bgB] = opts.background ?? [255, 255, 255];
   const perPixelPct = new Uint8ClampedArray(pixelCount);
 
   let maxPct = 0;
   let sumPct = 0;
   let i = 0;
   for (let p = 0; p < data.length; p += 4) {
-    const r = (data[p] ?? 0) / 255;
-    const g = (data[p + 1] ?? 0) / 255;
-    const b = (data[p + 2] ?? 0) / 255;
+    // Pre-multiply with the background ("over" composite) so
+    // semi-transparent pixels reflect what's actually visible /
+    // printable. Fully-opaque pixels (the common case) pass through
+    // unchanged because alpha=1 collapses the lerp.
+    const a = (data[p + 3] ?? 255) / 255;
+    const inv = 1 - a;
+    const r = ((data[p] ?? 0) * a + bgR * inv) / 255;
+    const g = ((data[p + 1] ?? 0) * a + bgG * inv) / 255;
+    const b = ((data[p + 2] ?? 0) * a + bgB * inv) / 255;
     // Subtractive RGB → CMYK with K-extraction; same math as
     // color-math.ts but inlined for the tight loop.
     const k = 1 - Math.max(r, g, b);
