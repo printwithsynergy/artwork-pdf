@@ -9,7 +9,8 @@ import type { CSSProperties } from "react";
  * The panel is purely presentational — EditorCanvas owns the
  * snapshot stack + the active cursor and threads them in via these
  * props. `onSelect(idx)` seeks the canvas to the chosen snapshot;
- * `entries` is the total stack depth (used to compute step labels).
+ * stack depth is derived from `objectCounts.length` (single source
+ * of truth — no separate `entries` prop to keep in sync).
  *
  * `cursor` is 0-indexed; row 0 is the initial canvas state, row N
  * is the most recent commit.
@@ -17,11 +18,10 @@ import type { CSSProperties } from "react";
  * @public
  */
 export type HistoryPanelProps = {
-  /** Total number of snapshots currently on the stack. */
-  entries: number;
   /** 0-indexed position of the active snapshot. */
   cursor: number;
-  /** Per-snapshot object count, in stack order. */
+  /** Per-snapshot object count, in stack order. Length defines the
+   *  number of rows; the array itself drives the per-row count chip. */
   objectCounts: number[];
   /** Click handler — seek the canvas to the given snapshot index. */
   onSelect: (idx: number) => void;
@@ -67,10 +67,12 @@ const rowBaseStyle: CSSProperties = {
  *
  * @public
  */
-export function HistoryPanel({ entries, cursor, objectCounts, onSelect }: HistoryPanelProps) {
+export function HistoryPanel({ cursor, objectCounts, onSelect }: HistoryPanelProps) {
   // Render newest → oldest so the most-recent action is at the top
   // (mirrors the canvas's "future-of-undo is at the top of the
-  // stack" mental model).
+  // stack" mental model). Stack depth comes from objectCounts.length
+  // — single source of truth.
+  const entries = objectCounts.length;
   const indices = Array.from({ length: entries }, (_, i) => entries - 1 - i);
 
   return (

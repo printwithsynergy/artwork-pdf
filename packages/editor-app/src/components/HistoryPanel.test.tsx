@@ -12,7 +12,6 @@ import { HistoryPanel } from "./HistoryPanel";
 describe("HistoryPanel — JSX shape", () => {
   it("renders one button per snapshot in newest-first order", () => {
     const el = HistoryPanel({
-      entries: 3,
       cursor: 2,
       objectCounts: [0, 1, 2],
       onSelect: () => {},
@@ -30,7 +29,6 @@ describe("HistoryPanel — JSX shape", () => {
 
   it("marks the cursor row with aria-current='step'", () => {
     const el = HistoryPanel({
-      entries: 3,
       cursor: 1,
       objectCounts: [0, 1, 2],
       onSelect: () => {},
@@ -48,9 +46,8 @@ describe("HistoryPanel — JSX shape", () => {
 
   it("guards against missing objectCounts entries (defaults to 0 obj)", () => {
     const el = HistoryPanel({
-      entries: 2,
       cursor: 1,
-      objectCounts: [],
+      objectCounts: [0, 0],
       onSelect: () => {},
     });
     // Doesn't throw — that's the invariant. Shape check kept light.

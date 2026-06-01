@@ -480,23 +480,24 @@ export function EditorCanvas({
 
   function seekHistory(idx: number) {
     const clamped = Math.max(0, Math.min(history.length - 1, idx));
+    const snapshot = history[clamped] ?? [];
     setHistoryIdx(clamped);
-    setObjects(history[clamped] ?? []);
-    setSelectedId(null);
+    setObjects(snapshot);
+    // Preserve selection only if the selected object still exists in
+    // the target snapshot — otherwise the selection points at a
+    // deleted id (e.g. undoing an "add"). Single consistent rule for
+    // all three history-navigation paths (seek / undo / redo).
+    if (selectedId && !snapshot.some((o) => o.id === selectedId)) {
+      setSelectedId(null);
+    }
   }
 
   function undo() {
-    const idx = Math.max(0, historyIdx - 1);
-    setHistoryIdx(idx);
-    setObjects(history[idx] ?? []);
-    setSelectedId(null);
+    seekHistory(historyIdx - 1);
   }
 
   function redo() {
-    const idx = Math.min(history.length - 1, historyIdx + 1);
-    setHistoryIdx(idx);
-    setObjects(history[idx] ?? []);
-    setSelectedId(null);
+    seekHistory(historyIdx + 1);
   }
 
   // ── keyboard shortcuts ──────────────────────────────────────────────────────
@@ -1249,7 +1250,6 @@ export function EditorCanvas({
         {/* ── right rail: history scrubber (X2) ── */}
         {!isMobile && isPanelVisible(config, "history") && (
           <HistoryPanel
-            entries={history.length}
             cursor={historyIdx}
             objectCounts={history.map((snap) => snap.length)}
             onSelect={seekHistory}
