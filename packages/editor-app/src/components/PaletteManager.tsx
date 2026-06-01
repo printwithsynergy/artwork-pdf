@@ -74,6 +74,7 @@ export function PaletteManager({ config, panelVisibility, onChange }: PaletteMan
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Toggle palettes"
+        aria-haspopup="menu"
         aria-expanded={open}
         style={{
           background: "transparent",

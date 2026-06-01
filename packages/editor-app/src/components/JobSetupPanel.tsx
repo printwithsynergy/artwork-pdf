@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 
-import type { CSSProperties } from "react";
+import { type CSSProperties, useEffect } from "react";
 
 /**
  * Print process category. Mirrors `PrintContext.process` in
@@ -108,11 +108,27 @@ export function JobSetupPanel({ value, onChange, onClose }: JobSetupPanelProps) 
     onChange({ ...value, substrate: { ...value.substrate, ...p } });
   }
 
+  // Close on Escape — matches PaletteManager pattern + standard
+  // modal a11y. Focus trapping is deferred (substantial; tracked as
+  // a follow-up).
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   return (
     <div
       role="dialog"
       aria-label="Job setup — print context"
       aria-modal="true"
+      // Click on the backdrop (this element) closes; clicks inside
+      // the inner panel stopPropagate via the panel's own handler.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -218,7 +234,19 @@ export function JobSetupPanel({ value, onChange, onClose }: JobSetupPanelProps) 
                     min="0"
                     max="1"
                     value={value.substrate.opacity}
-                    onChange={(e) => patchSubstrate({ opacity: Number(e.target.value) })}
+                    onChange={(e) => {
+                      // Empty → no-op (don't conflate "user clearing
+                      // the field" with "fully transparent"). Out-of-
+                      // range typed input gets clamped to [0,1]
+                      // because HTML min/max only constrain the
+                      // spinner, not raw keyboard input.
+                      const v = e.target.value;
+                      if (v === "") return;
+                      const n = Number(v);
+                      if (Number.isNaN(n)) return;
+                      const clamped = Math.min(1, Math.max(0, n));
+                      patchSubstrate({ opacity: clamped });
+                    }}
                     style={inputStyle}
                   />
                 </div>
