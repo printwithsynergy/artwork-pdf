@@ -273,6 +273,55 @@ const DIELINE_PATH_STROKES: Record<DielinePath["type"], string> = {
 };
 
 /**
+ * Scale every coordinate in an SVG `d` string from millimeters to
+ * PDF points (multiply by `MM_TO_PT`).
+ *
+ * The dieline-parser emits absolute `M` / `L` / `A` commands in
+ * dieline-native millimeters. The editor's Konva Stage is configured
+ * in PDF points (the canvas / pageSize math is all in points), so
+ * the raw `d` string would render at ~35% of intended size if used
+ * directly. We pre-scale here so `pathData` matches the canvas unit
+ * system end-to-end (no Konva.Path `scaleX` / `scaleY` shenanigans
+ * that would also scale stroke width).
+ *
+ * Per-command coordinate slots:
+ * - `M x,y` / `L x,y` → both coordinates are positions; scale all.
+ * - `A rx,ry,xRot,largeArc,sweep,x,y` → rx and ry are radii (scale),
+ *   xRot is degrees (pass through), the two flags are 0/1 (pass
+ *   through), the trailing x,y are positions (scale).
+ *
+ * Unknown commands pass through unchanged. The parser's output only
+ * uses M / L / A so the full SVG-path alphabet doesn't need handling.
+ */
+function scalePathMmToPt(d: string): string {
+  return d.replace(/([MLA])\s*([\d.,\s-]+)/g, (_, cmd: string, args: string) => {
+    const nums = args
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+      .filter((n) => !Number.isNaN(n));
+    if (cmd === "A") {
+      // Arc: rx, ry, xRot, largeArc, sweep, x, y — scale rx, ry, x, y; pass others.
+      const out: number[] = [];
+      for (let i = 0; i + 6 < nums.length; i += 7) {
+        out.push(
+          (nums[i] ?? 0) * MM_TO_PT,
+          (nums[i + 1] ?? 0) * MM_TO_PT,
+          nums[i + 2] ?? 0,
+          nums[i + 3] ?? 0,
+          nums[i + 4] ?? 0,
+          (nums[i + 5] ?? 0) * MM_TO_PT,
+          (nums[i + 6] ?? 0) * MM_TO_PT,
+        );
+      }
+      return `${cmd}${out.join(",")}`;
+    }
+    // M / L: alternating x,y pairs.
+    return `${cmd}${nums.map((n) => n * MM_TO_PT).join(",")}`;
+  });
+}
+
+/**
  * Build a {@link Page} from a parsed {@link Dieline} (CF2 / DDES /
  * ARD import).
  *
@@ -317,7 +366,8 @@ export function dielineToPage(dieline: Dieline, bleedMmOverride?: number): Page 
     stroke: DIELINE_PATH_STROKES[p.type],
     strokeWidth: 1,
     opacity: 1,
-    pathData: p.d,
+    // Pre-scale mm → pt so pathData matches the canvas unit system.
+    pathData: scalePathMmToPt(p.d),
     name: `${dieline.format} ${p.type}`,
     locked: true,
   }));

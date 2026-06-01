@@ -107,10 +107,13 @@ describe("dielineToPage — invariants", () => {
     expect(page.pageSize.height).toBeGreaterThanOrEqual(0);
   });
 
-  it("path data is the SVG d-string from the parser, not re-serialized", () => {
+  it("path data is the parser's SVG d-string pre-scaled mm → pt", () => {
+    // Parser emits "M0,0 L10,10" in mm; dielineToPage scales by MM_TO_PT
+    // so the canvas (which operates in points) renders at the correct size.
     const dieline = parseCF2("LINE 0 0 10 10");
     const page = dielineToPage(dieline);
     expect(page.objects[0]?.pathData).toContain("M0,0");
-    expect(page.objects[0]?.pathData).toContain("L10,10");
+    // 10 mm = 28.3465 pt
+    expect(page.objects[0]?.pathData).toContain("L28.3465,28.3465");
   });
 });

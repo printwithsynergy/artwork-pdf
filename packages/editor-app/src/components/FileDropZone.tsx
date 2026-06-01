@@ -127,6 +127,8 @@ export function FileDropZone({ onFile, onDieline }: Props) {
       </span>
       {parseError && (
         <span
+          role="alert"
+          aria-live="polite"
           style={{
             display: "block",
             color: "#ef4444",
