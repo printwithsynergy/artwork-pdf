@@ -1,7 +1,34 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// Preflight types and the compiled default ruleset.
+//
+// Two parties share these types:
+//
+//   1. `apps/service` `GET /preflight-rules` returns a merged rule set
+//      (defaults + tenant overrides) so editor + platform can validate
+//      with the same shape.
+//   2. compile-pdf accepts `PreflightReport` on the compose call so
+//      server-side checks can be skipped if the client already ran
+//      them (`clientSide: true` rules).
 
+/**
+ * Severity of a preflight rule. `"block"` prevents render submission;
+ * `"warn"` surfaces in the UI but does not block.
+ */
 export type PreflightSeverity = "block" | "warn";
 
+/**
+ * One configurable preflight check.
+ *
+ * `clientSide: true` rules can be evaluated entirely in the editor
+ * (no PDF needed); the server skips them when an evaluated
+ * {@link PreflightReport} is attached to the job. `clientSide: false`
+ * rules require the composed PDF and run inside compile-pdf.
+ *
+ * `params` is rule-specific (e.g. `{ minDpi: 300 }` for `dpi_min`); the
+ * shape is determined by `checkName` and validated at evaluation time,
+ * not here.
+ */
 export type PreflightRule = {
   checkName: string;
   enabled: boolean;
@@ -10,6 +37,13 @@ export type PreflightRule = {
   params: Record<string, unknown>;
 };
 
+/**
+ * A single finding emitted by a preflight check.
+ *
+ * `page` is 1-indexed (matching the PDF page numbering convention),
+ * absent for document-level findings. `detail` is rule-specific
+ * structured context — e.g. `{ actualDpi, x, y }` for `dpi_min`.
+ */
 export type PreflightIssue = {
   checkName: string;
   severity: PreflightSeverity;
@@ -18,6 +52,18 @@ export type PreflightIssue = {
   detail?: Record<string, unknown>;
 };
 
+/**
+ * Aggregate result of evaluating every enabled rule against a document.
+ *
+ * `passed` is true iff `issues` is empty *or* contains only `"warn"`
+ * findings; `hasBlockingIssues` is the inverse predicate for fast UI
+ * gating. `skippedChecks` lists `checkName`s that could not run (e.g.
+ * a `clientSide: false` check evaluated in the editor) so the
+ * server-side run knows what's still owed.
+ *
+ * `checkedAt` is an ISO 8601 timestamp; consumers may treat it as
+ * cache key input.
+ */
 export type PreflightReport = {
   passed: boolean;
   hasBlockingIssues: boolean;
@@ -26,8 +72,24 @@ export type PreflightReport = {
   checkedAt: string;
 };
 
+/**
+ * Print process category for tenant-scoped rule resolution.
+ *
+ * Used as the `label_class` query parameter on
+ * `GET /preflight-rules` to narrow which override rows apply.
+ */
 export type LabelClass = "flexo" | "offset" | "digital" | "screen" | "gravure";
 
+/**
+ * The compiled default preflight ruleset — the floor that
+ * tenant/label overrides in the `preflight_rules` table merge on top
+ * of. Order is not significant; consumers match by `checkName`.
+ *
+ * Five `clientSide: true` rules (dpi, font embedding, bleed, spot
+ * colors, image mode) run in the editor for instant feedback; the
+ * remaining rules require the composed PDF and run server-side
+ * inside compile-pdf.
+ */
 export const DEFAULT_PREFLIGHT_RULES: PreflightRule[] = [
   {
     checkName: "dpi_min",
