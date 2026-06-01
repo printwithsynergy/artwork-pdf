@@ -39,11 +39,34 @@ For each area PR:
 - [ ] No noise: nothing that restates code, narrates task history, or
       duplicates type signatures verbatim. CLAUDE.md's "Avoid" rules
       apply.
-- [ ] `pnpm --filter <pkg> typecheck` — clean.
-- [ ] `pnpm --filter <pkg> test` — clean.
+- [ ] Scoped typecheck — clean.
+- [ ] Scoped tests — clean.
 - [ ] `pnpm -r typecheck` — still clean across the whole monorepo
       (no regressions outside the touched area).
 - [ ] `node scripts/check-license-boundary.mjs` — passes.
+
+### Concrete verification commands per area
+
+Use the exact commands below — these match what CI runs in
+`lint + typecheck + test`. Run them from the repo root.
+
+| PR | Scoped typecheck | Scoped tests |
+|---|---|---|
+| PR-2 (`apps/service`) | `pnpm --filter @artworkpdf/service typecheck` | `pnpm --filter @artworkpdf/service test` |
+| PR-3 (`document-model`) | `pnpm --filter @artworkpdf/document-model typecheck` | `pnpm --filter @artworkpdf/document-model test` |
+| PR-4 (`editor-app`) | `pnpm --filter @printwithsynergy/artwork-pdf-editor typecheck` | `pnpm --filter @printwithsynergy/artwork-pdf-editor test` |
+| PR-5 (`compose`) | `pnpm --filter @artworkpdf/compose typecheck` | `pnpm --filter @artworkpdf/compose test` |
+| PR-6 (`dieline-parser`) | `pnpm --filter @artworkpdf/dieline-parser typecheck` | `pnpm --filter @artworkpdf/dieline-parser test` |
+| PR-7 (`flexo-distortion`) | `pnpm --filter @artworkpdf/flexo-distortion typecheck` | `pnpm --filter @artworkpdf/flexo-distortion test` |
+| PR-8 (`synergy-client`) | `pnpm --filter @printwithsynergy/artwork-pdf typecheck` | `pnpm --filter @printwithsynergy/artwork-pdf test` |
+| PR-9 (`apps/editor`) | `pnpm --filter @artworkpdf/editor-host typecheck` | `pnpm --filter @artworkpdf/editor-host test` |
+
+Repo-wide gates (run for every PR after the scoped ones pass):
+
+```bash
+pnpm -r typecheck
+node scripts/check-license-boundary.mjs
+```
 
 ## Non-goals
 
