@@ -11,11 +11,17 @@ import { useEffect, useRef, useState } from "react";
  * Mirrors compile-pdf's `trap_diff.operations[i]` shape (see
  * `apps/service/src/compile-pdf-client.ts`'s `TrapOperation`). Kept
  * inline here so the published editor package has no runtime dep on
- * apps/service.
+ * apps/service — a future refactor may centralize this shape in
+ * `@artworkpdf/document-model` to remove the structural duplication.
  *
  * @public
  */
 export type TrapPreviewOperation = {
+  /** Server-side page index — **0-indexed**, matching compile-pdf's
+   *  `TrapZone.page_index: NonNegativeInt`. Note the distinct
+   *  convention from the overlay's prop, which uses **1-indexed**
+   *  `pageIndex` to match PDF user-facing page numbers; the overlay
+   *  converts internally. */
   page_index: number;
   rect_pt: [number, number, number, number];
   from_ink: string;
@@ -79,6 +85,17 @@ export type TrapPreviewOverlayProps = {
  *
  * @public
  */
+/** Wipes any previously drawn trap rectangles. Called from every
+ *  "no overlay should be visible right now" branch so the canvas
+ *  doesn't keep stale visuals after the user disables the feature
+ *  or the preview request fails. */
+function clearOverlayCanvas(canvas: HTMLCanvasElement | null): void {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 export function TrapPreviewOverlay({
   width,
   height,
@@ -98,7 +115,11 @@ export function TrapPreviewOverlay({
     // consumed — only its identity change is meaningful.
     void trigger;
     if (!previewFn || width <= 0 || height <= 0) {
+      // Reset BOTH state and canvas — otherwise the previously drawn
+      // trap bands stay visible after the user disables the feature
+      // via `enable_trap_preview` or the container collapses to 0×0.
       setOpsCount(null);
+      clearOverlayCanvas(canvasRef.current);
       return;
     }
     reqIdRef.current += 1;
@@ -111,13 +132,19 @@ export function TrapPreviewOverlay({
         // Network / server failure — clear the overlay and stop. We
         // don't surface the error because trap preview is advisory;
         // failures shouldn't block editing.
-        if (myReqId === reqIdRef.current) setOpsCount(null);
+        if (myReqId === reqIdRef.current) {
+          setOpsCount(null);
+          clearOverlayCanvas(canvasRef.current);
+        }
         return;
       }
       // Stale-response guard: a newer request fired while this one
       // was in-flight; drop the result.
       if (myReqId !== reqIdRef.current) return;
 
+      // The server emits 0-indexed `page_index` (compile-pdf's
+      // `TrapZone.page_index: NonNegativeInt`); our prop is 1-indexed
+      // to match PDF user-facing page numbers. Convert at the boundary.
       const pageOps = result.operations.filter((o) => o.page_index === pageIndex - 1);
       setOpsCount(pageOps.length);
 
