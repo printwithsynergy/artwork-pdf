@@ -204,9 +204,16 @@ export function WebhookNotifyPanel({
   onSuccess,
 }: WebhookNotifyPanelProps): ReactElement {
   const [event, setEvent] = useState<WebhookNotificationEventKind>(defaultEvent ?? "job-submitted");
-  const [integration, setIntegration] = useState<string>(
-    defaultIntegration ?? integrations?.[0] ?? "",
-  );
+  // Validate `defaultIntegration` against the wired list — a host-supplied
+  // default that isn't in `integrations` would otherwise quietly ship as
+  // the outgoing event's `integration` field even though the user can't
+  // see / change it in the dropdown.
+  const [integration, setIntegration] = useState<string>(() => {
+    if (defaultIntegration && integrations?.includes(defaultIntegration)) {
+      return defaultIntegration;
+    }
+    return integrations?.[0] ?? "";
+  });
   const [note, setNote] = useState("");
   const [state, setState] = useState<
     { kind: "idle" } | { kind: "sending" } | { kind: "ok" } | { kind: "error"; message: string }
