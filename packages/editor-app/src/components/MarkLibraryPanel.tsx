@@ -346,13 +346,20 @@ function MarkLibraryRow({
       <span style={{ flex: 1, fontSize: "0.8125rem" }}>{mark.name}</span>
     </>
   );
+  // Visually-hidden description, referenced by `aria-describedby` so
+  // screen readers announce the mark's name first and the longer
+  // description as a separate supporting detail (rather than fused
+  // into a single mash-up label). Hosts that disable verbose
+  // announcements then still get a short button name.
+  const describedById = mark.description ? `mark-${mark.id}-description` : undefined;
   return (
     <li>
       {onSelect ? (
         <button
           type="button"
           onClick={() => onSelect(mark)}
-          aria-label={mark.description ? `${mark.name} — ${mark.description}` : mark.name}
+          aria-label={mark.name}
+          aria-describedby={describedById}
           title={mark.description}
           style={{
             ...rowStyle,
@@ -361,6 +368,24 @@ function MarkLibraryRow({
           }}
         >
           {contents}
+          {mark.description && (
+            <span
+              id={describedById}
+              style={{
+                position: "absolute",
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: "hidden",
+                clip: "rect(0 0 0 0)",
+                whiteSpace: "nowrap",
+                border: 0,
+              }}
+            >
+              {mark.description}
+            </span>
+          )}
         </button>
       ) : (
         <div style={rowStyle} title={mark.description}>
