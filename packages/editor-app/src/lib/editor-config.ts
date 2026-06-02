@@ -32,7 +32,8 @@ export type PaletteId =
   | "preflight-diff"
   | "brand-assets"
   | "mark-library"
-  | "slack-notify";
+  | "slack-notify"
+  | "preflight-autofix";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -183,6 +184,13 @@ export interface EditorConfig {
    *  workflow node when one is deployed; disable when no Slack
    *  bridge is wired. */
   enable_slack_notify: boolean;
+  /** AI3 — Preflight auto-fix suggestions panel. When enabled, hosts
+   *  mount the {@link PreflightAutoFixPanel} alongside the preflight
+   *  panel; an AI / rules-engine loader resolves each finding to a
+   *  list of remediation suggestions the user can apply. Pairs with
+   *  the synergy `preflight.fix` workflow node when one is deployed;
+   *  disable when no fix-suggestion adapter is wired. */
+  enable_preflight_autofix: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -360,6 +368,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_variant_matrix_versions: true,
   enable_mark_library: true,
   enable_slack_notify: true,
+  enable_preflight_autofix: true,
   // Job setup
   enable_print_context: true,
   // Canvas
