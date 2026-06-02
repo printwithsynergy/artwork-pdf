@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import type { DielineParameters, DielineParametersPanelProps } from "./DielineParametersPanel";
+import { validateDielineParameters } from "./DielineParametersPanel";
 
 /**
  * Contract tests for DielineParametersPanel's typed public surface.
@@ -58,5 +59,84 @@ describe("DielineParametersPanelProps type", () => {
     props.onChange({ widthMm: 200, heightMm: 100, bleedMm: 3 });
     expect(latest?.widthMm).toBe(200);
     expect(props.hideDepth).toBe(true);
+  });
+
+  it("accepts an onCommit callback distinct from onChange (Wave 4 S5)", () => {
+    const commits: DielineParameters[] = [];
+    const props: DielineParametersPanelProps = {
+      value: { widthMm: 100, heightMm: 50, bleedMm: 3 },
+      onChange: () => {
+        /* live edits */
+      },
+      onCommit: (next) => commits.push(next),
+    };
+    props.onCommit?.({ widthMm: 100, heightMm: 50, bleedMm: 3 });
+    expect(commits).toHaveLength(1);
+    expect(commits[0]?.widthMm).toBe(100);
+  });
+
+  it("accepts hidePreview to suppress the live preview thumbnail", () => {
+    const props: DielineParametersPanelProps = {
+      value: { widthMm: 100, heightMm: 50, bleedMm: 3 },
+      onChange: () => {
+        /* noop */
+      },
+      hidePreview: true,
+    };
+    expect(props.hidePreview).toBe(true);
+  });
+});
+
+describe("validateDielineParameters (Wave 4 S5)", () => {
+  it("returns no warnings for well-sized parameters", () => {
+    const warnings = validateDielineParameters({
+      widthMm: 200,
+      heightMm: 300,
+      depthMm: 50,
+      bleedMm: 3,
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it("warns when bleed exceeds 50% of the shorter trim dimension", () => {
+    const warnings = validateDielineParameters({
+      widthMm: 10,
+      heightMm: 20,
+      bleedMm: 8,
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/Bleed/);
+    expect(warnings[0]).toMatch(/50%/);
+  });
+
+  it("warns when depth exceeds the shorter trim dimension", () => {
+    const warnings = validateDielineParameters({
+      widthMm: 80,
+      heightMm: 120,
+      depthMm: 100,
+      bleedMm: 3,
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/Depth/);
+    expect(warnings[0]).toMatch(/carton would not close/);
+  });
+
+  it("can surface multiple warnings simultaneously", () => {
+    const warnings = validateDielineParameters({
+      widthMm: 10,
+      heightMm: 10,
+      depthMm: 30,
+      bleedMm: 6,
+    });
+    expect(warnings.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("does not warn for a flat dieline with no depth", () => {
+    const warnings = validateDielineParameters({
+      widthMm: 100,
+      heightMm: 200,
+      bleedMm: 3,
+    });
+    expect(warnings).toEqual([]);
   });
 });
