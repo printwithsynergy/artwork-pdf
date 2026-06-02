@@ -110,8 +110,17 @@ export function sortAnnotationsByDate(
   annotations: readonly AnnotationOverlayAnnotation[],
   direction: "asc" | "desc" = "desc",
 ): readonly AnnotationOverlayAnnotation[] {
+  // Empty / missing createdAt is treated as sorting *after* anything
+  // valid in descending mode (and *before* anything valid in ascending
+  // mode) so a malformed entry surfaces at the tail of the review
+  // pile rather than silently breaking the sort.
   const out = [...annotations];
   out.sort((a, b) => {
+    const aHas = typeof a.createdAt === "string" && a.createdAt.length > 0;
+    const bHas = typeof b.createdAt === "string" && b.createdAt.length > 0;
+    if (!aHas && !bHas) return 0;
+    if (!aHas) return direction === "desc" ? 1 : -1;
+    if (!bHas) return direction === "desc" ? -1 : 1;
     if (a.createdAt === b.createdAt) return 0;
     return direction === "desc"
       ? a.createdAt < b.createdAt
@@ -237,11 +246,11 @@ function AnnotationRow({
           <div style={{ fontSize: "0.8125rem", fontWeight: 500 }}>
             {describeAnnotation(annotation)}
           </div>
-          {annotation.author && (
-            <div style={{ fontSize: "0.6875rem", color: "#595959", marginTop: "0.125rem" }}>
-              {annotation.author} · {annotation.createdAt}
-            </div>
-          )}
+          <div style={{ fontSize: "0.6875rem", color: "#595959", marginTop: "0.125rem" }}>
+            {annotation.author
+              ? `${annotation.author} · ${annotation.createdAt}`
+              : annotation.createdAt}
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
           {onSelect && (
