@@ -201,6 +201,12 @@ export interface EditorConfig {
    *  no compile-pdf endpoint reachable) — surfacing the panel without
    *  a working adapter would only frustrate users. */
   enable_barcode_generate: boolean;
+  /** P5 — Braille layout panel (EN 15823 / Marburg Medium). When
+   *  enabled, hosts can mount the {@link BraillePanel} to compose
+   *  Grade 1 English Braille cells. Disable for hosts that don't
+   *  ship pharma-grade packaging or already wire a tenant-owned
+   *  Braille translator. */
+  enable_braille_panel: boolean;
   /** G3 — GS1 Digital Link composer panel. When enabled, hosts can
    *  mount the {@link Gs1DigitalLinkPanel} to assemble a GTIN + AIs
    *  into a canonical GS1 Digital Link URL (optionally rendered as a
@@ -299,6 +305,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_barcode_generate: true,
   enable_gs1_digital_link: true,
   enable_nutrition_panel: true,
+  enable_braille_panel: true,
 };
 
 /**
