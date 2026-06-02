@@ -70,6 +70,14 @@ export type SpotMatch = {
 export type SpotMatchLoaderFn = (query: SpotMatchQuery) => Promise<readonly SpotMatch[]>;
 
 /**
+ * Configuration for the {@link SmartSpotMatchPanel}. The host always
+ * supplies the {@link SpotMatchLoaderFn}; the other three props are
+ * optional and shape the panel's initial state and selection
+ * behaviour. Hosts that want to drive the query from outside the
+ * panel (e.g. wire the active fill colour straight in) flow that
+ * through `initialQuery`; the panel re-derives its query whenever
+ * `initialQuery`'s content changes.
+ *
  * @public
  */
 export type SmartSpotMatchPanelProps = {
@@ -113,6 +121,14 @@ export function sortMatchesByDeltaE(matches: readonly SpotMatch[]): readonly Spo
 export type DeltaEQuality = "imperceptible" | "noticeable" | "fair" | "poor";
 
 /**
+ * Pure helper — maps a ΔE distance to a {@link DeltaEQuality} band
+ * using the CIE-1994 perceptual cut points (under 1 is
+ * imperceptible, 1–3 is noticeable, 3–5 is fair, ≥5 is poor). Used
+ * by the panel for the per-row severity chip; exported so hosts can
+ * surface the same banding outside the panel (e.g. in a print-proof
+ * audit). Returns `"poor"` for non-finite or negative inputs by
+ * threshold ordering — callers should pre-validate if they care.
+ *
  * @public
  */
 export function deltaEQuality(deltaE: number): DeltaEQuality {
@@ -170,6 +186,14 @@ export function SmartSpotMatchPanel({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Keep the hex input in lockstep with `initialQuery.hex` when the
+  // host swaps the active selection — without this, a panel reused
+  // for a different object would mix new cmyk / lab with the old
+  // hex value in the input.
+  useEffect(() => {
+    setHex(initialQuery?.hex ?? "");
+  }, [initialQuery?.hex]);
+
   // Stable query object — re-derived only when content changes, not
   // when a parent re-render hands back a referentially-different
   // but content-identical `initialQuery`. The join'd keys identity-
@@ -198,6 +222,9 @@ export function SmartSpotMatchPanel({
     let disposed = false;
     setLoading(true);
     setError(null);
+    // Drop the previous result eagerly so stale rows can't be
+    // selected for a query that's no longer current.
+    setMatches(null);
     void (async () => {
       try {
         const next = await loader(query);
@@ -205,6 +232,7 @@ export function SmartSpotMatchPanel({
         setMatches(sortMatchesByDeltaE(next));
       } catch (err: unknown) {
         if (disposed) return;
+        setMatches(null);
         setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (!disposed) setLoading(false);
