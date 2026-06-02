@@ -98,6 +98,14 @@ export {
   type BarcodeRenderResult,
 } from "./components/BarcodeGeneratorPanel";
 export {
+  composeGs1DigitalLink,
+  DEFAULT_GS1_DOMAIN,
+  Gs1DigitalLinkPanel,
+  type Gs1AiEntry,
+  type Gs1DigitalLinkPanelProps,
+  type Gs1DigitalLinkResult,
+} from "./components/Gs1DigitalLinkPanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
