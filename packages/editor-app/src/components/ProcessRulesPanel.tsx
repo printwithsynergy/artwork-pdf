@@ -147,6 +147,10 @@ export function ProcessRulesPanel({
     let disposed = false;
     setLoading(true);
     setError(null);
+    // Clear stale findings while the next fetch is in flight — if a
+    // caller ever bypasses the `loading` guard, we don't want the
+    // previous process's rules to flash through.
+    setRules(null);
     // Wrap in an async IIFE so a *synchronous* throw from the adapter
     // (e.g. a host validating inputs before constructing fetch) flows
     // through the same `setError` path as a rejected Promise.
