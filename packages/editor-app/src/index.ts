@@ -24,6 +24,18 @@ export {
   type DielineParameters,
   type DielineParametersPanelProps,
 } from "./components/DielineParametersPanel";
+export {
+  computeDielinePreviewLayout,
+  DielinePreview,
+  type DielinePreviewFoldConfig,
+  type DielinePreviewFoldEdge,
+  type DielinePreviewLaidOutHinge,
+  type DielinePreviewLaidOutPanel,
+  type DielinePreviewLayout,
+  type DielinePreviewPanel,
+  type DielinePreviewPanelMetadata,
+  type DielinePreviewProps,
+} from "./components/DielinePreview";
 export { TacOverlay, type TacOverlayProps } from "./components/TacOverlay";
 export {
   TrapPreviewOverlay,

@@ -37,6 +37,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   preflight: { slot: "panel.right", label: "Preflight" },
   "dieline-library": { slot: "panel.modal", label: "Dieline Library" },
   "dieline-parameters": { slot: "panel.right", label: "Dieline Parameters" },
+  "dieline-preview": { slot: "panel.right", label: "Dieline Preview" },
   swatches: { slot: "panel.right", label: "Swatches" },
   inks: { slot: "panel.right", label: "Inks" },
   "graphic-styles": { slot: "panel.right", label: "Graphic Styles" },
