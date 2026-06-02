@@ -340,6 +340,16 @@ export interface EditorConfig {
    *  no compile-pdf endpoint reachable) — surfacing the panel without
    *  a working adapter would only frustrate users. */
   enable_barcode_generate: boolean;
+  /** G2v — barcode validation preflight rule. When enabled, the
+   *  client-side `barcode_validation` preflight rule rasterizes the
+   *  active page, runs {@link scanBarcodes} over the resulting
+   *  ImageData, then validates each detection via
+   *  {@link validateBarcode} (EAN-13 check digit, UPC-A length,
+   *  GS1-128 AI sequence). Detected codes that fail their format's
+   *  validator surface as warn-severity findings. Disable when the
+   *  host doesn't ship barcode-bearing artwork (skips the
+   *  rasterize+scan round-trip on every preflight pass). */
+  enable_barcode_validation: boolean;
   /** P5 — Braille layout panel (EN 15823 / Marburg Medium). When
    *  enabled, hosts can mount the {@link BraillePanel} to compose
    *  Grade 1 English Braille cells. Disable for hosts that don't
@@ -466,6 +476,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_soft_proof: true,
   enable_variant_matrix: true,
   enable_barcode_generate: true,
+  enable_barcode_validation: true,
   enable_gs1_digital_link: true,
   enable_nutrition_panel: true,
   enable_braille_panel: true,
