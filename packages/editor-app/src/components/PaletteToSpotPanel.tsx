@@ -210,15 +210,45 @@ export function PaletteToSpotPanel({
   );
 
   const matchAll = useCallback(async () => {
-    await Promise.all(rows.filter((r) => r.status !== "loading").map((r) => matchOne(r.color)));
+    // Skip rows that are already loading (in-flight) or already matched
+    // (no point re-paying the matcher cost — host can use the per-row
+    // "Re-match" button if they want to refresh a single entry).
+    await Promise.all(
+      rows
+        .filter((r) => r.status !== "loading" && r.status !== "matched")
+        .map((r) => matchOne(r.color)),
+    );
   }, [rows, matchOne]);
 
   const commit = useCallback(
     async (row: PaletteToSpotRow) => {
       if (!onCommit || !row.bestMatch) return;
-      await onCommit(row.color, row.bestMatch);
+      try {
+        await onCommit(row.color, row.bestMatch);
+      } catch (err) {
+        // Surface commit failures the same way match failures land
+        // (per-row error state). Without this branch a failed write
+        // would leave the row showing the matched state, suggesting
+        // the spot was committed when it wasn't.
+        let message = "Couldn't commit spot to registry.";
+        if (errorMessage) {
+          try {
+            const candidate = errorMessage(err);
+            if (candidate) message = candidate;
+          } catch {
+            // fall back to default
+          }
+        }
+        setRows((prev) =>
+          prev.map((r) =>
+            r.color.id === row.color.id
+              ? { color: row.color, status: "error", errorMessage: message }
+              : r,
+          ),
+        );
+      }
     },
-    [onCommit],
+    [onCommit, errorMessage],
   );
 
   const summary = useMemo(() => summarizePaletteCoverage(rows), [rows]);
