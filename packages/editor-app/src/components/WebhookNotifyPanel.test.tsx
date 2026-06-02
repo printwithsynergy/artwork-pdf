@@ -49,6 +49,7 @@ describe("WEBHOOK_NOTIFICATION_EVENT_LABELS", () => {
     expect(WEBHOOK_NOTIFICATION_EVENT_LABELS["preflight-cleared"]).toBe("Preflight cleared");
     expect(WEBHOOK_NOTIFICATION_EVENT_LABELS["job-submitted"]).toBe("Job submitted");
     expect(WEBHOOK_NOTIFICATION_EVENT_LABELS["variant-approved"]).toBe("Variant approved");
+    expect(WEBHOOK_NOTIFICATION_EVENT_LABELS["approval-requested"]).toBe("Approval requested");
     expect(WEBHOOK_NOTIFICATION_EVENT_LABELS.custom).toBe("Custom event");
   });
 });
