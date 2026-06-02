@@ -154,6 +154,13 @@ export interface EditorConfig {
    *  consults the same registry. Hosts that don't carry brand assets
    *  opt out via this flag. */
   enable_brand_assets_panel: boolean;
+  /** X3 — annotation overlay. When enabled, hosts mount the
+   *  {@link AnnotationOverlay} SVG layer over the canvas to surface
+   *  `PageV3.annotations` (point / area / text). The overlay is
+   *  read-only; mutation (add / resolve / delete) is a host concern.
+   *  Disable for view-only / print-preview surfaces where comments
+   *  shouldn't appear. */
+  enable_annotation_overlay: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -327,6 +334,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_process_rules_panel: true,
   enable_preflight_diff: true,
   enable_brand_assets_panel: true,
+  enable_annotation_overlay: true,
   // Job setup
   enable_print_context: true,
   // Canvas

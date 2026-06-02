@@ -125,6 +125,18 @@ export {
   groupBrandAssetsByKind,
 } from "./components/BrandAssetsPanel";
 export {
+  AnnotationOverlay,
+  type AnnotationBaseInput,
+  type AnnotationOverlayAnnotation,
+  type AnnotationOverlayProps,
+  type AreaAnnotationInput,
+  describeAnnotation,
+  isPointInsideAnnotation,
+  type PointAnnotationInput,
+  type TextAnnotationInput,
+  visibleAnnotations,
+} from "./components/AnnotationOverlay";
+export {
   IccSoftProofOverlay,
   type IccSoftProofLoaderFn,
   type IccSoftProofOverlayProps,
