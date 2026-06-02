@@ -40,7 +40,8 @@ export type PaletteId =
   | "brand-consistency"
   | "webhook-notify"
   | "email-notify"
-  | "accessibility-hints";
+  | "accessibility-hints"
+  | "palette-to-spot";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -255,6 +256,15 @@ export interface EditorConfig {
    *  etc.). Pairs with the synergy `email.notify` workflow node when
    *  one is deployed; disable when no email transport is wired. */
   enable_email_notify: boolean;
+  /** AI4 — Palette → spot conversion panel. Closes the Wave 1 AI
+   *  family. AI2 {@link SmartSpotMatchPanel} matches a user-picked
+   *  color to PANTONE; AI4 takes the inverse direction — given the
+   *  document's existing palette (every distinct fill/stroke on the
+   *  active page), route each entry through the same matcher and let
+   *  the user commit the best match into the spot registry in one
+   *  click. Reuses AI2's {@link SpotMatchLoaderFn} so one host
+   *  adapter serves both panels. Disable when no matcher is wired. */
+  enable_palette_to_spot: boolean;
   /** AI5 — Accessibility hints panel. Fourth member of the Wave 4 AI
    *  family (alongside AI1 design-suggestions, AI2 smart spot-match,
    *  AI3 preflight auto-fix); surfaces a host-loader-supplied list of
@@ -450,6 +460,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_webhook_notify: true,
   enable_email_notify: true,
   enable_accessibility_hints: true,
+  enable_palette_to_spot: true,
   // Job setup
   enable_print_context: true,
   // Canvas
