@@ -40,6 +40,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Build @printwithsynergy/artwork-pdf-editor
+        run: pnpm --filter @printwithsynergy/artwork-pdf-editor build
+
+      - name: Publish @printwithsynergy/artwork-pdf-editor
+        run: pnpm --filter @printwithsynergy/artwork-pdf-editor publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   github-release:
     name: GitHub release
     runs-on: ubuntu-latest
