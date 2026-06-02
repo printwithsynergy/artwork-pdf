@@ -81,6 +81,11 @@ export function mergeRow(
   row: MergeRow,
 ): { merged: string; missingTokens: string[] } {
   const missingSet = new Set<string>();
+  // `String.prototype.replace` with a `/g` regex doesn't read
+  // `lastIndex`, but the same regex is reused by `extractMergeTokens`
+  // via `.exec`. Resetting up front decouples call ordering and avoids
+  // a class of stateful-regex bugs.
+  TOKEN_RE.lastIndex = 0;
   const merged = template.replace(TOKEN_RE, (_match, rawName: string) => {
     const name = rawName.trim();
     const value = row[name];
