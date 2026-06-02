@@ -71,6 +71,15 @@ export {
   type VariantMatrixPanelVariant,
 } from "./components/VariantMatrixPanel";
 export {
+  diffVariantMatrices,
+  resolveSnapshot,
+  type VariantMatrixDiffResult,
+  type VariantMatrixModifiedVariant,
+  type VariantMatrixSnapshot,
+  VariantMatrixVersionPanel,
+  type VariantMatrixVersionPanelProps,
+} from "./components/VariantMatrixVersionPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
