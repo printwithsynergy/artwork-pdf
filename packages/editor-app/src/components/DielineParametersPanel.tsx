@@ -21,7 +21,7 @@
  */
 
 import type { KeyboardEvent, ReactElement } from "react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 /**
  * Editable dieline parameters. All values are in **mm**; the
@@ -153,6 +153,12 @@ export function DielineParametersPanel({
   // fast-path the no-warning render.
   const warnings = useMemo(() => (value ? validateDielineParameters(value) : []), [value]);
 
+  // Track the value as of the last commit so blur on an untouched
+  // field doesn't push a duplicate history entry to the host.
+  // `value` is recreated by `onChange` on every keystroke (via the
+  // spread in `set`), so a reference compare is sufficient.
+  const lastCommittedRef = useRef(value);
+
   if (!value) {
     return (
       <div data-testid="dieline-parameters-panel" style={{ padding: "0.5rem", opacity: 0.6 }}>
@@ -166,6 +172,12 @@ export function DielineParametersPanel({
   };
 
   const commit = () => {
+    // Skip if the value hasn't changed since the last commit —
+    // blur on an untouched field shouldn't fire an undo-stack
+    // entry. Reference compare is safe because `set` recreates
+    // the object on every keystroke.
+    if (value === lastCommittedRef.current) return;
+    lastCommittedRef.current = value;
     onCommit?.(value);
   };
 

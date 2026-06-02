@@ -70,6 +70,10 @@ describe("DielineParametersPanelProps type", () => {
       },
       onCommit: (next) => commits.push(next),
     };
+    // The callback contract is "fires when finished editing" — the
+    // panel itself dedupes no-op blurs internally via a ref. This
+    // test pins the host-facing shape, not the panel's internal
+    // dedup logic (which is covered by the DOM test once RTL lands).
     props.onCommit?.({ widthMm: 100, heightMm: 50, bleedMm: 3 });
     expect(commits).toHaveLength(1);
     expect(commits[0]?.widthMm).toBe(100);
