@@ -135,6 +135,14 @@ export {
   groupDesignSuggestionsByCategory,
 } from "./components/DesignSuggestionsPanel";
 export {
+  AnnotationsSidebar,
+  type AnnotationsSidebarFilter,
+  type AnnotationsSidebarProps,
+  type AnnotationStatusFilter,
+  filterAnnotationsForSidebar,
+  sortAnnotationsByDate,
+} from "./components/AnnotationsSidebar";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,

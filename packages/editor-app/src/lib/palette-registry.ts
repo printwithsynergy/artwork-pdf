@@ -52,6 +52,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "preflight-autofix": { slot: "panel.right", label: "Auto-fix" },
   "smart-spot-match": { slot: "panel.right", label: "Spot match" },
   "design-suggestions": { slot: "panel.right", label: "Design suggestions" },
+  "annotations-sidebar": { slot: "panel.right", label: "Annotations" },
 };
 
 /**

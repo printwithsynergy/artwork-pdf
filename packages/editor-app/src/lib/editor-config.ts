@@ -35,7 +35,8 @@ export type PaletteId =
   | "slack-notify"
   | "preflight-autofix"
   | "smart-spot-match"
-  | "design-suggestions";
+  | "design-suggestions"
+  | "annotations-sidebar";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -206,6 +207,12 @@ export interface EditorConfig {
    *  dismiss. Pairs with the synergy `design.suggest` node when one
    *  is deployed; disable when no suggestion adapter is wired. */
   enable_design_suggestions: boolean;
+  /** X1 — Annotations sidebar. Companion list view to the X3
+   *  {@link AnnotationOverlay}; surfaces the same annotation stream
+   *  as a scrollable, filterable list so reviewers can read the
+   *  thread without hunting for pins. Disable when the host doesn't
+   *  ship annotations (view-only surfaces, print-preview, …). */
+  enable_annotations_sidebar: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -386,6 +393,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_autofix: true,
   enable_smart_spot_match: true,
   enable_design_suggestions: true,
+  enable_annotations_sidebar: true,
   // Job setup
   enable_print_context: true,
   // Canvas
