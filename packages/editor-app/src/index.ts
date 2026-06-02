@@ -102,6 +102,15 @@ export {
   type SlackNotifyPanelProps,
 } from "./components/SlackNotifyPanel";
 export {
+  findingKey,
+  indexFixSetsByFinding,
+  PreflightAutoFixPanel,
+  type PreflightAutoFixPanelProps,
+  type PreflightFixLoaderFn,
+  type PreflightFixSet,
+  type PreflightFixSuggestion,
+} from "./components/PreflightAutoFixPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
