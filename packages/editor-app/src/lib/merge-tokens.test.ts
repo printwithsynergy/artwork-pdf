@@ -47,6 +47,21 @@ describe("mergeRow", () => {
     const result = mergeRow("{{x}} {{x}}", {});
     expect(result.missingTokens).toEqual(["x"]);
   });
+
+  it("treats Object.prototype members as missing, not as inherited values", () => {
+    // Guards against a class of bugs where `row[name]` resolves to
+    // inherited prototype methods (e.g. `toString`, `constructor`)
+    // and corrupts the merged output.
+    const result = mergeRow("Hi {{toString}}!", {});
+    expect(result.merged).toBe("Hi !");
+    expect(result.missingTokens).toEqual(["toString"]);
+  });
+
+  it("still resolves prototype-shadowing names from own properties", () => {
+    const result = mergeRow("Hi {{toString}}!", { toString: "Ada" });
+    expect(result.merged).toBe("Hi Ada!");
+    expect(result.missingTokens).toEqual([]);
+  });
 });
 
 describe("validateMergeManifest", () => {

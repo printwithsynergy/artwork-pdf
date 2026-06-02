@@ -88,12 +88,16 @@ export function mergeRow(
   TOKEN_RE.lastIndex = 0;
   const merged = template.replace(TOKEN_RE, (_match, rawName: string) => {
     const name = rawName.trim();
-    const value = row[name];
-    if (value === undefined) {
+    // `Object.hasOwn` (not `name in row` / `row[name] !== undefined`)
+    // — otherwise tokens like `{{toString}}` resolve to the inherited
+    // `Object.prototype.toString` method and silently corrupt the
+    // merged output. `validateMergeManifest` already uses `Object.keys`
+    // (own enumerable keys), so this keeps the two helpers in sync.
+    if (!Object.hasOwn(row, name)) {
       missingSet.add(name);
       return "";
     }
-    return value;
+    return row[name] ?? "";
   });
   return { merged, missingTokens: [...missingSet] };
 }
