@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { composeDocument } from "@artworkpdf/compose";
 import type {
   DocumentModel,
   ImposeTemplate,
@@ -49,11 +50,15 @@ type RenderJobData = Record<string, unknown> & {
  * to the correlated `jobs` row (if a DB is configured and `dbJobId`
  * is set).
  *
- * **Cache-key threading:** the `cacheKey` returned to the host is
- * always from the *last* producer in the chain — compose alone when
- * only compose ran; impose's key when impose ran last; etc. This
- * lets downstream consumers cache on the final output identity, not
- * an intermediate step.
+ * **Cache-key threading:** the `cacheKey` written to the host is
+ * the *last wire producer's* lineage key — marks's if marks ran
+ * last, impose's when impose ran last, etc. **Compose-only runs**
+ * (no marks / trap / impose field on the request) leave `cacheKey`
+ * as an empty string `""` because compose now runs in-process via
+ * `@artworkpdf/compose` and has no Lineage backend to issue a key.
+ * Downstream consumers must not assume a compose cache entry
+ * exists for those rows; a real key materializes the moment a
+ * wire producer chains onto compose's output.
  *
  * Error handling is per-job and intentionally swallowing: a single
  * failure does not abort the batch — pg-boss expects no throw, so we
@@ -83,9 +88,26 @@ export function makeRenderJob(
         // Chain: compose → marks → trap → impose. Each step only
         // runs when its request field is present; absent fields fall
         // through with the previous step's output unchanged.
-        let bytes: ArrayBuffer;
-        let cacheKey: string;
-        ({ bytes, cacheKey } = await client.compose(document));
+        //
+        // Compose runs in-process via `@artworkpdf/compose` — the
+        // reference TypeScript implementation. Marks / trap / impose
+        // still cross the wire to compile-pdf because those producers
+        // ship Python-only engines today. When compile-pdf grows a
+        // `/v1/compose/apply` endpoint we can flip the local call
+        // back to `client.compose(document)` without changing the
+        // chain shape.
+        const composed = await composeDocument(document);
+        let bytes: ArrayBuffer = composed.buffer.slice(
+          composed.byteOffset,
+          composed.byteOffset + composed.byteLength,
+        ) as ArrayBuffer;
+        // Local compose has no producer cache — initial cacheKey is
+        // empty until the first wire-call producer overwrites it.
+        // Downstream consumers that depend on cacheKey identity get
+        // a stable empty string for compose-only runs (deterministic
+        // input → deterministic empty key) and a real key the moment
+        // a wire producer chains onto it.
+        let cacheKey = "";
 
         if (marksTemplate) {
           ({ bytes, cacheKey } = await client.marks(marksTemplate, bytes));

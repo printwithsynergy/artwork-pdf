@@ -18,7 +18,8 @@
     "drizzle-orm": "^0.45.2",
     "pg-boss": "^10.1.0",
     "postgres": "^3.4.5",
-    "@artworkpdf/document-model": "workspace:*"
+    "@artworkpdf/document-model": "workspace:*",
+    "@artworkpdf/compose": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

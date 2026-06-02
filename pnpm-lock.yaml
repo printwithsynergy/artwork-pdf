@@ -71,6 +71,9 @@ importers:
 
   apps/service:
     dependencies:
+      '@artworkpdf/compose':
+        specifier: workspace:*
+        version: link:../../packages/compose
       '@artworkpdf/document-model':
         specifier: workspace:*
         version: link:../../packages/document-model
