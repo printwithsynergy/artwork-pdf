@@ -30,7 +30,8 @@ export type PaletteId =
   | "variant-matrix"
   | "process-rules"
   | "preflight-diff"
-  | "brand-assets";
+  | "brand-assets"
+  | "mark-library";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -167,6 +168,13 @@ export interface EditorConfig {
    *  with the optional `version` field on `VariantMatrix` (Wave 4
    *  PR-A). Disable for hosts that don't ship versioned variants. */
   enable_variant_matrix_versions: boolean;
+  /** M1 — mark library picker panel. When enabled, hosts mount the
+   *  {@link MarkLibraryPanel} to browse a host-provided catalogue of
+   *  printer marks (crop, registration, color bar, slug, other) and
+   *  wire the selected entry into the active page's marks template.
+   *  Pairs with compile-pdf's marks producer; disable when no
+   *  catalogue source is wired. */
+  enable_mark_library: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -342,6 +350,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_brand_assets_panel: true,
   enable_annotation_overlay: true,
   enable_variant_matrix_versions: true,
+  enable_mark_library: true,
   // Job setup
   enable_print_context: true,
   // Canvas

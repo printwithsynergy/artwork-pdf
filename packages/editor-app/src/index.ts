@@ -80,6 +80,18 @@ export {
   type VariantMatrixVersionPanelProps,
 } from "./components/VariantMatrixVersionPanel";
 export {
+  filterMarks,
+  groupMarksByCategory,
+  MARK_CATEGORY_ORDER,
+  type MarkCategory,
+  MarkLibraryPanel,
+  type MarkLibraryEntry,
+  type MarkLibraryFilter,
+  type MarkLibraryGroup,
+  type MarkLibraryLoaderFn,
+  type MarkLibraryPanelProps,
+} from "./components/MarkLibraryPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
