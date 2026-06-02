@@ -118,9 +118,19 @@ export function IccSoftProofOverlay({
     if (!documentB64 || !sourceProfile || !destinationProfile) {
       setStats(null);
       setError(null);
+      // Also clear the in-flight loading state — a request started
+      // before the inputs were cleared would otherwise leave the
+      // footer chip stuck on "soft-proofing…".
+      setLoading(false);
       return;
     }
     let disposed = false;
+    // Reset stats + the canvas up front so a slow fetch doesn't
+    // leave the previous run's heatmap visible under the
+    // "soft-proofing…" footer.
+    setStats(null);
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvasRef.current?.width ?? 0, canvasRef.current?.height ?? 0);
     setLoading(true);
     setError(null);
     // Wrap the loader call in an async IIFE so synchronous throws
