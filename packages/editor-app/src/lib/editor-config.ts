@@ -201,6 +201,12 @@ export interface EditorConfig {
    *  no compile-pdf endpoint reachable) — surfacing the panel without
    *  a working adapter would only frustrate users. */
   enable_barcode_generate: boolean;
+  /** G3 — GS1 Digital Link composer panel. When enabled, hosts can
+   *  mount the {@link Gs1DigitalLinkPanel} to assemble a GTIN + AIs
+   *  into a canonical GS1 Digital Link URL (optionally rendered as a
+   *  QR via the same renderer adapter the G2g panel uses). Disable
+   *  when the host's workflow doesn't ship GS1-encoded artwork. */
+  enable_gs1_digital_link: boolean;
   /** G1 — FDA Nutrition Facts label data-entry panel. When enabled,
    *  hosts can mount the {@link NutritionPanel} to compose a typed
    *  {@link NutritionFacts} record into an ordered
@@ -291,6 +297,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_soft_proof: true,
   enable_variant_matrix: true,
   enable_barcode_generate: true,
+  enable_gs1_digital_link: true,
   enable_nutrition_panel: true,
 };
 

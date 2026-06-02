@@ -98,6 +98,15 @@ export {
   type BarcodeRenderResult,
 } from "./components/BarcodeGeneratorPanel";
 export {
+  composeGs1DigitalLink,
+  DEFAULT_GS1_DOMAIN,
+  Gs1DigitalLinkPanel,
+  isValidGs1Ai17,
+  type Gs1AiEntry,
+  type Gs1DigitalLinkPanelProps,
+  type Gs1DigitalLinkResult,
+} from "./components/Gs1DigitalLinkPanel";
+export {
   composeNutritionFacts,
   FDA_DAILY_VALUES,
   NutritionPanel,
