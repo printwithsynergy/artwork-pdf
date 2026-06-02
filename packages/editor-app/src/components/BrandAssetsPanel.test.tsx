@@ -102,6 +102,20 @@ describe("groupBrandAssetsByKind", () => {
     expect(groups).toHaveLength(5);
     expect(groups.every((g) => g.assets.length === 0)).toBe(true);
   });
+
+  it("falls back unknown runtime kinds into the 'other' bucket", () => {
+    // JSON loads from external sources could carry kinds the TS union
+    // doesn't know about — those land in "other" rather than vanishing.
+    const rogue = {
+      id: "rogue",
+      hash: "z".repeat(64),
+      name: "Unknown-kind asset",
+      kind: "videos" as BrandAssetKind, // forced — simulates wire drift
+    };
+    const groups = groupBrandAssetsByKind([LOGO, rogue]);
+    const other = groups.find((g) => g.kind === "other");
+    expect(other?.assets.map((a) => a.id)).toContain("rogue");
+  });
 });
 
 describe("filterBrandAssets", () => {

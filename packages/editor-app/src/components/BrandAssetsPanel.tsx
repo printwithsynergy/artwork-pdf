@@ -125,7 +125,12 @@ export type BrandAssetsPanelProps = {
 export function groupBrandAssetsByKind(assets: readonly BrandAsset[]): readonly BrandAssetGroup[] {
   const buckets = new Map<BrandAssetKind, BrandAsset[]>(BRAND_ASSET_KIND_ORDER.map((k) => [k, []]));
   for (const a of assets) {
-    buckets.get(a.kind)?.push(a);
+    // Defensive: TS makes `kind` a strict union, but runtime data
+    // (a JSON load from an external source, a forward-compat extension
+    // in the registry) could carry kinds we don't know about. Drop
+    // such entries into "other" rather than silently losing them.
+    const bucket = buckets.get(a.kind) ?? buckets.get("other");
+    bucket?.push(a);
   }
   return BRAND_ASSET_KIND_ORDER.map((kind) => ({
     kind,
@@ -186,6 +191,14 @@ export function BrandAssetsPanel({
       <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.875rem" }}>
         Brand assets ({visibleAssets.length})
       </h3>
+      {visibleAssets.length === 0 && filterKind && (
+        <div
+          data-testid="brand-assets-panel-empty-filter"
+          style={{ opacity: 0.6, fontSize: "0.875rem" }}
+        >
+          No {filterKind} assets in this document.
+        </div>
+      )}
       {groups.map((group) => {
         if (group.assets.length === 0) return null;
         return (
