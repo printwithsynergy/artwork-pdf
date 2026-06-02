@@ -2,10 +2,13 @@
 import { describe, expect, it } from "vitest";
 import type {
   Annotation,
+  AreaAnnotation,
   BrandAssetRef,
   DocumentV3,
   PageV3,
+  PointAnnotation,
   PreflightSnapshot,
+  TextAnnotation,
   Variant,
   VariantMatrix,
 } from "./index.js";
@@ -83,19 +86,57 @@ describe("Annotation (X3)", () => {
     expect(page.annotations).toBeUndefined();
   });
 
-  it("width / height / text / author / resolved are all optional", () => {
-    const minimal: Annotation = {
-      id: "min",
+  it("discriminated union — point has no width/height, area requires both, text requires body", () => {
+    // Point: just an anchor, optional note. No width/height allowed.
+    const point: PointAnnotation = {
+      id: "p",
       kind: "point",
       x: 0,
       y: 0,
       createdAt: "2026-06-02T00:00:00Z",
     };
-    expect(minimal.width).toBeUndefined();
-    expect(minimal.height).toBeUndefined();
-    expect(minimal.text).toBeUndefined();
-    expect(minimal.author).toBeUndefined();
-    expect(minimal.resolved).toBeUndefined();
+    expect(point.text).toBeUndefined();
+    expect(point.author).toBeUndefined();
+    expect(point.resolved).toBeUndefined();
+    // @ts-expect-error — width is not a field on PointAnnotation
+    point.width;
+
+    // Area: required width + height. Text optional.
+    const area: AreaAnnotation = {
+      id: "a",
+      kind: "area",
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 20,
+      createdAt: "2026-06-02T00:00:00Z",
+    };
+    expect(area.width).toBe(10);
+    expect(area.height).toBe(20);
+
+    // Text: required text body.
+    const text: TextAnnotation = {
+      id: "t",
+      kind: "text",
+      x: 0,
+      y: 0,
+      text: "Approve before press",
+      createdAt: "2026-06-02T00:00:00Z",
+    };
+    expect(text.text).toBe("Approve before press");
+    // @ts-expect-error — width is not a field on TextAnnotation
+    text.width;
+
+    // The union itself narrows on `kind`. Use an array typed as the
+    // wider union so TS doesn't pre-narrow on assignment.
+    const all: Annotation[] = [point, area, text];
+    for (const a of all) {
+      if (a.kind === "area") {
+        expect(a.width).toBeGreaterThanOrEqual(0);
+      } else if (a.kind === "text") {
+        expect(a.text.length).toBeGreaterThanOrEqual(0);
+      }
+    }
   });
 });
 
@@ -235,9 +276,7 @@ describe("Wave 4 additivity — round-trips preserve identity", () => {
         },
       ],
       variants: { tokenKeys: [], variants: [], version: "1.0.0" },
-      brandAssets: [
-        { id: "b1", hash: "0".repeat(64), name: "Logo", kind: "logo" },
-      ],
+      brandAssets: [{ id: "b1", hash: "0".repeat(64), name: "Logo", kind: "logo" }],
       preflightHistory: [
         { id: "h1", timestamp: "2026-06-02T00:00:00Z", triggeredBy: "auto", findings: [] },
       ],

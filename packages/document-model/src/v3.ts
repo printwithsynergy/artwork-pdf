@@ -118,30 +118,71 @@ export type VariantMatrix = {
 };
 
 /**
+ * Common fields shared by every {@link Annotation} variant.
+ *
+ * Pulled out so the discriminated union below can extend a single
+ * base shape — keeps the per-kind variants focused on the fields
+ * that distinguish them.
+ */
+type AnnotationBase = {
+  id: string;
+  x: number;
+  y: number;
+  author?: string;
+  createdAt: string;
+  resolved?: boolean;
+};
+
+/**
+ * Pinpoint annotation (Wave 4 X3) — a single x/y marker with an
+ * optional note body. Width / height are forbidden by the union
+ * discrimination; use {@link AreaAnnotation} for bounded regions.
+ */
+export type PointAnnotation = AnnotationBase & {
+  kind: "point";
+  text?: string;
+};
+
+/**
+ * Bounded-region annotation (Wave 4 X3). The `width`/`height` pair
+ * define a rectangle anchored at (`x`, `y`) in page coordinates
+ * matching the page's `unit` field. `text` is the optional note.
+ */
+export type AreaAnnotation = AnnotationBase & {
+  kind: "area";
+  width: number;
+  height: number;
+  text?: string;
+};
+
+/**
+ * Inline text annotation (Wave 4 X3) — a point-anchored marker
+ * with a required text body (the comment itself). Use
+ * {@link PointAnnotation} when the note is optional or absent.
+ */
+export type TextAnnotation = AnnotationBase & {
+  kind: "text";
+  text: string;
+};
+
+/**
  * Author annotation pinned to a page (Wave 4 X3).
  *
- * Three shapes: `point` annotations carry a single x/y in page
- * coordinates (units match the page's `unit` field); `area`
- * annotations add `width`/`height` for a bounded region; `text`
- * annotations are point-anchored with required `text` body.
+ * Discriminated union on `kind`:
+ *   - `"point"` → {@link PointAnnotation} (no width/height; optional text)
+ *   - `"area"`  → {@link AreaAnnotation}  (required width/height; optional text)
+ *   - `"text"`  → {@link TextAnnotation}  (no width/height; required text body)
+ *
+ * The discrimination prevents nonsensical shapes — TypeScript
+ * rejects `{ kind: "point", width: 5 }` at compile time and
+ * requires `text` to be populated when `kind === "text"`.
  *
  * `resolved` toggles whether the host should hide the annotation
  * by default. The wire model is intentionally minimal — threaded
  * replies, mentions, and review state are host-side concerns and
  * live outside DocumentV3.
  */
-export type Annotation = {
-  id: string;
-  kind: "point" | "area" | "text";
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  text?: string;
-  author?: string;
-  createdAt: string;
-  resolved?: boolean;
-};
+export type Annotation = PointAnnotation | AreaAnnotation | TextAnnotation;
 
 /**
  * Reference to a brand asset cached by the editor's brand-asset
