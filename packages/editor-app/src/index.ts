@@ -176,6 +176,19 @@ export {
   parseEmailList,
 } from "./components/EmailNotifyPanel";
 export {
+  ACCESSIBILITY_SEVERITY_ORDER,
+  AccessibilityHintsPanel,
+  type AccessibilityCategory,
+  type AccessibilityFilter,
+  type AccessibilityFinding,
+  type AccessibilityGroup,
+  type AccessibilityHintsLoaderFn,
+  type AccessibilityHintsPanelProps,
+  type AccessibilitySeverity,
+  filterAccessibilityFindings,
+  groupAccessibilityFindingsBySeverity,
+} from "./components/AccessibilityHintsPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
