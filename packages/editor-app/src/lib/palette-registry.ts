@@ -48,6 +48,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "preflight-diff": { slot: "panel.right", label: "Preflight Diff" },
   "brand-assets": { slot: "panel.right", label: "Brand Assets" },
   "mark-library": { slot: "panel.right", label: "Marks" },
+  "slack-notify": { slot: "panel.right", label: "Slack notify" },
 };
 
 /**

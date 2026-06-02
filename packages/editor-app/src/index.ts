@@ -92,6 +92,16 @@ export {
   type MarkLibraryPanelProps,
 } from "./components/MarkLibraryPanel";
 export {
+  composeSlackMessage,
+  SLACK_NOTIFICATION_EVENT_LABELS,
+  type SlackNotificationContext,
+  type SlackNotificationEventKind,
+  type SlackNotificationPayload,
+  SlackNotifyPanel,
+  type SlackNotifyFn,
+  type SlackNotifyPanelProps,
+} from "./components/SlackNotifyPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
