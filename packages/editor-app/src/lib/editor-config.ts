@@ -179,6 +179,13 @@ export interface EditorConfig {
    *  unconditional (a pure projection), so the flag controls the UI
    *  surface and the host's outbound wiring, not the helper. */
   enable_process_preflight: boolean;
+  /** C5 — ICC soft-proof overlay. When enabled, hosts can mount the
+   *  {@link IccSoftProofOverlay} on top of the canvas; the overlay's
+   *  loader adapter resolves to a per-pixel delta-E map (typically
+   *  via compile-pdf's `/v1/soft-proof/apply`). Disable to skip the
+   *  rasterize + round-trip cost on devices where the overlay would
+   *  be too expensive. */
+  enable_soft_proof: boolean;
   /** V2 — variant matrix UI for variable-data overrides. When
    *  enabled, the editor surfaces a rows-times-columns table of
    *  variants and token keys that writes into `document.variants`.
@@ -266,6 +273,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_fold_editor: true,
   enable_mis_estimate: true,
   enable_process_preflight: true,
+  enable_soft_proof: true,
   enable_variant_matrix: true,
 };
 

@@ -85,6 +85,13 @@ export {
   type ComplianceLoaderFn,
 } from "./components/ComplianceFindingsPanel";
 export {
+  IccSoftProofOverlay,
+  type IccSoftProofLoaderFn,
+  type IccSoftProofOverlayProps,
+  type IccSoftProofResult,
+  type SoftProofIntent,
+} from "./components/IccSoftProofOverlay";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
