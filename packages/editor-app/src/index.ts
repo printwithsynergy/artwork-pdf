@@ -123,6 +123,18 @@ export {
   sortMatchesByDeltaE,
 } from "./components/SmartSpotMatchPanel";
 export {
+  DESIGN_SUGGESTION_CATEGORY_ORDER,
+  DesignSuggestionsPanel,
+  type DesignSuggestion,
+  type DesignSuggestionCategory,
+  type DesignSuggestionFilter,
+  type DesignSuggestionGroup,
+  type DesignSuggestionLoaderFn,
+  type DesignSuggestionsPanelProps,
+  filterDesignSuggestions,
+  groupDesignSuggestionsByCategory,
+} from "./components/DesignSuggestionsPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
