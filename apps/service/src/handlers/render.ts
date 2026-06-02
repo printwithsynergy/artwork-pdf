@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { composeDocument } from "@artworkpdf/compose";
 import type {
   DocumentModel,
   ImposeTemplate,
@@ -83,9 +84,26 @@ export function makeRenderJob(
         // Chain: compose → marks → trap → impose. Each step only
         // runs when its request field is present; absent fields fall
         // through with the previous step's output unchanged.
-        let bytes: ArrayBuffer;
-        let cacheKey: string;
-        ({ bytes, cacheKey } = await client.compose(document));
+        //
+        // Compose runs in-process via `@artworkpdf/compose` — the
+        // reference TypeScript implementation. Marks / trap / impose
+        // still cross the wire to compile-pdf because those producers
+        // ship Python-only engines today. When compile-pdf grows a
+        // `/v1/compose/apply` endpoint we can flip the local call
+        // back to `client.compose(document)` without changing the
+        // chain shape.
+        const composed = await composeDocument(document);
+        let bytes: ArrayBuffer = composed.buffer.slice(
+          composed.byteOffset,
+          composed.byteOffset + composed.byteLength,
+        ) as ArrayBuffer;
+        // Local compose has no producer cache — initial cacheKey is
+        // empty until the first wire-call producer overwrites it.
+        // Downstream consumers that depend on cacheKey identity get
+        // a stable empty string for compose-only runs (deterministic
+        // input → deterministic empty key) and a real key the moment
+        // a wire producer chains onto it.
+        let cacheKey = "";
 
         if (marksTemplate) {
           ({ bytes, cacheKey } = await client.marks(marksTemplate, bytes));
