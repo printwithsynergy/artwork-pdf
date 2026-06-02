@@ -193,6 +193,14 @@ export interface EditorConfig {
    *  variant) lands in Wave 3 V1; this flag just gates the editing
    *  surface. */
   enable_variant_matrix: boolean;
+  /** G2g — barcode generator panel. When enabled, hosts can mount the
+   *  {@link BarcodeGeneratorPanel} on the canvas chrome; the panel's
+   *  renderer adapter resolves a format + payload to an ImageData
+   *  bitmap the host then places as a `CanvasObj`. Disable when the
+   *  host doesn't ship a barcode-rendering backend (no library wired,
+   *  no compile-pdf endpoint reachable) — surfacing the panel without
+   *  a working adapter would only frustrate users. */
+  enable_barcode_generate: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -275,6 +283,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_process_preflight: true,
   enable_soft_proof: true,
   enable_variant_matrix: true,
+  enable_barcode_generate: true,
 };
 
 /**

@@ -92,6 +92,12 @@ export {
   type SoftProofIntent,
 } from "./components/IccSoftProofOverlay";
 export {
+  BarcodeGeneratorPanel,
+  type BarcodeGeneratorPanelProps,
+  type BarcodeRenderFn,
+  type BarcodeRenderResult,
+} from "./components/BarcodeGeneratorPanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
@@ -151,6 +157,7 @@ export {
   type BarcodeDetection,
   type BarcodeFormat,
   type BarcodeValidation,
+  ALL_BARCODE_FORMATS,
   scanBarcodes,
   validateBarcode,
   validateEAN13,
