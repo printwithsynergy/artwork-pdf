@@ -165,6 +165,17 @@ const KIND_LABELS: Record<BrandAssetKind, string> = {
 };
 
 /**
+ * Read-only browser for `DocumentV3.brandAssets` grouped by kind.
+ *
+ * Renders the registry as a count header plus one section per kind in
+ * {@link BRAND_ASSET_KIND_ORDER}. When `filterKind` is set, only that
+ * bucket's assets are visible; the panel surfaces a distinct
+ * "no {kind} assets in this document" message when the filter
+ * matches nothing (vs the registry-is-empty message). Hosts opt in
+ * to row interaction by passing `onSelect` — otherwise rows render
+ * as static content so screen readers don't announce non-functional
+ * buttons.
+ *
  * @public
  */
 export function BrandAssetsPanel({
@@ -230,6 +241,14 @@ export function BrandAssetsPanel({
   );
 }
 
+/**
+ * Renders one asset row inside a kind section. The row is a `<button>`
+ * when the host wired `onSelect` (announces interactivity to screen
+ * readers) and a plain `<div>` otherwise so static rows aren't read
+ * as clickable controls that do nothing.
+ *
+ * Intra-package helper — not exported.
+ */
 function BrandAssetRow({
   asset,
   onSelect,
