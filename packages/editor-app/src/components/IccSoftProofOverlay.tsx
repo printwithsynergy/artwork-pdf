@@ -184,8 +184,7 @@ export function IccSoftProofOverlay({
           opacity: 0.7,
         }}
       />
-      <div
-        role="status"
+      <output
         style={{
           position: "absolute",
           right: 8,
@@ -205,7 +204,7 @@ export function IccSoftProofOverlay({
             : stats
               ? `ΔE max ${stats.max.toFixed(1)} · avg ${stats.avg.toFixed(1)}`
               : null}
-      </div>
+      </output>
     </div>
   );
 }
