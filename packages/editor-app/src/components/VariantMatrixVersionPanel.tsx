@@ -214,14 +214,13 @@ export function VariantMatrixVersionPanel({
   onBaselineChange,
   onCurrentChange,
 }: VariantMatrixVersionPanelProps): ReactElement {
-  if (history.length === 0) {
-    return (
-      <div data-testid="variant-matrix-version-panel" style={{ padding: "0.5rem", opacity: 0.6 }}>
-        No matrix history yet — save the matrix to capture the first version.
-      </div>
-    );
-  }
-
+  // All hooks must run before any conditional return — toggling
+  // `history` between empty and non-empty across renders would
+  // otherwise change the hook count and trip
+  // "Rendered fewer hooks than expected". The helpers tolerate
+  // empty input (`resolveSnapshot` returns undefined,
+  // `history[0]?.version` is undefined) so the work is cheap on
+  // the empty path.
   const resolvedCurrent = resolveSnapshot(history, currentVersion);
   // Default baseline = the version *before* current; lets the panel
   // open with the most useful comparison ("what changed in the last
@@ -237,6 +236,14 @@ export function VariantMatrixVersionPanel({
         : null,
     [resolvedBaseline, resolvedCurrent],
   );
+
+  if (history.length === 0) {
+    return (
+      <div data-testid="variant-matrix-version-panel" style={{ padding: "0.5rem", opacity: 0.6 }}>
+        No matrix history yet — save the matrix to capture the first version.
+      </div>
+    );
+  }
 
   return (
     <div data-testid="variant-matrix-version-panel" style={{ padding: "0.5rem" }}>
