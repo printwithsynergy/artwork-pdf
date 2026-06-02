@@ -134,6 +134,14 @@ export interface EditorConfig {
    *  palette (which still handles PANTONE search). Hosts can disable
    *  to avoid the `/v1/separations/list` round-trip on every export. */
   enable_inks_panel: boolean;
+  /** C3 — swatches palette / browseable PANTONE library picker. When
+   *  enabled, hosts mount {@link SwatchesPicker} on the right rail;
+   *  the panel hosts a debounced search input against compile-pdf's
+   *  `/v1/spots/search` endpoint with an optional library-filter
+   *  dropdown. Pairs with AI4's `registerSpot` to commit a chosen
+   *  swatch as a document spot. Hosts that don't run compile-pdf's
+   *  spots router opt out via this flag. */
+  enable_swatches: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -452,6 +460,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_dieline_parameters: true,
   enable_dieline_preview: true,
   enable_inks_panel: true,
+  enable_swatches: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
