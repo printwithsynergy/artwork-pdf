@@ -105,6 +105,13 @@ const DEFAULT_SIZE_PX = 160;
 /** SVG gutter around the dieline so panel strokes don't kiss the edge. */
 const GUTTER_PX = 8;
 
+/** Pixel tolerance for treating two panel-bbox edges as "touching".
+ *  In viewport-projected coords a half-pixel slop covers float drift
+ *  from the bbox → scaled-corner pipeline without spuriously matching
+ *  visibly-separated panels. Hosts that need a stricter test can drive
+ *  `computeDielinePreviewLayout` themselves over their own constant. */
+const ADJACENCY_TOLERANCE_PX = 0.5;
+
 /**
  * Internal layout shape produced by {@link computeDielinePreviewLayout}.
  *
@@ -232,15 +239,21 @@ function hingeBetween(
   const bRight = b.x + b.width;
   const bBottom = b.y + b.height;
   // Horizontal-adjacent: a is left of b, edge is x = aRight ≈ b.x.
-  if (Math.abs(aRight - b.x) < 0.5 || Math.abs(bRight - a.x) < 0.5) {
-    const x = Math.abs(aRight - b.x) < 0.5 ? aRight : a.x;
+  if (
+    Math.abs(aRight - b.x) < ADJACENCY_TOLERANCE_PX ||
+    Math.abs(bRight - a.x) < ADJACENCY_TOLERANCE_PX
+  ) {
+    const x = Math.abs(aRight - b.x) < ADJACENCY_TOLERANCE_PX ? aRight : a.x;
     const y1 = Math.max(a.y, b.y);
     const y2 = Math.min(aBottom, bBottom);
     return { x1: x, y1, x2: x, y2 };
   }
   // Vertical-adjacent: a is above b, edge is y = aBottom ≈ b.y.
-  if (Math.abs(aBottom - b.y) < 0.5 || Math.abs(bBottom - a.y) < 0.5) {
-    const y = Math.abs(aBottom - b.y) < 0.5 ? aBottom : a.y;
+  if (
+    Math.abs(aBottom - b.y) < ADJACENCY_TOLERANCE_PX ||
+    Math.abs(bBottom - a.y) < ADJACENCY_TOLERANCE_PX
+  ) {
+    const y = Math.abs(aBottom - b.y) < ADJACENCY_TOLERANCE_PX ? aBottom : a.y;
     const x1 = Math.max(a.x, b.x);
     const x2 = Math.min(aRight, bRight);
     return { x1, y1: y, x2, y2: y };
