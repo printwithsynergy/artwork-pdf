@@ -51,6 +51,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "slack-notify": { slot: "panel.right", label: "Slack notify" },
   "preflight-autofix": { slot: "panel.right", label: "Auto-fix" },
   "smart-spot-match": { slot: "panel.right", label: "Spot match" },
+  "design-suggestions": { slot: "panel.right", label: "Design suggestions" },
 };
 
 /**

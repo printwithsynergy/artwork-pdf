@@ -34,7 +34,8 @@ export type PaletteId =
   | "mark-library"
   | "slack-notify"
   | "preflight-autofix"
-  | "smart-spot-match";
+  | "smart-spot-match"
+  | "design-suggestions";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -198,6 +199,13 @@ export interface EditorConfig {
    *  chips. Pairs with compile-pdf's `/v1/spots/match` endpoint or a
    *  tenant-local ΔE engine; disable when no matcher is wired. */
   enable_smart_spot_match: boolean;
+  /** AI1 — AI design-suggestions panel. When enabled, hosts mount
+   *  the {@link DesignSuggestionsPanel} alongside the canvas; a host
+   *  loader resolves a stream of proactive design hints (typography,
+   *  color, contrast, layout, imagery) the user can apply or
+   *  dismiss. Pairs with the synergy `design.suggest` node when one
+   *  is deployed; disable when no suggestion adapter is wired. */
+  enable_design_suggestions: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -377,6 +385,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_slack_notify: true,
   enable_preflight_autofix: true,
   enable_smart_spot_match: true,
+  enable_design_suggestions: true,
   // Job setup
   enable_print_context: true,
   // Canvas
