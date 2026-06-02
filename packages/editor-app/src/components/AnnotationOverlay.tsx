@@ -131,6 +131,31 @@ const COLORS = {
 } as const;
 
 /**
+ * Build a screen-reader-friendly description of an annotation.
+ *
+ * Pattern: `"<status> <kind> annotation[: <truncated body>]"`. The
+ * resolved status comes first so screen readers announce it ahead of
+ * the body (matching the visual cue: greyed-out marker = resolved).
+ * Body text is truncated to 60 chars so long comments don't blow up
+ * the announcement. The internal `id` is intentionally omitted —
+ * opaque ids carry no meaning for assistive tech.
+ *
+ * Pure function; exposed so hosts that render their own annotation
+ * affordances (e.g. a sidebar list) can describe rows consistently
+ * with the overlay's pin labels.
+ *
+ * @public
+ */
+export function describeAnnotation(annotation: AnnotationOverlayAnnotation): string {
+  const status = annotation.resolved ? "Resolved" : "Open";
+  const body = "text" in annotation && annotation.text ? annotation.text : undefined;
+  const truncatedBody = body !== undefined && body.length > 60 ? `${body.slice(0, 60)}…` : body;
+  return truncatedBody
+    ? `${status} ${annotation.kind} annotation: ${truncatedBody}`
+    : `${status} ${annotation.kind} annotation`;
+}
+
+/**
  * Filter resolved annotations unless `showResolved` is set. Pure
  * function; exposed for hosts that drive their own renderer.
  *
@@ -201,7 +226,11 @@ export function AnnotationOverlay({
         pointerEvents: "none",
       }}
       role="img"
-      aria-label={`Page annotations (${visible.length})`}
+      aria-label={
+        visible.length === 0
+          ? "Page annotations: none visible"
+          : `Page annotations: ${visible.length} visible`
+      }
     >
       {visible.map((a) => (
         <AnnotationMarker
@@ -250,7 +279,7 @@ function AnnotationMarker({
     ? {
         role: "button" as const,
         tabIndex: 0,
-        "aria-label": `Annotation ${annotation.id}`,
+        "aria-label": describeAnnotation(annotation),
       }
     : {};
 
@@ -297,10 +326,10 @@ function AnnotationMarker({
       />
       {/* The "T" badge differentiates a required-body text
        * annotation from a notes-optional point at first glance.
-       * `aria-hidden` would conflict with the focusable parent
-       * `<g role="button">`, so the badge stays in the a11y tree;
-       * the parent's `aria-label` already names the annotation. */}
+       * Decorative; the parent `<g role="button">`'s `aria-label`
+       * already names the annotation. */}
       {isTextKind && (
+        // biome-ignore lint/a11y/noAriaHiddenOnFocusable: nested SVG <text> inside a focusable <g role="button"> is treated as focusable by the rule, but it's a purely decorative badge and the parent owns the a11y contract — without aria-hidden a screen reader would redundantly announce a literal "T".
         <text
           x={annotation.x}
           y={annotation.y + 3}
@@ -308,6 +337,7 @@ function AnnotationMarker({
           fontSize="7"
           fontWeight="bold"
           fill={COLORS.textForeground}
+          aria-hidden="true"
         >
           T
         </text>

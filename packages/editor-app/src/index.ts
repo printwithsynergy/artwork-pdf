@@ -130,6 +130,7 @@ export {
   type AnnotationOverlayAnnotation,
   type AnnotationOverlayProps,
   type AreaAnnotationInput,
+  describeAnnotation,
   isPointInsideAnnotation,
   type PointAnnotationInput,
   type TextAnnotationInput,

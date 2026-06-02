@@ -7,7 +7,11 @@ import type {
   PointAnnotationInput,
   TextAnnotationInput,
 } from "./AnnotationOverlay";
-import { isPointInsideAnnotation, visibleAnnotations } from "./AnnotationOverlay";
+import {
+  describeAnnotation,
+  isPointInsideAnnotation,
+  visibleAnnotations,
+} from "./AnnotationOverlay";
 
 /**
  * Contract tests for AnnotationOverlay (Wave 4 X3).
@@ -115,6 +119,32 @@ describe("visibleAnnotations", () => {
   it("preserves input order in both modes", () => {
     const ordered = visibleAnnotations(annotations, true);
     expect(ordered.map((a) => a.id)).toEqual(["p1", "a1", "t1", "t-resolved"]);
+  });
+});
+
+describe("describeAnnotation", () => {
+  it("describes an open point without body", () => {
+    expect(describeAnnotation(POINT)).toBe("Open point annotation");
+  });
+  it("includes a truncated body when present", () => {
+    expect(describeAnnotation(AREA)).toBe("Open area annotation: Logo too small here");
+  });
+  it("uses Resolved as the status prefix when applicable", () => {
+    const resolved: TextAnnotationInput = { ...TEXT, resolved: true };
+    expect(describeAnnotation(resolved)).toBe(
+      "Resolved text annotation: Approve before press",
+    );
+  });
+  it("truncates long bodies to 60 chars with an ellipsis", () => {
+    const longText: TextAnnotationInput = {
+      ...TEXT,
+      text: "a".repeat(200),
+    };
+    const label = describeAnnotation(longText);
+    expect(label.startsWith("Open text annotation: ")).toBe(true);
+    expect(label.endsWith("…")).toBe(true);
+    // 60 a's + ellipsis
+    expect(label.length).toBeLessThan(100);
   });
 });
 
