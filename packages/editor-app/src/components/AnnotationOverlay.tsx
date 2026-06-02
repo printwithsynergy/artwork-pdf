@@ -225,7 +225,14 @@ export function AnnotationOverlay({
         left: 0,
         pointerEvents: "none",
       }}
-      role="img"
+      // `role="img"` declares "no semantic children" — browsers apply
+      // role="presentation" to every descendant, which would hide the
+      // interactive markers from screen readers. When `onSelect` is
+      // wired we switch to `role="group"` so the buttons stay reachable;
+      // the static (read-only) case keeps `role="img"` so a screen
+      // reader announces "Page annotations: 5 visible" as a single
+      // labelled image, not a navigable list.
+      role={onSelect ? "group" : "img"}
       aria-label={
         visible.length === 0
           ? "Page annotations: none visible"
