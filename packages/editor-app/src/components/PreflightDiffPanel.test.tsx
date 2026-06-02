@@ -6,7 +6,7 @@ import type {
   PreflightFinding,
   PreflightSnapshotInput,
 } from "./PreflightDiffPanel";
-import { diffPreflightFindings } from "./PreflightDiffPanel";
+import { diffPreflightFindings, resolveBaselineSnapshot } from "./PreflightDiffPanel";
 
 /**
  * Contract tests for PreflightDiffPanel (Wave 4 P4).
@@ -128,5 +128,30 @@ describe("diffPreflightFindings", () => {
     expect(diff.removed).toHaveLength(1);
     expect(diff.added).toHaveLength(1);
     expect(diff.persisted).toEqual([]);
+  });
+});
+
+describe("resolveBaselineSnapshot", () => {
+  it("returns the explicit snapshot when its id matches", () => {
+    const resolved = resolveBaselineSnapshot([SNAPSHOT_PREV, SNAPSHOT_LATER], "snap-prev");
+    expect(resolved?.id).toBe("snap-prev");
+    expect(resolved?.findings).toEqual(SNAPSHOT_PREV.findings);
+  });
+
+  it("returns the most recent snapshot when baselineSnapshotId is absent", () => {
+    const resolved = resolveBaselineSnapshot([SNAPSHOT_PREV, SNAPSHOT_LATER], undefined);
+    expect(resolved?.id).toBe("snap-later");
+  });
+
+  it("falls back to the most recent snapshot when baselineSnapshotId misses", () => {
+    // Mirrors the case where a host trims history below the user's
+    // previously-saved baseline — the panel stays useful.
+    const resolved = resolveBaselineSnapshot([SNAPSHOT_PREV, SNAPSHOT_LATER], "ghost");
+    expect(resolved?.id).toBe("snap-later");
+  });
+
+  it("returns undefined for empty history", () => {
+    expect(resolveBaselineSnapshot([], "snap-prev")).toBeUndefined();
+    expect(resolveBaselineSnapshot([], undefined)).toBeUndefined();
   });
 });

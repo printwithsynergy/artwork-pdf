@@ -111,6 +111,7 @@ export {
   type PreflightDiffResult,
   type PreflightFinding,
   type PreflightSnapshotInput,
+  resolveBaselineSnapshot,
 } from "./components/PreflightDiffPanel";
 export {
   IccSoftProofOverlay,
