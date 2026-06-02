@@ -165,6 +165,17 @@ export {
   type WebhookNotifyPanelProps,
 } from "./components/WebhookNotifyPanel";
 export {
+  composeEmailMessage,
+  EMAIL_NOTIFICATION_EVENT_LABELS,
+  type EmailNotificationContext,
+  type EmailNotificationEventKind,
+  type EmailNotificationPayload,
+  EmailNotifyPanel,
+  type EmailNotifyFn,
+  type EmailNotifyPanelProps,
+  parseEmailList,
+} from "./components/EmailNotifyPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,

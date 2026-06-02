@@ -38,7 +38,8 @@ export type PaletteId =
   | "design-suggestions"
   | "annotations-sidebar"
   | "brand-consistency"
-  | "webhook-notify";
+  | "webhook-notify"
+  | "email-notify";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -232,6 +233,13 @@ export interface EditorConfig {
    *  panel. Pairs with the synergy `webhook.notify` workflow node when
    *  one is deployed; disable when no webhook adapter is wired. */
   enable_webhook_notify: boolean;
+  /** I2 — Email-notify panel. Third member of the Wave 4 integration
+   *  family (alongside I3 Slack and I1 webhook); emits a composed
+   *  subject + body through a host-supplied {@link EmailNotifyFn}
+   *  (SMTP relay, SendGrid, Postmark, AWS SES, internal Synergy node,
+   *  etc.). Pairs with the synergy `email.notify` workflow node when
+   *  one is deployed; disable when no email transport is wired. */
+  enable_email_notify: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -415,6 +423,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_annotations_sidebar: true,
   enable_brand_consistency: true,
   enable_webhook_notify: true,
+  enable_email_notify: true,
   // Job setup
   enable_print_context: true,
   // Canvas
