@@ -73,6 +73,14 @@ export type BarcodeGeneratorPanelProps = {
 };
 
 /**
+ * Interactive barcode generation panel. Users pick a format from the
+ * dropdown, type the payload, optionally constrain the physical
+ * dimensions in millimetres, and click **Generate**. The panel calls
+ * the host-supplied `renderer` adapter and emits the resulting
+ * bitmap via `onRendered`; the host then places it on the canvas as
+ * a `CanvasObj`. Renderer rejections surface inline in an `alert`
+ * region — the panel never throws to the host.
+ *
  * @public
  */
 export function BarcodeGeneratorPanel({
@@ -155,9 +163,13 @@ export function BarcodeGeneratorPanel({
             // = 37.29 × 25.93 mm at 100% magnification, GS1-128 is
             // payload-length-dependent, etc.). Don't pin a number
             // here because the panel doesn't know which renderer
-            // backend is wired.
+            // backend is wired. The NaN guard catches paste / a11y
+            // tool / programmatic-DOM cases where `type="number"`
+            // browser validation is bypassed and a non-numeric string
+            // reaches `Number()`.
             const v = e.target.value;
-            setWidthMm(v === "" ? undefined : Number(v));
+            const num = Number(v);
+            setWidthMm(v === "" || Number.isNaN(num) ? undefined : num);
           }}
           style={{ marginLeft: "0.5rem" }}
         />
@@ -171,7 +183,8 @@ export function BarcodeGeneratorPanel({
           value={heightMm ?? ""}
           onChange={(e) => {
             const v = e.target.value;
-            setHeightMm(v === "" ? undefined : Number(v));
+            const num = Number(v);
+            setHeightMm(v === "" || Number.isNaN(num) ? undefined : num);
           }}
           style={{ marginLeft: "0.5rem" }}
         />
