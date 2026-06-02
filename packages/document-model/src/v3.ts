@@ -105,10 +105,81 @@ export type Variant = {
  * computed at render time: for each variant, the document's
  * `variableData` is shallow-merged with the variant's `overrides`,
  * and the result is rendered as one page-instance.
+ *
+ * `version` (Wave 4 V3) is an optional semver-style stamp on the
+ * matrix as a whole — hosts that ship variant-aware versioning
+ * surface "matrix v1.2.0 vs v1.3.0" diffs in their UI; absence
+ * preserves Wave 2 behaviour.
  */
 export type VariantMatrix = {
   variants: Variant[];
   tokenKeys: string[];
+  version?: string;
+};
+
+/**
+ * Author annotation pinned to a page (Wave 4 X3).
+ *
+ * Three shapes: `point` annotations carry a single x/y in page
+ * coordinates (units match the page's `unit` field); `area`
+ * annotations add `width`/`height` for a bounded region; `text`
+ * annotations are point-anchored with required `text` body.
+ *
+ * `resolved` toggles whether the host should hide the annotation
+ * by default. The wire model is intentionally minimal — threaded
+ * replies, mentions, and review state are host-side concerns and
+ * live outside DocumentV3.
+ */
+export type Annotation = {
+  id: string;
+  kind: "point" | "area" | "text";
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  text?: string;
+  author?: string;
+  createdAt: string;
+  resolved?: boolean;
+};
+
+/**
+ * Reference to a brand asset cached by the editor's brand-asset
+ * cache (Wave 4 B1).
+ *
+ * `hash` is the content sha256 the cache uses as its primary key;
+ * the host populates `name` / `kind` / `mimeType` from the cache
+ * lookup. `sourceUrl` is optional and only set when the asset
+ * originally came from an external CDN — local-only assets omit it.
+ *
+ * `kind` discriminates how the editor renders brand-consistency
+ * findings (Wave 4 B2): logo mismatches surface differently from
+ * typography or swatch mismatches.
+ */
+export type BrandAssetRef = {
+  id: string;
+  hash: string;
+  name: string;
+  kind: "logo" | "swatch" | "typography" | "graphic-style" | "other";
+  mimeType?: string;
+  sourceUrl?: string;
+};
+
+/**
+ * Snapshot of a preflight report at a moment in time (Wave 4 P4).
+ *
+ * The editor's PreflightDiff panel compares the current report
+ * against the most recent snapshot to show what changed since the
+ * last save. `findings` carries the raw rule-id + severity tuples;
+ * the diff UI re-resolves human-readable detail from the live
+ * preflight rule catalog so messages stay current even when older
+ * snapshots are surfaced.
+ */
+export type PreflightSnapshot = {
+  id: string;
+  timestamp: string;
+  triggeredBy: "user" | "auto" | "export";
+  findings: { ruleId: string; severity: "info" | "warn" | "error"; pageIndex?: number }[];
 };
 
 /**
@@ -127,6 +198,9 @@ export type VariantMatrix = {
  * `panelMetadata` and `foldConfig` are the Wave 2 additions for
  * panel-anchored authoring (S3) and 3D fold preview (S4); both are
  * additive — pages without them behave identically to Wave 1.
+ *
+ * `annotations` (Wave 4 X3) is the optional list of author
+ * annotations pinned to this page. Absent → no annotations.
  */
 export type PageV3 = {
   id: string;
@@ -142,6 +216,7 @@ export type PageV3 = {
   trapConfig?: TrapPolicy;
   panelMetadata?: PanelMetadata;
   foldConfig?: FoldConfig;
+  annotations?: Annotation[];
 };
 
 /**
@@ -155,6 +230,13 @@ export type PageV3 = {
  * `variants` (Wave 2 V2) is document-level because variant rows index
  * the *entire* document, not per-page — a 12-variant business card
  * emits 12 instances of every page in the document, not 12 of page 1.
+ *
+ * `brandAssets` (Wave 4 B1) is the optional registry of brand-asset
+ * references the editor's brand-consistency check (B2) consults;
+ * absent → the check skips silently. `preflightHistory` (Wave 4 P4)
+ * is the ring buffer of past preflight snapshots the diff panel
+ * compares against; hosts cap the buffer size (typical: 10) so
+ * documents don't bloat indefinitely.
  */
 export type DocumentV3 = {
   version: "3";
@@ -164,4 +246,6 @@ export type DocumentV3 = {
   variableData?: Record<string, string>;
   printContext?: PrintContext;
   variants?: VariantMatrix;
+  brandAssets?: BrandAssetRef[];
+  preflightHistory?: PreflightSnapshot[];
 };
