@@ -233,7 +233,12 @@ export function BrandConsistencyPanel({
 
   if (loading) {
     return (
-      <div data-testid="brand-consistency-panel" style={{ padding: "0.5rem", opacity: 0.6 }}>
+      <div
+        data-testid="brand-consistency-panel"
+        role="status"
+        aria-live="polite"
+        style={{ padding: "0.5rem", opacity: 0.6 }}
+      >
         Loading brand findings…
       </div>
     );
@@ -357,12 +362,7 @@ function BrandConsistencyRow({
   return (
     <li>
       {onSelect ? (
-        <button
-          type="button"
-          onClick={() => onSelect(finding)}
-          aria-label={finding.summary}
-          style={rowStyle}
-        >
+        <button type="button" onClick={() => onSelect(finding)} style={rowStyle}>
           {contents}
         </button>
       ) : (
