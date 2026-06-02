@@ -48,6 +48,39 @@ describe("composeBraille letters", () => {
     const result = composeBraille({ text: "ab", charSpacingMm: 3 });
     expect(result.cells.map((c) => c.xMm)).toEqual([0, 3]);
   });
+
+  it("falls back to MARBURG_MEDIUM.charSpacingMm when given 0 or negative spacing", () => {
+    // Direct callers (server pre-compute, custom hosts) might pass
+    // garbage; the panel form already clamps but the helper must
+    // guard for non-panel callers too.
+    const zero = composeBraille({ text: "ab", charSpacingMm: 0 });
+    const negative = composeBraille({ text: "ab", charSpacingMm: -1 });
+    expect(zero.cells.map((c) => c.xMm)).toEqual([0, MARBURG_MEDIUM.charSpacingMm]);
+    expect(negative.cells.map((c) => c.xMm)).toEqual([0, MARBURG_MEDIUM.charSpacingMm]);
+  });
+});
+
+describe("composeBraille punctuation (UEB / EBAE patterns)", () => {
+  // Each row is [character, expected 6-dot pattern, semantic description].
+  // Patterns are sourced from the Braille Authority's UEB Rules and
+  // match older EBAE for these symbols.
+  const cases: Array<[string, [boolean, boolean, boolean, boolean, boolean, boolean], string]> = [
+    [".", [false, true, false, false, true, true], "period (dots 2-5-6)"],
+    [",", [false, true, false, false, false, false], "comma (dot 2)"],
+    [";", [false, true, true, false, false, false], "semicolon (dots 2-3)"],
+    [":", [false, true, false, false, true, false], "colon (dots 2-5)"],
+    ["!", [false, true, true, false, true, false], "exclamation (dots 2-3-5)"],
+    ["?", [true, false, false, true, true, true], "question (dots 1-4-5-6)"],
+    ["'", [false, false, true, false, false, false], "apostrophe (dot 3)"],
+    ["-", [false, false, true, false, false, true], "hyphen (dots 3-6)"],
+  ];
+
+  it.each(cases)("encodes %s as %s", (ch, dots, _label) => {
+    const result = composeBraille({ text: ch });
+    expect(result.cells).toHaveLength(1);
+    expect(result.cells[0]?.dots).toEqual(dots);
+    expect(result.unsupportedChars).not.toContain(ch);
+  });
 });
 
 describe("composeBraille digits", () => {

@@ -130,15 +130,19 @@ const DIGIT_TO_LETTER: Record<string, string> = {
 };
 
 const PUNCT_DOTS: Record<string, [boolean, boolean, boolean, boolean, boolean, boolean]> = {
+  // Dot indices in the tuple are 1, 2, 3, 4, 5, 6 (left col top→bottom,
+  // right col top→bottom). Patterns follow Unified English Braille
+  // (UEB) and English Braille American Edition (EBAE), which agree on
+  // these punctuation symbols.
   " ": [false, false, false, false, false, false],
-  ".": [false, true, false, false, true, true],
-  ",": [false, true, false, false, false, false],
-  ";": [false, true, true, false, false, false],
-  ":": [true, false, false, false, true, false],
-  "!": [false, true, true, false, true, false],
-  "?": [false, true, false, false, true, true],
-  "'": [false, false, true, false, false, false],
-  "-": [false, false, true, false, false, true],
+  ".": [false, true, false, false, true, true], // dots 2-5-6
+  ",": [false, true, false, false, false, false], // dot 2
+  ";": [false, true, true, false, false, false], // dots 2-3
+  ":": [false, true, false, false, true, false], // dots 2-5
+  "!": [false, true, true, false, true, false], // dots 2-3-5
+  "?": [true, false, false, true, true, true], // dots 1-4-5-6
+  "'": [false, false, true, false, false, false], // dot 3
+  "-": [false, false, true, false, false, true], // dots 3-6
 };
 
 function dotsToUnicode(
@@ -173,7 +177,13 @@ export function composeBraille(input: {
   text: string;
   charSpacingMm?: number;
 }): BrailleComposeResult {
-  const charSpacing = input.charSpacingMm ?? MARBURG_MEDIUM.charSpacingMm;
+  // Clamp the spacing for direct callers (RSC, host code) the same
+  // way the panel does. Zero / negative values produce overlapping
+  // or reverse-ordered cells, which is never what a host wants.
+  const charSpacing =
+    input.charSpacingMm !== undefined && input.charSpacingMm > 0
+      ? input.charSpacingMm
+      : MARBURG_MEDIUM.charSpacingMm;
   const cells: BrailleCell[] = [];
   const unsupportedChars: string[] = [];
   let cursorMm = 0;
