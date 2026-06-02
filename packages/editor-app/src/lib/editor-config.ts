@@ -207,6 +207,12 @@ export interface EditorConfig {
    *  ship pharma-grade packaging or already wire a tenant-owned
    *  Braille translator. */
   enable_braille_panel: boolean;
+  /** V1 — variable-data merge helpers. When enabled, hosts can wire
+   *  `{{token}}` placeholders into Wave 2 V2's variant matrix and use
+   *  {@link mergeRow} / {@link mergeAllRows} to preview each rendered
+   *  variant before submitting to compose. Disable for hosts that
+   *  don't ship variable-data printing. */
+  enable_variable_data_merge: boolean;
   /** G3 — GS1 Digital Link composer panel. When enabled, hosts can
    *  mount the {@link Gs1DigitalLinkPanel} to assemble a GTIN + AIs
    *  into a canonical GS1 Digital Link URL (optionally rendered as a
@@ -306,6 +312,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_gs1_digital_link: true,
   enable_nutrition_panel: true,
   enable_braille_panel: true,
+  enable_variable_data_merge: true,
 };
 
 /**
