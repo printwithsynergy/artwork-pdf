@@ -143,6 +143,18 @@ export {
   sortAnnotationsByDate,
 } from "./components/AnnotationsSidebar";
 export {
+  BRAND_CONSISTENCY_SEVERITY_ORDER,
+  BrandConsistencyPanel,
+  type BrandConsistencyFilter,
+  type BrandConsistencyFinding,
+  type BrandConsistencyGroup,
+  type BrandConsistencyLoaderFn,
+  type BrandConsistencyPanelProps,
+  type BrandConsistencySeverity,
+  filterBrandConsistencyFindings,
+  groupBrandConsistencyFindingsBySeverity,
+} from "./components/BrandConsistencyPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,

@@ -53,6 +53,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "smart-spot-match": { slot: "panel.right", label: "Spot match" },
   "design-suggestions": { slot: "panel.right", label: "Design suggestions" },
   "annotations-sidebar": { slot: "panel.right", label: "Annotations" },
+  "brand-consistency": { slot: "panel.right", label: "Brand consistency" },
 };
 
 /**

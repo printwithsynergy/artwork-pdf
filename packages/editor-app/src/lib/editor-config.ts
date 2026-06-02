@@ -36,7 +36,8 @@ export type PaletteId =
   | "preflight-autofix"
   | "smart-spot-match"
   | "design-suggestions"
-  | "annotations-sidebar";
+  | "annotations-sidebar"
+  | "brand-consistency";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -213,6 +214,14 @@ export interface EditorConfig {
    *  thread without hunting for pins. Disable when the host doesn't
    *  ship annotations (view-only surfaces, print-preview, …). */
   enable_annotations_sidebar: boolean;
+  /** B2 — Brand-consistency findings panel. Companion to the B1
+   *  brand-assets panel; surfaces a host-loader-supplied list of
+   *  violations against the brand-asset registry (logo placed too
+   *  small, fill color outside the swatches set, typography pairing
+   *  off the brand kit, etc.). Pairs with lint-pdf's brand-consistency
+   *  profile when one is deployed; disable when no brand-consistency
+   *  loader is wired. */
+  enable_brand_consistency: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -394,6 +403,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_smart_spot_match: true,
   enable_design_suggestions: true,
   enable_annotations_sidebar: true,
+  enable_brand_consistency: true,
   // Job setup
   enable_print_context: true,
   // Canvas
