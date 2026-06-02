@@ -107,6 +107,15 @@ export {
   type Gs1DigitalLinkResult,
 } from "./components/Gs1DigitalLinkPanel";
 export {
+  composeNutritionFacts,
+  FDA_DAILY_VALUES,
+  NutritionPanel,
+  type NutritionFacts,
+  type NutritionPanelProps,
+  type NutritionPanelSpec,
+  type NutritionRow,
+} from "./components/NutritionPanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,

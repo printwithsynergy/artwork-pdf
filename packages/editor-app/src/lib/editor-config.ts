@@ -207,6 +207,13 @@ export interface EditorConfig {
    *  QR via the same renderer adapter the G2g panel uses). Disable
    *  when the host's workflow doesn't ship GS1-encoded artwork. */
   enable_gs1_digital_link: boolean;
+  /** G1 — FDA Nutrition Facts label data-entry panel. When enabled,
+   *  hosts can mount the {@link NutritionPanel} to compose a typed
+   *  {@link NutritionFacts} record into an ordered
+   *  {@link NutritionPanelSpec} the host renders onto the canvas.
+   *  Disable for hosts that don't deal with food / supplement
+   *  labelling. */
+  enable_nutrition_panel: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -291,6 +298,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_variant_matrix: true,
   enable_barcode_generate: true,
   enable_gs1_digital_link: true,
+  enable_nutrition_panel: true,
 };
 
 /**
