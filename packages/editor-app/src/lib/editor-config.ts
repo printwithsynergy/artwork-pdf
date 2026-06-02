@@ -171,6 +171,13 @@ export interface EditorConfig {
    *  id were registered in earlier waves; this flag formally gates the
    *  surface. */
   enable_history: boolean;
+  /** S2 — dieline import (CF2 / DDES / ARD file-drop). When enabled,
+   *  {@link FileDropZone} accepts the three legacy packaging-industry
+   *  formats and routes them through `@artworkpdf/dieline-parser` →
+   *  {@link dielineToPage}, bypassing the PDF preflight phase and
+   *  seeding the canvas directly. Disable for hosts that only ship
+   *  PDF artwork (the dropzone falls back to PDF-only). */
+  enable_dieline_import: boolean;
   /** X3 — annotation overlay. When enabled, hosts mount the
    *  {@link AnnotationOverlay} SVG layer over the canvas to surface
    *  `PageV3.annotations` (point / area / text). The overlay is
@@ -430,6 +437,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_diff: true,
   enable_brand_assets_panel: true,
   enable_history: true,
+  enable_dieline_import: true,
   enable_annotation_overlay: true,
   enable_variant_matrix_versions: true,
   enable_mark_library: true,
