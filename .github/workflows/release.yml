@@ -32,16 +32,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Build everything first so we never publish one package and
+      # then discover the other's tsc errored out mid-release.
       - name: Build @printwithsynergy/artwork-pdf
         run: pnpm --filter @printwithsynergy/artwork-pdf build
+
+      - name: Build @printwithsynergy/artwork-pdf-editor
+        run: pnpm --filter @printwithsynergy/artwork-pdf-editor build
 
       - name: Publish @printwithsynergy/artwork-pdf
         run: pnpm --filter @printwithsynergy/artwork-pdf publish --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Build @printwithsynergy/artwork-pdf-editor
-        run: pnpm --filter @printwithsynergy/artwork-pdf-editor build
 
       - name: Publish @printwithsynergy/artwork-pdf-editor
         run: pnpm --filter @printwithsynergy/artwork-pdf-editor publish --no-git-checks --access public

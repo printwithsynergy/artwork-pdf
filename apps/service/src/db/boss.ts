@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import PgBoss from "pg-boss";
+import { PgBoss } from "pg-boss";
 
 let _boss: PgBoss | null = null;
 let _started = false;
