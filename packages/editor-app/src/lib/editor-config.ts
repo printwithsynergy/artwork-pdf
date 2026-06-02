@@ -161,6 +161,12 @@ export interface EditorConfig {
    *  Disable for view-only / print-preview surfaces where comments
    *  shouldn't appear. */
   enable_annotation_overlay: boolean;
+  /** V3 — versioned variant matrix diff viewer. When enabled, hosts
+   *  can mount the {@link VariantMatrixVersionPanel} to compare two
+   *  matrix snapshots from their persisted version history. Pairs
+   *  with the optional `version` field on `VariantMatrix` (Wave 4
+   *  PR-A). Disable for hosts that don't ship versioned variants. */
+  enable_variant_matrix_versions: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -335,6 +341,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_preflight_diff: true,
   enable_brand_assets_panel: true,
   enable_annotation_overlay: true,
+  enable_variant_matrix_versions: true,
   // Job setup
   enable_print_context: true,
   // Canvas
