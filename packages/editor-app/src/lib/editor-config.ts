@@ -29,7 +29,8 @@ export type PaletteId =
   | "fold-preview"
   | "variant-matrix"
   | "process-rules"
-  | "preflight-diff";
+  | "preflight-diff"
+  | "brand-assets";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -146,6 +147,13 @@ export interface EditorConfig {
    *  (cleared / still firing / new since baseline). Hosts that don't
    *  carry preflight history opt out via this flag. */
   enable_preflight_diff: boolean;
+  /** B1 — brand-assets registry panel. Surfaces
+   *  `DocumentV3.brandAssets` as a browsable list grouped by kind
+   *  (logo, swatch, typography, graphic-style, other). Pairs with
+   *  the Wave 4 B2 brand-consistency rule (lint-pdf side) — the rule
+   *  consults the same registry. Hosts that don't carry brand assets
+   *  opt out via this flag. */
+  enable_brand_assets_panel: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -318,6 +326,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
   enable_preflight_diff: true,
+  enable_brand_assets_panel: true,
   // Job setup
   enable_print_context: true,
   // Canvas
