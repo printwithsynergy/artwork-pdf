@@ -46,6 +46,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "variant-matrix": { slot: "panel.modal", label: "Variants" },
   "process-rules": { slot: "panel.right", label: "Process Rules" },
   "preflight-diff": { slot: "panel.right", label: "Preflight Diff" },
+  "brand-assets": { slot: "panel.right", label: "Brand Assets" },
 };
 
 /**

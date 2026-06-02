@@ -114,6 +114,17 @@ export {
   resolveBaselineSnapshot,
 } from "./components/PreflightDiffPanel";
 export {
+  BRAND_ASSET_KIND_ORDER,
+  BrandAssetsPanel,
+  type BrandAsset,
+  type BrandAssetFilter,
+  type BrandAssetGroup,
+  type BrandAssetKind,
+  type BrandAssetsPanelProps,
+  filterBrandAssets,
+  groupBrandAssetsByKind,
+} from "./components/BrandAssetsPanel";
+export {
   IccSoftProofOverlay,
   type IccSoftProofLoaderFn,
   type IccSoftProofOverlayProps,
