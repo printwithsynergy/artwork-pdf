@@ -62,8 +62,10 @@ export type DesignSuggestion = {
   description?: string;
   applyHint?: Record<string, unknown>;
   /** Loader-supplied confidence in `[0, 1]`. Optional — when absent
-   *  the panel doesn't surface a confidence chip and sorts solely by
-   *  category order then id. */
+   *  the panel doesn't surface a confidence chip. Suggestions are
+   *  grouped by category in {@link DESIGN_SUGGESTION_CATEGORY_ORDER}
+   *  and keep loader-supplied order within each bucket; the panel
+   *  does not re-sort by confidence or id. */
   confidence?: number;
 };
 
@@ -173,6 +175,12 @@ export function groupDesignSuggestionsByCategory(
 }
 
 /**
+ * Configuration for the {@link DesignSuggestionsPanel}. The host
+ * always supplies the {@link DesignSuggestionLoaderFn}; the other
+ * three props are optional and shape the panel's initial filter
+ * floor and apply / dismiss wiring. Hosts that ship a high-recall
+ * model can tighten the surface up-front via `defaultMinConfidence`.
+ *
  * @public
  */
 export type DesignSuggestionsPanelProps = {
@@ -343,6 +351,13 @@ export function DesignSuggestionsPanel({
   );
 }
 
+/**
+ * Renders one suggestion row inside a category group. Intra-package
+ * helper — the row's surface is intentionally minimal (summary +
+ * optional description + optional confidence chip + apply / dismiss
+ * buttons) so {@link DesignSuggestionsPanel} can swap it without
+ * downstream consumers depending on the shape.
+ */
 function DesignSuggestionRow({
   suggestion,
   onApply,
@@ -372,7 +387,7 @@ function DesignSuggestionRow({
           </div>
         )}
         {typeof suggestion.confidence === "number" && (
-          <div style={{ fontSize: "0.6875rem", color: "#888", marginTop: "0.125rem" }}>
+          <div style={{ fontSize: "0.6875rem", color: "#595959", marginTop: "0.125rem" }}>
             confidence {suggestion.confidence.toFixed(2)}
           </div>
         )}
