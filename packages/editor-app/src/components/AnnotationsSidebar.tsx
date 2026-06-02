@@ -51,6 +51,12 @@ export type AnnotationsSidebarFilter = {
 };
 
 /**
+ * Configuration for the {@link AnnotationsSidebar}. The host owns
+ * the annotation store and the active-id state; the sidebar only
+ * renders and emits user intents (select / resolve-toggle / delete)
+ * through the optional callbacks. The `annotations` array is treated
+ * as immutable — the sidebar never writes back to it.
+ *
  * @public
  */
 export type AnnotationsSidebarProps = {
