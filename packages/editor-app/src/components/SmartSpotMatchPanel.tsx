@@ -243,7 +243,11 @@ export function SmartSpotMatchPanel({
       {matches && matches.length > 0 && (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {matches.map((match) => (
-            <SmartSpotMatchRow key={match.spot.name} match={match} onSelect={onSelect} />
+            <SmartSpotMatchRow
+              key={`${match.spot.library ?? "-"}|${match.spot.name}`}
+              match={match}
+              onSelect={onSelect}
+            />
           ))}
         </ul>
       )}
