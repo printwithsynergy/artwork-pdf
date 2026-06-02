@@ -124,6 +124,14 @@ export {
   type BraillePanelProps,
 } from "./components/BraillePanel";
 export {
+  extractMergeTokens,
+  mergeAllRows,
+  mergeRow,
+  validateMergeManifest,
+  type MergeRow,
+  type MergeValidationResult,
+} from "./lib/merge-tokens";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
