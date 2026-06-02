@@ -233,14 +233,13 @@ export function BrandConsistencyPanel({
 
   if (loading) {
     return (
-      <div
+      <output
         data-testid="brand-consistency-panel"
-        role="status"
         aria-live="polite"
-        style={{ padding: "0.5rem", opacity: 0.6 }}
+        style={{ display: "block", padding: "0.5rem", opacity: 0.6 }}
       >
         Loading brand findings…
-      </div>
+      </output>
     );
   }
   if (error) {
