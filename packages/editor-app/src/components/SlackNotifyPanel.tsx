@@ -111,9 +111,14 @@ export function composeSlackMessage(
 
   switch (kind) {
     case "preflight-blocked": {
-      const n = context.findingCount ?? 0;
+      // Treat undefined / unknown counts as "no number to show" rather
+      // than "0" — "Preflight blocked: 0 findings" reads as a
+      // contradiction even though it's how a number-less template
+      // would default.
+      const n = context.findingCount;
+      const findingsFragment = typeof n === "number" ? `: ${n} finding${n === 1 ? "" : "s"}` : "";
       return {
-        text: `Preflight blocked on ${subject}${actor}: ${n} finding${n === 1 ? "" : "s"}${link}${trailer}`,
+        text: `Preflight blocked on ${subject}${actor}${findingsFragment}${link}${trailer}`,
       };
     }
     case "preflight-cleared":
@@ -218,6 +223,13 @@ export function SlackNotifyPanel({
     { kind: "idle" } | { kind: "sending" } | { kind: "ok" } | { kind: "error"; message: string }
   >({ kind: "idle" });
 
+  // Clear the success / error chip when the user edits any input —
+  // a "Sent" indicator next to an unsent payload reads as a lie. The
+  // wrapper keeps the original setter ergonomic at every call site.
+  const resetOutcome = () => {
+    setState((prev) => (prev.kind === "ok" || prev.kind === "error" ? { kind: "idle" } : prev));
+  };
+
   const onClick = async () => {
     setState({ kind: "sending" });
     const composed = composeSlackMessage(event, {
@@ -233,10 +245,19 @@ export function SlackNotifyPanel({
       setState({ kind: "ok" });
       onSuccess?.(payload);
     } catch (err) {
-      setState({
-        kind: "error",
-        message: errorMessage ? errorMessage(err) : "Couldn't send Slack notification.",
-      });
+      // Guard against a host-supplied errorMessage that throws (e.g.
+      // makes assumptions about `err`'s shape) — without the inner
+      // try/catch the panel would silently swallow the failure and
+      // never enter the `error` state.
+      let message = "Couldn't send Slack notification.";
+      if (errorMessage) {
+        try {
+          message = errorMessage(err);
+        } catch {
+          // fall back to the default message
+        }
+      }
+      setState({ kind: "error", message });
     }
   };
 
@@ -250,7 +271,10 @@ export function SlackNotifyPanel({
         <select
           aria-label="Event"
           value={event}
-          onChange={(e) => setEvent(e.target.value as SlackNotificationEventKind)}
+          onChange={(e) => {
+            setEvent(e.target.value as SlackNotificationEventKind);
+            resetOutcome();
+          }}
           style={{ display: "block", marginTop: "0.125rem", width: "100%" }}
         >
           {Object.entries(SLACK_NOTIFICATION_EVENT_LABELS).map(([k, label]) => (
@@ -267,7 +291,10 @@ export function SlackNotifyPanel({
           aria-label="Channel"
           placeholder="#preflight (optional)"
           value={channel}
-          onChange={(e) => setChannel(e.target.value)}
+          onChange={(e) => {
+            setChannel(e.target.value);
+            resetOutcome();
+          }}
           style={{ display: "block", marginTop: "0.125rem", width: "100%" }}
         />
       </label>
@@ -277,7 +304,10 @@ export function SlackNotifyPanel({
           aria-label="Note"
           placeholder="Optional — appended to the message"
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => {
+            setNote(e.target.value);
+            resetOutcome();
+          }}
           rows={2}
           style={{ display: "block", marginTop: "0.125rem", width: "100%" }}
         />

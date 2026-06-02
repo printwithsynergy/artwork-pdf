@@ -75,6 +75,14 @@ describe("composeSlackMessage", () => {
     expect(out.text).not.toContain("1 findings");
   });
 
+  it("omits the count fragment when findingCount is absent", () => {
+    const { findingCount: _, ...ctxWithoutCount } = FULL_CTX;
+    const out = composeSlackMessage("preflight-blocked", ctxWithoutCount);
+    expect(out.text).toContain("Preflight blocked");
+    expect(out.text).not.toContain("0 findings");
+    expect(out.text).not.toMatch(/: \d+ finding/);
+  });
+
   it("uses documentId when documentName is absent", () => {
     const out = composeSlackMessage("preflight-cleared", { documentId: "doc-42" });
     expect(out.text).toContain("doc-42");
