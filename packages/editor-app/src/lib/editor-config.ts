@@ -201,6 +201,13 @@ export interface EditorConfig {
    *  no compile-pdf endpoint reachable) — surfacing the panel without
    *  a working adapter would only frustrate users. */
   enable_barcode_generate: boolean;
+  /** G1 — FDA Nutrition Facts label data-entry panel. When enabled,
+   *  hosts can mount the {@link NutritionPanel} to compose a typed
+   *  {@link NutritionFacts} record into an ordered
+   *  {@link NutritionPanelSpec} the host renders onto the canvas.
+   *  Disable for hosts that don't deal with food / supplement
+   *  labelling. */
+  enable_nutrition_panel: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -284,6 +291,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_soft_proof: true,
   enable_variant_matrix: true,
   enable_barcode_generate: true,
+  enable_nutrition_panel: true,
 };
 
 /**
