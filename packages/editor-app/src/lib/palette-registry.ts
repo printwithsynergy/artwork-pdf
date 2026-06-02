@@ -50,6 +50,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "mark-library": { slot: "panel.right", label: "Marks" },
   "slack-notify": { slot: "panel.right", label: "Slack notify" },
   "preflight-autofix": { slot: "panel.right", label: "Auto-fix" },
+  "smart-spot-match": { slot: "panel.right", label: "Spot match" },
 };
 
 /**

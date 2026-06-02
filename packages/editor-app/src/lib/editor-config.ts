@@ -33,7 +33,8 @@ export type PaletteId =
   | "brand-assets"
   | "mark-library"
   | "slack-notify"
-  | "preflight-autofix";
+  | "preflight-autofix"
+  | "smart-spot-match";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -191,6 +192,12 @@ export interface EditorConfig {
    *  the synergy `preflight.fix` workflow node when one is deployed;
    *  disable when no fix-suggestion adapter is wired. */
   enable_preflight_autofix: boolean;
+  /** AI2 — Smart spot-match panel. When enabled, hosts mount the
+   *  {@link SmartSpotMatchPanel} so users can resolve a picked CMYK
+   *  / Lab / hex color to ranked nearest-PANTONE candidates with ΔE
+   *  chips. Pairs with compile-pdf's `/v1/spots/match` endpoint or a
+   *  tenant-local ΔE engine; disable when no matcher is wired. */
+  enable_smart_spot_match: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -369,6 +376,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_mark_library: true,
   enable_slack_notify: true,
   enable_preflight_autofix: true,
+  enable_smart_spot_match: true,
   // Job setup
   enable_print_context: true,
   // Canvas
