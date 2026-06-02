@@ -65,7 +65,7 @@ describe("PaletteToSpotPanelProps type", () => {
     expect(props.errorMessage).toBeUndefined();
   });
 
-  it("accepts onCommit + errorMessage", () => {
+  it("accepts onCommit + errorMessage", async () => {
     let committed = false;
     const onCommit: SpotCommitFn = async () => {
       committed = true;
@@ -77,9 +77,8 @@ describe("PaletteToSpotPanelProps type", () => {
       errorMessage: (err) => `Custom: ${String(err)}`,
     };
     expect(props.onCommit).toBe(onCommit);
-    void props.onCommit?.(BRAND_BLUE, PMS_185).then(() => {
-      expect(committed).toBe(true);
-    });
+    await props.onCommit?.(BRAND_BLUE, PMS_185);
+    expect(committed).toBe(true);
     expect(props.errorMessage?.(new Error("nope"))).toBe("Custom: Error: nope");
   });
 });

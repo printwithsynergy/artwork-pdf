@@ -177,13 +177,28 @@ export function PaletteToSpotPanel({
         const matches = await matchLoader({ hex: color.hex });
         const sorted = sortMatchesByDeltaE(matches);
         const best = sorted[0];
+        if (!best) {
+          // Loader returned zero matches — surface as a distinct
+          // "no match found" error row rather than a confusing
+          // matched-but-empty state (which would render no match
+          // line, hide Convert, and still flip the button to
+          // "Re-match" as if a match landed).
+          setRows((prev) =>
+            prev.map((r) =>
+              r.color.id === color.id
+                ? { color, status: "error", errorMessage: "No match found." }
+                : r,
+            ),
+          );
+          return;
+        }
         setRows((prev) =>
           prev.map((r) =>
             r.color.id === color.id
               ? {
                   color,
                   status: "matched",
-                  ...(best && { bestMatch: best }),
+                  bestMatch: best,
                   alternates: sorted,
                 }
               : r,

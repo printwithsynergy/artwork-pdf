@@ -265,10 +265,11 @@ export interface EditorConfig {
    *  click. Reuses AI2's {@link SpotMatchLoaderFn} so one host
    *  adapter serves both panels. Disable when no matcher is wired. */
   enable_palette_to_spot: boolean;
-  /** AI5 — Accessibility hints panel. Fourth member of the Wave 4 AI
-   *  family (alongside AI1 design-suggestions, AI2 smart spot-match,
-   *  AI3 preflight auto-fix); surfaces a host-loader-supplied list of
-   *  accessibility findings (low contrast, missing alt text, text-size
+  /** AI5 — Accessibility hints panel. Fifth member of the AI family
+   *  (alongside AI1 design-suggestions, AI2 smart spot-match, AI3
+   *  preflight auto-fix, AI4 palette-to-spot); surfaces a host-loader
+   *  -supplied list of accessibility findings (low contrast, missing
+   *  alt text, text-size
    *  minimums, color-only signalling). Pairs with a tenant-deployed
    *  lint-pdf accessibility profile or an in-house rules engine;
    *  disable when no accessibility loader is wired. */
