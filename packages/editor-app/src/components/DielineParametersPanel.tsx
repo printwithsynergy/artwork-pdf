@@ -20,7 +20,7 @@
  * @public
  */
 
-import type { ReactElement } from "react";
+import type { KeyboardEvent, ReactElement } from "react";
 import { useMemo } from "react";
 
 /**
@@ -96,12 +96,16 @@ const PREVIEW_SIZE_PX = 120;
 export function validateDielineParameters(value: DielineParameters): string[] {
   const warnings: string[] = [];
   const minTrim = Math.min(value.widthMm, value.heightMm);
+  // Both checks guard on `minTrim > 0` so partial mid-edit values
+  // (e.g. user clears a field momentarily) don't flash spurious
+  // warnings. Once both width and height are populated, the
+  // guard releases and validation fires normally.
   if (minTrim > 0 && value.bleedMm > minTrim * BLEED_WARN_FRACTION) {
     warnings.push(
       `Bleed ${value.bleedMm} mm exceeds ${(BLEED_WARN_FRACTION * 100).toFixed(0)}% of the shorter trim (${minTrim} mm) — most parametric generators will reject this.`,
     );
   }
-  if (value.depthMm !== undefined && value.depthMm > Math.min(value.widthMm, value.heightMm)) {
+  if (minTrim > 0 && value.depthMm !== undefined && value.depthMm > minTrim) {
     warnings.push(
       `Depth ${value.depthMm} mm exceeds the shorter trim ${minTrim} mm — the carton would not close.`,
     );
@@ -165,6 +169,14 @@ export function DielineParametersPanel({
     onCommit?.(value);
   };
 
+  // Enter inside a numeric input should commit the same way blur
+  // does — matches the contract documented on `onCommit` and keeps
+  // keyboard-only users from being stuck in a "no commit ever
+  // fires" state when they tab through fields with `Enter`.
+  const commitOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") commit();
+  };
+
   // Parse a numeric input, clamping to [min, max]. Empty / `NaN`
   // returns `null` so callers can decide what to do — width/height/
   // bleed treat that as a no-op (host keeps the last good value
@@ -194,6 +206,7 @@ export function DielineParametersPanel({
             if (next !== null) set({ widthMm: next });
           }}
           onBlur={commit}
+          onKeyDown={commitOnEnter}
           aria-label="Width in millimetres"
         />
         <label htmlFor="dieline-height">Height (mm)</label>
@@ -209,6 +222,7 @@ export function DielineParametersPanel({
             if (next !== null) set({ heightMm: next });
           }}
           onBlur={commit}
+          onKeyDown={commitOnEnter}
           aria-label="Height in millimetres"
         />
         {!hideDepth && (
@@ -234,6 +248,7 @@ export function DielineParametersPanel({
                 if (next !== null) set({ depthMm: next });
               }}
               onBlur={commit}
+              onKeyDown={commitOnEnter}
               aria-label="Depth in millimetres"
               placeholder="—"
             />
@@ -252,6 +267,7 @@ export function DielineParametersPanel({
             if (next !== null) set({ bleedMm: next });
           }}
           onBlur={commit}
+          onKeyDown={commitOnEnter}
           aria-label="Bleed in millimetres"
         />
       </div>

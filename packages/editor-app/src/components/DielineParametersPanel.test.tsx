@@ -139,4 +139,17 @@ describe("validateDielineParameters (Wave 4 S5)", () => {
     });
     expect(warnings).toEqual([]);
   });
+
+  it("suppresses depth + bleed warnings when a trim dimension is zero (mid-edit)", () => {
+    // Both width and height of 0 — user has cleared one mid-edit.
+    // Bleed and depth warnings should not flash in that transient
+    // state because `minTrim` is 0.
+    const warnings = validateDielineParameters({
+      widthMm: 0,
+      heightMm: 100,
+      depthMm: 50,
+      bleedMm: 5,
+    });
+    expect(warnings).toEqual([]);
+  });
 });
