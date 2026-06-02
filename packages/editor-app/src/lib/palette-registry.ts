@@ -58,6 +58,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "email-notify": { slot: "panel.right", label: "Email notify" },
   "accessibility-hints": { slot: "panel.right", label: "Accessibility hints" },
   "palette-to-spot": { slot: "panel.right", label: "Palette → spot" },
+  "white-underbase": { slot: "panel.right", label: "White underbase" },
 };
 
 /**

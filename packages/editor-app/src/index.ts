@@ -218,6 +218,15 @@ export {
   type InksPanelProps,
 } from "./components/InksPanel";
 export {
+  DEFAULT_WHITE_UNDERBASE_SPEC,
+  validateWhiteUnderbaseSpec,
+  WhiteUnderbasePanel,
+  type WhiteUnderbaseGeneratorFn,
+  type WhiteUnderbasePanelProps,
+  type WhiteUnderbaseResult,
+  type WhiteUnderbaseSpec,
+} from "./components/WhiteUnderbasePanel";
+export {
   ComplianceFindingsPanel,
   type ComplianceFinding,
   type ComplianceFindingsPanelProps,

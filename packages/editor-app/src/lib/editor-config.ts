@@ -41,7 +41,8 @@ export type PaletteId =
   | "webhook-notify"
   | "email-notify"
   | "accessibility-hints"
-  | "palette-to-spot";
+  | "palette-to-spot"
+  | "white-underbase";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -142,6 +143,14 @@ export interface EditorConfig {
    *  swatch as a document spot. Hosts that don't run compile-pdf's
    *  spots router opt out via this flag. */
   enable_swatches: boolean;
+  /** C2 — white / underbase auto-generation panel. When enabled,
+   *  hosts mount {@link WhiteUnderbasePanel} to compute the union of
+   *  CMYK fill coverage on the active page and ask compile-pdf's
+   *  `white_underbase` producer to emit a new opaque-white
+   *  separation matching that union (optionally choked inward).
+   *  Hosts that don't run the white-underbase producer opt out via
+   *  this flag. */
+  enable_white_underbase: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -461,6 +470,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_dieline_preview: true,
   enable_inks_panel: true,
   enable_swatches: true,
+  enable_white_underbase: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
