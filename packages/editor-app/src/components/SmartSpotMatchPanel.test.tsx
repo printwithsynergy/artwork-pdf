@@ -73,6 +73,12 @@ describe("deltaEQuality", () => {
     expect(deltaEQuality(99)).toBe("poor");
   });
 
+  it("treats negative / non-finite ΔE as poor (bad loader output)", () => {
+    expect(deltaEQuality(-1)).toBe("poor");
+    expect(deltaEQuality(Number.NaN)).toBe("poor");
+    expect(deltaEQuality(Number.POSITIVE_INFINITY)).toBe("poor");
+  });
+
   it("enumerates four canonical bands", () => {
     const bands: DeltaEQuality[] = ["imperceptible", "noticeable", "fair", "poor"];
     expect(bands).toHaveLength(4);

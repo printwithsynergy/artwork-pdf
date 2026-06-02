@@ -132,6 +132,7 @@ export type DeltaEQuality = "imperceptible" | "noticeable" | "fair" | "poor";
  * @public
  */
 export function deltaEQuality(deltaE: number): DeltaEQuality {
+  if (!Number.isFinite(deltaE) || deltaE < 0) return "poor";
   if (deltaE < 1) return "imperceptible";
   if (deltaE < 3) return "noticeable";
   if (deltaE < 5) return "fair";
