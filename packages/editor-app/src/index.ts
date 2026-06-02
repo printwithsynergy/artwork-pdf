@@ -97,6 +97,14 @@ export {
   type ComplianceLoaderFn,
 } from "./components/ComplianceFindingsPanel";
 export {
+  groupRulesByProcess,
+  ProcessRulesPanel,
+  type ProcessRule,
+  type ProcessRuleGroup,
+  type ProcessRulesLoaderFn,
+  type ProcessRulesPanelProps,
+} from "./components/ProcessRulesPanel";
+export {
   IccSoftProofOverlay,
   type IccSoftProofLoaderFn,
   type IccSoftProofOverlayProps,

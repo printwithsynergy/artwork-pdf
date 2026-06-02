@@ -27,7 +27,8 @@ export type PaletteId =
   | "graphic-styles"
   | "history"
   | "fold-preview"
-  | "variant-matrix";
+  | "variant-matrix"
+  | "process-rules";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -132,6 +133,12 @@ export interface EditorConfig {
    *  separately from the existing generic preflight panel. Hosts
    *  that don't run lint-pdf opt out via this flag. */
   enable_compliance_panel: boolean;
+  /** P2 — process-specific preflight panel. Surfaces process-physics
+   *  findings (flexo white-knock, gravure max line freq, screen
+   *  halftone limit) separately from generic preflight and from the
+   *  P3 compliance panel. Hosts that don't run lint-pdf's
+   *  process-aware profile opt out via this flag. */
+  enable_process_rules_panel: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -302,6 +309,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_inks_panel: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
+  enable_process_rules_panel: true,
   // Job setup
   enable_print_context: true,
   // Canvas

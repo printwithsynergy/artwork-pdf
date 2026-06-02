@@ -44,6 +44,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   history: { slot: "panel.right", label: "History" },
   "fold-preview": { slot: "panel.modal", label: "3D Fold Preview" },
   "variant-matrix": { slot: "panel.modal", label: "Variants" },
+  "process-rules": { slot: "panel.right", label: "Process Rules" },
 };
 
 /**
