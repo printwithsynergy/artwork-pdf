@@ -148,11 +148,15 @@ export function composeEmailMessage(
   };
 }
 
+function documentDisplayName(context: EmailNotificationContext): string {
+  return context.documentName ?? context.documentId ?? "an artwork document";
+}
+
 function composeSubject(
   kind: EmailNotificationEventKind,
   context: EmailNotificationContext,
 ): string {
-  const subject = context.documentName ?? context.documentId ?? "an artwork document";
+  const subject = documentDisplayName(context);
   switch (kind) {
     case "preflight-blocked":
       return `Preflight blocked: ${subject}`;
@@ -173,11 +177,10 @@ function composeBody(kind: EmailNotificationEventKind, context: EmailNotificatio
   if (kind === "custom") {
     const trailing = context.text?.trim();
     if (trailing) return trailing;
-    const subject = context.documentName ?? context.documentId ?? "an artwork document";
-    return `Update on ${subject}.`;
+    return `Update on ${documentDisplayName(context)}.`;
   }
   const lines: string[] = [];
-  const subject = context.documentName ?? context.documentId ?? "an artwork document";
+  const subject = documentDisplayName(context);
   switch (kind) {
     case "preflight-blocked": {
       const n = context.findingCount;
@@ -324,11 +327,14 @@ export function EmailNotifyPanel({
       setState({ kind: "ok" });
       onSuccess?.(payload);
     } catch (err) {
-      // Guard against a host-supplied errorMessage that throws.
+      // Guard against a host-supplied errorMessage that throws or returns
+      // a falsy / empty string — either would leave the user staring at a
+      // blank error chip with no idea what happened.
       let message = "Couldn't send email notification.";
       if (errorMessage) {
         try {
-          message = errorMessage(err);
+          const candidate = errorMessage(err);
+          if (candidate) message = candidate;
         } catch {
           // fall back to the default
         }
