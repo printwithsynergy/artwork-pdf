@@ -28,7 +28,8 @@ export type PaletteId =
   | "history"
   | "fold-preview"
   | "variant-matrix"
-  | "process-rules";
+  | "process-rules"
+  | "preflight-diff";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -139,6 +140,12 @@ export interface EditorConfig {
    *  P3 compliance panel. Hosts that don't run lint-pdf's
    *  process-aware profile opt out via this flag. */
   enable_process_rules_panel: boolean;
+  /** P4 — preflight-diff panel. Compares current preflight findings
+   *  against a previous {@link import("@artworkpdf/document-model").PreflightSnapshot}
+   *  from `DocumentV3.preflightHistory` and surfaces what changed
+   *  (cleared / still firing / new since baseline). Hosts that don't
+   *  carry preflight history opt out via this flag. */
+  enable_preflight_diff: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -310,6 +317,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
+  enable_preflight_diff: true,
   // Job setup
   enable_print_context: true,
   // Canvas

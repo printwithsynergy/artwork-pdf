@@ -105,6 +105,15 @@ export {
   type ProcessRulesPanelProps,
 } from "./components/ProcessRulesPanel";
 export {
+  diffPreflightFindings,
+  PreflightDiffPanel,
+  type PreflightDiffPanelProps,
+  type PreflightDiffResult,
+  type PreflightFinding,
+  type PreflightSnapshotInput,
+  resolveBaselineSnapshot,
+} from "./components/PreflightDiffPanel";
+export {
   IccSoftProofOverlay,
   type IccSoftProofLoaderFn,
   type IccSoftProofOverlayProps,
