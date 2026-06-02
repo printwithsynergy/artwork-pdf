@@ -155,6 +155,16 @@ export {
   groupBrandConsistencyFindingsBySeverity,
 } from "./components/BrandConsistencyPanel";
 export {
+  composeWebhookEvent,
+  WEBHOOK_NOTIFICATION_EVENT_LABELS,
+  type WebhookNotificationContext,
+  type WebhookNotificationEvent,
+  type WebhookNotificationEventKind,
+  type WebhookNotifyFn,
+  WebhookNotifyPanel,
+  type WebhookNotifyPanelProps,
+} from "./components/WebhookNotifyPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,

@@ -37,7 +37,8 @@ export type PaletteId =
   | "smart-spot-match"
   | "design-suggestions"
   | "annotations-sidebar"
-  | "brand-consistency";
+  | "brand-consistency"
+  | "webhook-notify";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -222,6 +223,15 @@ export interface EditorConfig {
    *  profile when one is deployed; disable when no brand-consistency
    *  loader is wired. */
   enable_brand_consistency: boolean;
+  /** I1 — Generic webhook-notify panel. Companion to the I3
+   *  {@link SlackNotifyPanel}; emits a structured
+   *  {@link WebhookNotificationEvent} through a host adapter so any
+   *  outbound HTTP integration (Zapier, n8n, GitHub Actions
+   *  `repository_dispatch`, internal worker queues, custom tenant
+   *  endpoints) can subscribe to editor events without their own
+   *  panel. Pairs with the synergy `webhook.notify` workflow node when
+   *  one is deployed; disable when no webhook adapter is wired. */
+  enable_webhook_notify: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -404,6 +414,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_design_suggestions: true,
   enable_annotations_sidebar: true,
   enable_brand_consistency: true,
+  enable_webhook_notify: true,
   // Job setup
   enable_print_context: true,
   // Canvas
