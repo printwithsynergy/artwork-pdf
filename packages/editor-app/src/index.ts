@@ -111,6 +111,18 @@ export {
   type PreflightFixSuggestion,
 } from "./components/PreflightAutoFixPanel";
 export {
+  type DeltaEQuality,
+  deltaEQuality,
+  formatDeltaE,
+  isQueryReady,
+  SmartSpotMatchPanel,
+  type SmartSpotMatchPanelProps,
+  type SpotMatch,
+  type SpotMatchLoaderFn,
+  type SpotMatchQuery,
+  sortMatchesByDeltaE,
+} from "./components/SmartSpotMatchPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
