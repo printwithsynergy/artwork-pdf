@@ -324,8 +324,16 @@ function DiffSection({
         {label} ({entries.length})
       </h4>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {entries.map((entry) => (
-          <li key={entry} style={{ padding: "0.125rem 0.5rem", fontSize: "0.8125rem" }}>
+        {entries.map((entry, i) => (
+          // Composite key — two variants can legitimately share a
+          // name (the id is what disambiguates), and a token-column
+          // name can repeat across kind buckets. Including the index
+          // keeps React's reconciliation correct without exposing
+          // the internal ids in the rendered output.
+          <li
+            key={`${label}-${i}-${entry}`}
+            style={{ padding: "0.125rem 0.5rem", fontSize: "0.8125rem" }}
+          >
             {entry}
           </li>
         ))}
