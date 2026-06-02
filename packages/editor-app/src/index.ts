@@ -116,6 +116,14 @@ export {
   type NutritionRow,
 } from "./components/NutritionPanel";
 export {
+  BraillePanel,
+  composeBraille,
+  MARBURG_MEDIUM,
+  type BrailleCell,
+  type BrailleComposeResult,
+  type BraillePanelProps,
+} from "./components/BraillePanel";
+export {
   JobSetupPanel,
   type JobSetupPanelProps,
   type JobSetupValue,
