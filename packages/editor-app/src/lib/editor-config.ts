@@ -164,6 +164,13 @@ export interface EditorConfig {
    *  consults the same registry. Hosts that don't carry brand assets
    *  opt out via this flag. */
   enable_brand_assets_panel: boolean;
+  /** X2 — history scrubber panel. When enabled, hosts mount the
+   *  {@link HistoryPanel} on the right rail; the panel renders the
+   *  per-page snapshot stack from {@link EditorCanvas} as a clickable
+   *  list so users can revert to any prior commit. The panel + palette
+   *  id were registered in earlier waves; this flag formally gates the
+   *  surface. */
+  enable_history: boolean;
   /** X3 — annotation overlay. When enabled, hosts mount the
    *  {@link AnnotationOverlay} SVG layer over the canvas to surface
    *  `PageV3.annotations` (point / area / text). The overlay is
@@ -422,6 +429,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_process_rules_panel: true,
   enable_preflight_diff: true,
   enable_brand_assets_panel: true,
+  enable_history: true,
   enable_annotation_overlay: true,
   enable_variant_matrix_versions: true,
   enable_mark_library: true,
