@@ -33,12 +33,15 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Build everything first so we never publish one package and
-      # then discover the other's tsc errored out mid-release.
-      - name: Build @printwithsynergy/artwork-pdf
-        run: pnpm --filter @printwithsynergy/artwork-pdf build
+      # then discover the other's tsc errored out mid-release. The
+      # `...` syntax pulls in each target's workspace dependencies
+      # (dieline-parser, document-model, etc.) so the build sees a
+      # populated `dist/` rather than a missing module.
+      - name: Build @printwithsynergy/artwork-pdf (+ workspace deps)
+        run: pnpm --filter '@printwithsynergy/artwork-pdf...' build
 
-      - name: Build @printwithsynergy/artwork-pdf-editor
-        run: pnpm --filter @printwithsynergy/artwork-pdf-editor build
+      - name: Build @printwithsynergy/artwork-pdf-editor (+ workspace deps)
+        run: pnpm --filter '@printwithsynergy/artwork-pdf-editor...' build
 
       - name: Publish @printwithsynergy/artwork-pdf
         run: pnpm --filter @printwithsynergy/artwork-pdf publish --no-git-checks --access public
