@@ -39,6 +39,22 @@
 export type BarcodeFormat = "EAN-13" | "UPC-A" | "GS1-128" | "QR";
 
 /**
+ * Canonical list of every {@link BarcodeFormat} the module supports.
+ * Exported so UI surfaces ({@link import("../components/BarcodeGeneratorPanel").BarcodeGeneratorPanel}
+ * default dropdown, host-supplied filters, contract tests) don't have
+ * to redeclare the list and drift out of sync when a new format is
+ * added to the union.
+ *
+ * @public
+ */
+export const ALL_BARCODE_FORMATS: readonly BarcodeFormat[] = [
+  "EAN-13",
+  "UPC-A",
+  "GS1-128",
+  "QR",
+] as const;
+
+/**
  * Result of detecting one barcode on a rasterized image.
  *
  * `bounds` and `confidence` are optional because different detectors

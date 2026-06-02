@@ -157,6 +157,7 @@ export {
   type BarcodeDetection,
   type BarcodeFormat,
   type BarcodeValidation,
+  ALL_BARCODE_FORMATS,
   scanBarcodes,
   validateBarcode,
   validateEAN13,

@@ -23,7 +23,7 @@
  */
 import { useState } from "react";
 
-import type { BarcodeFormat } from "../lib/barcode-scan";
+import { ALL_BARCODE_FORMATS, type BarcodeFormat } from "../lib/barcode-scan";
 
 /**
  * Result returned by a {@link BarcodeRenderFn}. `bitmap` is an
@@ -72,17 +72,21 @@ export type BarcodeGeneratorPanelProps = {
   allowedFormats?: readonly BarcodeFormat[];
 };
 
-const ALL_FORMATS: readonly BarcodeFormat[] = ["EAN-13", "UPC-A", "GS1-128", "QR"] as const;
-
 /**
  * @public
  */
 export function BarcodeGeneratorPanel({
   renderer,
   onRendered,
-  allowedFormats = ALL_FORMATS,
+  allowedFormats,
 }: BarcodeGeneratorPanelProps) {
-  const [format, setFormat] = useState<BarcodeFormat>(allowedFormats[0] ?? "EAN-13");
+  // Fall back to the full format list when the host passes `undefined`
+  // *or* an empty array. An empty array would otherwise render a
+  // select with no options against a still-valid `format` state, which
+  // confuses both keyboard users and the host's `onRendered` flow.
+  const formats: readonly BarcodeFormat[] =
+    allowedFormats && allowedFormats.length > 0 ? allowedFormats : ALL_BARCODE_FORMATS;
+  const [format, setFormat] = useState<BarcodeFormat>(formats[0] ?? "EAN-13");
   const [payload, setPayload] = useState("");
   const [widthMm, setWidthMm] = useState<number | undefined>(undefined);
   const [heightMm, setHeightMm] = useState<number | undefined>(undefined);
@@ -121,7 +125,7 @@ export function BarcodeGeneratorPanel({
           onChange={(e) => setFormat(e.target.value as BarcodeFormat)}
           style={{ marginLeft: "0.5rem" }}
         >
-          {allowedFormats.map((f) => (
+          {formats.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>

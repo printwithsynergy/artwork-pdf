@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import type { BarcodeFormat } from "../lib/barcode-scan";
+import { ALL_BARCODE_FORMATS, type BarcodeFormat } from "../lib/barcode-scan";
 import type {
   BarcodeGeneratorPanelProps,
   BarcodeRenderFn,
@@ -91,12 +91,17 @@ describe("BarcodeGeneratorPanelProps contract", () => {
 });
 
 describe("BarcodeFormat coverage", () => {
-  it("the panel's default allowedFormats matches the BarcodeFormat union", () => {
-    // Compile-time sanity: an explicit list of every BarcodeFormat
-    // must type-check. If a new format is added to BarcodeFormat,
-    // this assertion forces the panel's ALL_FORMATS const to grow
-    // alongside it.
-    const all: readonly BarcodeFormat[] = ["EAN-13", "UPC-A", "GS1-128", "QR"];
+  it("ALL_BARCODE_FORMATS covers every BarcodeFormat in the union", () => {
+    // Compile-time sanity: the shared canonical list typechecks as
+    // BarcodeFormat[] and contains the same four formats the panel
+    // surfaces by default. When a new BarcodeFormat is added the
+    // union widens; if the constant doesn't grow alongside it this
+    // assignment fails to type-check and this test forces a fix.
+    const all: readonly BarcodeFormat[] = ALL_BARCODE_FORMATS;
+    expect(all).toContain("EAN-13");
+    expect(all).toContain("UPC-A");
+    expect(all).toContain("GS1-128");
+    expect(all).toContain("QR");
     expect(all).toHaveLength(4);
   });
 });
