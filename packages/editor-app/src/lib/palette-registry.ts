@@ -56,6 +56,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "brand-consistency": { slot: "panel.right", label: "Brand consistency" },
   "webhook-notify": { slot: "panel.right", label: "Webhook notify" },
   "email-notify": { slot: "panel.right", label: "Email notify" },
+  "accessibility-hints": { slot: "panel.right", label: "Accessibility hints" },
 };
 
 /**

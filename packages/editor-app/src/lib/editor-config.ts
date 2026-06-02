@@ -39,7 +39,8 @@ export type PaletteId =
   | "annotations-sidebar"
   | "brand-consistency"
   | "webhook-notify"
-  | "email-notify";
+  | "email-notify"
+  | "accessibility-hints";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -240,6 +241,14 @@ export interface EditorConfig {
    *  etc.). Pairs with the synergy `email.notify` workflow node when
    *  one is deployed; disable when no email transport is wired. */
   enable_email_notify: boolean;
+  /** AI5 — Accessibility hints panel. Fourth member of the Wave 4 AI
+   *  family (alongside AI1 design-suggestions, AI2 smart spot-match,
+   *  AI3 preflight auto-fix); surfaces a host-loader-supplied list of
+   *  accessibility findings (low contrast, missing alt text, text-size
+   *  minimums, color-only signalling). Pairs with a tenant-deployed
+   *  lint-pdf accessibility profile or an in-house rules engine;
+   *  disable when no accessibility loader is wired. */
+  enable_accessibility_hints: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -424,6 +433,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_brand_consistency: true,
   enable_webhook_notify: true,
   enable_email_notify: true,
+  enable_accessibility_hints: true,
   // Job setup
   enable_print_context: true,
   // Canvas
