@@ -69,9 +69,11 @@ export type Gs1DigitalLinkPanelProps = {
    *  composed Digital Link URL; the bitmap flows to `onRendered`. When
    *  absent, the panel only emits the URL via `onLink`. */
   renderer?: BarcodeRenderFn;
-  /** Fired whenever the composed URL changes (debounced — see
-   *  implementation note). The host can preview the URL or feed it
-   *  to a separate QR renderer. */
+  /** Fired when the user clicks **Preview URL** or **Generate QR**
+   *  with the composed URL. The panel does not fire on every
+   *  keystroke — hosts that want live preview should poll the
+   *  current form values via their own state or wrap
+   *  {@link composeGs1DigitalLink} themselves. */
   onLink?: (result: Gs1DigitalLinkResult) => void;
   /** Fired with the rendered bitmap when the host has wired a
    *  `renderer` and the user clicks "Generate QR". */
@@ -93,6 +95,30 @@ export const DEFAULT_GS1_DOMAIN = "id.gs1.org";
 const PATH_AIS_IN_ORDER = ["22", "10", "21"] as const;
 
 /**
+ * Validate a GS1 AI 17 (expiration date) value: must be exactly six
+ * digits in `YYMMDD` order with month 1-12 and a real calendar day.
+ * Year is two digits per the GS1 spec so the validator checks the
+ * day against an arbitrary 21st-century year — the year value itself
+ * does not constrain the calendar.
+ *
+ * Exported alongside {@link composeGs1DigitalLink} so server-side
+ * callers can reject invalid expiries before composing.
+ *
+ * @public
+ */
+export function isValidGs1Ai17(value: string): boolean {
+  if (!/^\d{6}$/.test(value)) return false;
+  const yy = Number(value.slice(0, 2));
+  const mm = Number(value.slice(2, 4));
+  const dd = Number(value.slice(4, 6));
+  if (mm < 1 || mm > 12) return false;
+  if (dd < 1 || dd > 31) return false;
+  const fullYear = 2000 + yy;
+  const date = new Date(fullYear, mm - 1, dd);
+  return date.getFullYear() === fullYear && date.getMonth() === mm - 1 && date.getDate() === dd;
+}
+
+/**
  * Compose a canonical GS1 Digital Link URL from a GTIN + optional
  * path-AIs + optional query-AIs. Pure function — exported so server
  * components (Next.js RSC, Astro frontmatter) can pre-compute URLs
@@ -109,7 +135,14 @@ export function composeGs1DigitalLink(input: {
   pathAis?: readonly Gs1AiEntry[];
   queryAis?: readonly Gs1AiEntry[];
 }): Gs1DigitalLinkResult {
-  const domain = input.domain.replace(/\/+$/, "");
+  // Normalize the host: trim whitespace, strip any explicit
+  // `http(s)://` scheme the user pasted (the composer always emits
+  // `https://`), then drop trailing slashes. Empty / whitespace-only
+  // input falls back to the GS1 community default rather than
+  // producing the malformed `https:///01/...`.
+  const trimmed = input.domain.trim().replace(/^https?:\/\//i, "");
+  const stripped = trimmed.replace(/\/+$/, "");
+  const domain = stripped === "" ? DEFAULT_GS1_DOMAIN : stripped;
   const pathAisByCode = new Map<string, string>();
   for (const entry of input.pathAis ?? []) {
     pathAisByCode.set(entry.ai, entry.value);
@@ -157,31 +190,63 @@ export function Gs1DigitalLinkPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function compose(): Gs1DigitalLinkResult {
-    return composeGs1DigitalLink({
-      domain,
-      gtin: gtin.trim(),
-      pathAis: [
-        ...(cpv.trim() ? [{ ai: "22", value: cpv.trim() }] : []),
-        ...(lot.trim() ? [{ ai: "10", value: lot.trim() }] : []),
-        ...(serial.trim() ? [{ ai: "21", value: serial.trim() }] : []),
-      ],
-      queryAis: [...(expiration.trim() ? [{ ai: "17", value: expiration.trim() }] : [])],
-    });
+  /**
+   * Validate the form. Returns the composed result on success or an
+   * error message; null `result` means the caller must not proceed.
+   * Centralised here so `handlePreview` and `handleGenerate` share
+   * the same checks.
+   */
+  function validateAndCompose(): { result: Gs1DigitalLinkResult | null; error: string | null } {
+    const trimmedGtin = gtin.trim();
+    if (!trimmedGtin) {
+      return { result: null, error: "GTIN is required." };
+    }
+    // GS1 GTINs are 8 / 12 / 13 / 14 digits (GTIN-8, UPC-A, EAN-13,
+    // GTIN-14). The check digit isn't validated here — leave that to
+    // the host renderer / server, which can also surface check-digit
+    // errors with a specific message.
+    if (!/^\d{8}$|^\d{12}$|^\d{13}$|^\d{14}$/.test(trimmedGtin)) {
+      return {
+        result: null,
+        error: "GTIN must be 8, 12, 13, or 14 digits.",
+      };
+    }
+    const trimmedExpiration = expiration.trim();
+    if (trimmedExpiration !== "" && !isValidGs1Ai17(trimmedExpiration)) {
+      return {
+        result: null,
+        error: "Expiration date (AI 17) must be a valid YYMMDD value.",
+      };
+    }
+    return {
+      error: null,
+      result: composeGs1DigitalLink({
+        domain,
+        gtin: trimmedGtin,
+        pathAis: [
+          ...(cpv.trim() ? [{ ai: "22", value: cpv.trim() }] : []),
+          ...(lot.trim() ? [{ ai: "10", value: lot.trim() }] : []),
+          ...(serial.trim() ? [{ ai: "21", value: serial.trim() }] : []),
+        ],
+        queryAis: trimmedExpiration ? [{ ai: "17", value: trimmedExpiration }] : [],
+      }),
+    };
   }
 
   function handlePreview() {
-    if (!gtin.trim()) {
-      setError("GTIN is required.");
+    const { result, error: validationError } = validateAndCompose();
+    if (!result) {
+      setError(validationError);
       return;
     }
     setError(null);
-    onLink?.(compose());
+    onLink?.(result);
   }
 
   async function handleGenerate() {
-    if (!gtin.trim()) {
-      setError("GTIN is required.");
+    const { result, error: validationError } = validateAndCompose();
+    if (!result) {
+      setError(validationError);
       return;
     }
     if (!renderer) {
@@ -191,7 +256,6 @@ export function Gs1DigitalLinkPanel({
     setBusy(true);
     setError(null);
     try {
-      const result = compose();
       onLink?.(result);
       const bitmap = await renderer({ format: "QR", payload: result.url });
       onRendered?.(bitmap);

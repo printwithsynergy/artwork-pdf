@@ -6,6 +6,7 @@ import {
   type Gs1DigitalLinkPanelProps,
   type Gs1DigitalLinkResult,
   composeGs1DigitalLink,
+  isValidGs1Ai17,
 } from "./Gs1DigitalLinkPanel";
 
 // Type-contract surface + pure-function tests for G3. The composer is
@@ -76,6 +77,61 @@ describe("composeGs1DigitalLink", () => {
       pathAis: [{ ai: "10", value: "lot/with spaces" }],
     });
     expect(result.pathSegment).toBe("/01/09506000134376/10/lot%2Fwith%20spaces");
+  });
+});
+
+describe("composeGs1DigitalLink domain normalization", () => {
+  it("strips a pasted https:// scheme so it doesn't double up", () => {
+    const result = composeGs1DigitalLink({
+      domain: "https://id.gs1.org",
+      gtin: "09506000134376",
+    });
+    expect(result.url).toBe("https://id.gs1.org/01/09506000134376");
+  });
+
+  it("strips a pasted http:// scheme too", () => {
+    const result = composeGs1DigitalLink({
+      domain: "http://brand.example.com/",
+      gtin: "09506000134376",
+    });
+    expect(result.url).toBe("https://brand.example.com/01/09506000134376");
+  });
+
+  it("trims leading/trailing whitespace from the domain", () => {
+    const result = composeGs1DigitalLink({
+      domain: "  id.gs1.org  ",
+      gtin: "09506000134376",
+    });
+    expect(result.url).toBe("https://id.gs1.org/01/09506000134376");
+  });
+
+  it("falls back to DEFAULT_GS1_DOMAIN when the domain is empty/whitespace", () => {
+    const result = composeGs1DigitalLink({
+      domain: "   ",
+      gtin: "09506000134376",
+    });
+    expect(result.url).toBe(`https://${DEFAULT_GS1_DOMAIN}/01/09506000134376`);
+  });
+});
+
+describe("isValidGs1Ai17", () => {
+  it("accepts a canonical YYMMDD", () => {
+    expect(isValidGs1Ai17("270101")).toBe(true);
+    expect(isValidGs1Ai17("250228")).toBe(true);
+  });
+
+  it("rejects wrong length / non-digit input", () => {
+    expect(isValidGs1Ai17("27010")).toBe(false);
+    expect(isValidGs1Ai17("2701011")).toBe(false);
+    expect(isValidGs1Ai17("27-01-01")).toBe(false);
+    expect(isValidGs1Ai17("abcdef")).toBe(false);
+    expect(isValidGs1Ai17("")).toBe(false);
+  });
+
+  it("rejects out-of-range months and days", () => {
+    expect(isValidGs1Ai17("271301")).toBe(false); // month 13
+    expect(isValidGs1Ai17("270132")).toBe(false); // day 32
+    expect(isValidGs1Ai17("270230")).toBe(false); // 2027 has no Feb 30
   });
 });
 
