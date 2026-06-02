@@ -31,7 +31,8 @@ export type PaletteId =
   | "process-rules"
   | "preflight-diff"
   | "brand-assets"
-  | "mark-library";
+  | "mark-library"
+  | "slack-notify";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -175,6 +176,13 @@ export interface EditorConfig {
    *  Pairs with compile-pdf's marks producer; disable when no
    *  catalogue source is wired. */
   enable_mark_library: boolean;
+  /** I3 — Slack-notify panel. When enabled, hosts mount the
+   *  {@link SlackNotifyPanel} so users can emit a Slack notification
+   *  keyed to a typed editor event (preflight cleared, job submitted,
+   *  approval requested, …). Pairs with the synergy `slack.notify`
+   *  workflow node when one is deployed; disable when no Slack
+   *  bridge is wired. */
+  enable_slack_notify: boolean;
 
   // ── Job setup (F2) ───────────────────────────────────────────────
   /** F2 — Print-context modal (process, substrate, ICC, TAC, target
@@ -351,6 +359,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_annotation_overlay: true,
   enable_variant_matrix_versions: true,
   enable_mark_library: true,
+  enable_slack_notify: true,
   // Job setup
   enable_print_context: true,
   // Canvas
