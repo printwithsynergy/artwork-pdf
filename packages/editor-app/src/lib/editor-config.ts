@@ -21,6 +21,7 @@ export type PaletteId =
   | "preflight"
   | "dieline-library"
   | "dieline-parameters"
+  | "dieline-preview"
   | "swatches"
   | "inks"
   | "graphic-styles"
@@ -107,6 +108,13 @@ export interface EditorConfig {
    *  regen step. Disable for hosts that only ship the bundled
    *  static library. */
   enable_dieline_parameters: boolean;
+  /** S6 — lightweight 2D dieline preview panel. When enabled, hosts
+   *  can mount the {@link DielinePreview} thumbnail next to the
+   *  parametric editor so a width/height edit and the resulting
+   *  folded-layout preview update side by side. Distinct from
+   *  `enable_3d_fold_preview` (which spins up Three.js); this is the
+   *  cheap always-on chrome companion. */
+  enable_dieline_preview: boolean;
   /** C1 — inks palette. Surfaces the live ink list extracted from the
    *  most recently rendered PDF, alongside the existing swatches
    *  palette (which still handles PANTONE search). Hosts can disable
@@ -290,6 +298,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_palettes: true,
   enable_separations: true,
   enable_dieline_parameters: true,
+  enable_dieline_preview: true,
   enable_inks_panel: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
