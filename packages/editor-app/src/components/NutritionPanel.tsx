@@ -244,6 +244,11 @@ export function composeNutritionFacts(facts: NutritionFacts): NutritionPanelSpec
   };
 }
 
+// Required-field defaults only. Optional nutrients (Added Sugars,
+// Vitamin D, Calcium, Iron, Potassium) are intentionally left absent
+// so hosts that don't want those rows aren't forced to pass
+// `undefined` overrides — `composeNutritionFacts` already omits any
+// optional field that's not set.
 const DEFAULT_FACTS: NutritionFacts = {
   servingSize: "1 cup (240g)",
   servingsPerContainer: 4,
@@ -256,9 +261,16 @@ const DEFAULT_FACTS: NutritionFacts = {
   totalCarbohydrateG: 37,
   dietaryFiberG: 4,
   totalSugarsG: 12,
-  addedSugarsG: 10,
   proteinG: 3,
 };
+
+const OPTIONAL_NUTRITION_KEYS = new Set<keyof NutritionFacts>([
+  "addedSugarsG",
+  "vitaminDMcg",
+  "calciumMg",
+  "ironMg",
+  "potassiumMg",
+]);
 
 /**
  * @public
@@ -288,15 +300,29 @@ export function NutritionPanel({ initialFacts, onCompose }: NutritionPanelProps)
     setFacts((f) => ({ ...f, [key]: value }));
   }
 
+  function clearOptional<K extends keyof NutritionFacts>(key: K) {
+    setFacts((f) => {
+      const { [key]: _dropped, ...rest } = f;
+      return rest as NutritionFacts;
+    });
+  }
+
   function numInput<K extends keyof NutritionFacts>(label: string, key: K, unit: string) {
+    const isOptional = OPTIONAL_NUTRITION_KEYS.has(key);
+    const current = facts[key] as number | undefined;
     return (
       <label style={{ display: "block", marginBottom: "0.25rem" }}>
         {label}
         <input
           type="number"
-          value={facts[key] as number | undefined}
+          value={current ?? ""}
           onChange={(e) => {
-            const v = Number(e.target.value);
+            const raw = e.target.value;
+            if (isOptional && raw === "") {
+              clearOptional(key);
+              return;
+            }
+            const v = Number(raw);
             setNum(key, (Number.isNaN(v) ? 0 : v) as NutritionFacts[K]);
           }}
           aria-label={label}
@@ -330,8 +356,12 @@ export function NutritionPanel({ initialFacts, onCompose }: NutritionPanelProps)
       {numInput("Total Carbohydrate", "totalCarbohydrateG", "g")}
       {numInput("Dietary Fiber", "dietaryFiberG", "g")}
       {numInput("Total Sugars", "totalSugarsG", "g")}
-      {numInput("Added Sugars", "addedSugarsG", "g")}
+      {numInput("Added Sugars (optional, leave blank to omit)", "addedSugarsG", "g")}
       {numInput("Protein", "proteinG", "g")}
+      {numInput("Vitamin D (optional)", "vitaminDMcg", "mcg")}
+      {numInput("Calcium (optional)", "calciumMg", "mg")}
+      {numInput("Iron (optional)", "ironMg", "mg")}
+      {numInput("Potassium (optional)", "potassiumMg", "mg")}
       <button
         type="button"
         onClick={() => onCompose(composeNutritionFacts(facts))}
