@@ -57,6 +57,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "webhook-notify": { slot: "panel.right", label: "Webhook notify" },
   "email-notify": { slot: "panel.right", label: "Email notify" },
   "accessibility-hints": { slot: "panel.right", label: "Accessibility hints" },
+  "palette-to-spot": { slot: "panel.right", label: "Palette → spot" },
 };
 
 /**

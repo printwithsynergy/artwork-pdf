@@ -189,6 +189,15 @@ export {
   groupAccessibilityFindingsBySeverity,
 } from "./components/AccessibilityHintsPanel";
 export {
+  type PaletteColor,
+  type PaletteCoverageSummary,
+  PaletteToSpotPanel,
+  type PaletteToSpotPanelProps,
+  type PaletteToSpotRow,
+  type SpotCommitFn,
+  summarizePaletteCoverage,
+} from "./components/PaletteToSpotPanel";
+export {
   buildFoldScene,
   type FoldHingeAxis,
   type FoldPanelQuad,
