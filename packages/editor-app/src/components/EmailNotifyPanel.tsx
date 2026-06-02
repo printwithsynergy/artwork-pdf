@@ -148,10 +148,13 @@ export function composeEmailMessage(
   };
 }
 
+/** Resolve a human-readable document name from the context, falling
+ *  back to id and then to a generic placeholder. */
 function documentDisplayName(context: EmailNotificationContext): string {
   return context.documentName ?? context.documentId ?? "an artwork document";
 }
 
+/** Render the email subject line for one of the canonical templates. */
 function composeSubject(
   kind: EmailNotificationEventKind,
   context: EmailNotificationContext,
@@ -173,6 +176,8 @@ function composeSubject(
   }
 }
 
+/** Render the email body (multi-line plaintext) for one of the
+ *  canonical templates; `"custom"` uses `context.text` verbatim. */
 function composeBody(kind: EmailNotificationEventKind, context: EmailNotificationContext): string {
   if (kind === "custom") {
     const trailing = context.text?.trim();
@@ -412,7 +417,11 @@ export function EmailNotifyPanel({
         Note
         <textarea
           aria-label="Note"
-          placeholder="Optional — appended to the body"
+          placeholder={
+            event === "custom"
+              ? "Used as the full body for custom messages"
+              : "Optional — appended to the body"
+          }
           value={note}
           onChange={(e) => {
             setNote(e.target.value);
