@@ -37,8 +37,9 @@ export type StructuralPath = {
  * @public
  */
 export type StructuralExportDieline = {
-  /** Display name — emitted as a CF2 `J1` job comment and a DXF
-   *  TEXT entity. */
+  /** Display name — emitted as the CF2 `J1` job comment.
+   *  (DXF doesn't carry it; downstream CAD packages take the
+   *  filename as the job name.) */
   name: string;
   /** Bounding box in millimetres. CF2 emits `B1 0 0 widthMm
    *  heightMm` and DXF emits a `$LIMMIN` / `$LIMMAX` pair. */

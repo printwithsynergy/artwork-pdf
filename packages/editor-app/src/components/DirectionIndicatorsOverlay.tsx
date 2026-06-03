@@ -19,7 +19,7 @@
  * @public
  */
 
-import type { ReactElement } from "react";
+import { type ReactElement, useId } from "react";
 
 /**
  * Direction-context spec emitted by the host (typically derived
@@ -214,6 +214,12 @@ function WebArrow({
   widthPx: number;
   heightPx: number;
 }): ReactElement {
+  // Per-instance marker id so multiple overlays in the same DOM
+  // (e.g. a multi-page editor with one indicator per page) don't
+  // collide on a shared `id="web-arrowhead"` — only one definition
+  // would be honoured and the rest would render unarrowed lines.
+  const rawId = useId();
+  const markerId = `web-arrowhead-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const cx = widthPx / 2;
   const cy = heightPx / 2;
   const len = Math.min(widthPx, heightPx) * 0.5;
@@ -249,7 +255,7 @@ function WebArrow({
       <title>{`web direction (${direction})`}</title>
       <defs>
         <marker
-          id="web-arrowhead"
+          id={markerId}
           viewBox="0 0 10 10"
           refX={8}
           refY={5}
@@ -267,7 +273,7 @@ function WebArrow({
         y2={y2}
         stroke="#fc5102"
         strokeWidth={3}
-        markerEnd="url(#web-arrowhead)"
+        markerEnd={`url(#${markerId})`}
       />
     </svg>
   );
