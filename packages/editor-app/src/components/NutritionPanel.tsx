@@ -21,6 +21,7 @@
  * @public
  */
 import { useState } from "react";
+import { primaryButtonStyle } from "../lib/panel-button-styles";
 
 /**
  * Typed Nutrition Facts data. All fields are per serving except
@@ -365,7 +366,7 @@ export function NutritionPanel({ initialFacts, onCompose }: NutritionPanelProps)
       <button
         type="button"
         onClick={() => onCompose(composeNutritionFacts(facts))}
-        style={{ padding: "0.4rem 0.8rem", marginTop: "0.5rem" }}
+        style={primaryButtonStyle()}
       >
         Compose
       </button>

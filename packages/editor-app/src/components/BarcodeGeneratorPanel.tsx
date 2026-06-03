@@ -24,6 +24,7 @@
 import { useState } from "react";
 
 import { ALL_BARCODE_FORMATS, type BarcodeFormat } from "../lib/barcode-scan";
+import { primaryButtonStyle } from "../lib/panel-button-styles";
 
 /**
  * Result returned by a {@link BarcodeRenderFn}. `bitmap` is an
@@ -193,7 +194,7 @@ export function BarcodeGeneratorPanel({
         type="button"
         onClick={handleGenerate}
         disabled={busy}
-        style={{ padding: "0.4rem 0.8rem" }}
+        style={primaryButtonStyle(busy)}
       >
         {busy ? "Generating…" : "Generate"}
       </button>
