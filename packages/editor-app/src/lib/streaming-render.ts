@@ -140,6 +140,10 @@ export type StreamingProgress = {
   status: "running" | "done" | "error";
   /** Populated when status is "error". */
   errorMessage?: string;
+  /** Set of `pageIndex` values that have landed `page-done` —
+   *  exposed so per-page badge renderers can do O(1) "is page N
+   *  done?" lookups instead of re-scanning the raw event list. */
+  completedPageIndices: ReadonlySet<number>;
 };
 
 /**
@@ -154,7 +158,10 @@ export type StreamingProgress = {
 export function summarizeStreamingProgress(
   events: readonly StreamingRenderEvent[],
 ): StreamingProgress {
-  let completedPages = 0;
+  // Track completion per page index so a duplicate `page-done`
+  // (backend retry, replay, etc.) doesn't double-count and push
+  // the percent above 100.
+  const completed = new Set<number>();
   let totalPages = 0;
   let currentPage: number | null = null;
   let receivedBytes = 0;
@@ -169,7 +176,7 @@ export function summarizeStreamingProgress(
         break;
       case "page-done":
         totalPages = Math.max(totalPages, ev.totalPages);
-        completedPages++;
+        completed.add(ev.pageIndex);
         if (currentPage === ev.pageIndex) currentPage = null;
         break;
       case "output-chunk":
@@ -187,6 +194,7 @@ export function summarizeStreamingProgress(
     }
   }
 
+  const completedPages = completed.size;
   const percent =
     status === "done"
       ? 100
@@ -202,5 +210,9 @@ export function summarizeStreamingProgress(
     receivedBytes,
     status,
     ...(errorMessage !== undefined && { errorMessage }),
+    /** Set of pageIndex values that have landed `page-done`.
+     *  Exposed for consumers that render per-page badges so they
+     *  don't have to re-scan the raw event list. */
+    completedPageIndices: completed,
   };
 }

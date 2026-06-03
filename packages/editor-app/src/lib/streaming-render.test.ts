@@ -121,6 +121,19 @@ describe("summarizeStreamingProgress", () => {
     expect(s.receivedBytes).toBe(1024);
   });
 
+  it("treats duplicate page-done events as one (idempotent per pageIndex)", () => {
+    const events: StreamingRenderEvent[] = [
+      { kind: "page-start", pageIndex: 0, totalPages: 2 },
+      { kind: "page-done", pageIndex: 0, totalPages: 2, ms: 10 },
+      { kind: "page-done", pageIndex: 0, totalPages: 2, ms: 10 },
+      { kind: "page-done", pageIndex: 0, totalPages: 2, ms: 10 },
+    ];
+    const s = summarizeStreamingProgress(events);
+    expect(s.completedPages).toBe(1);
+    expect(s.percent).toBe(50);
+    expect(s.completedPageIndices.has(0)).toBe(true);
+  });
+
   it("flips status to done on the terminal event", () => {
     const events: StreamingRenderEvent[] = [
       { kind: "page-start", pageIndex: 0, totalPages: 1 },

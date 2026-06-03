@@ -169,9 +169,9 @@ export function StreamingRenderProgress({
           }}
         >
           {Array.from({ length: summary.totalPages }, (_, i) => {
-            const done = events.some(
-              (e) => e.kind === "page-done" && e.pageIndex === i,
-            );
+            // O(1) lookup against the pre-computed Set so we don't
+            // re-scan the raw events array on every badge.
+            const done = summary.completedPageIndices.has(i);
             const active = summary.currentPage === i;
             const bg = done ? "#080" : active ? "#06a" : "#ccc";
             return (
