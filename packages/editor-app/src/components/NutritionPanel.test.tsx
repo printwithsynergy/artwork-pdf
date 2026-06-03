@@ -112,10 +112,23 @@ describe("composeNutritionFacts", () => {
 });
 
 describe("NutritionPanelProps contract", () => {
-  it("requires onCompose; initialFacts is optional", () => {
+  it("accepts uncontrolled-mode onCompose; initialFacts is optional", () => {
     const props: NutritionPanelProps = {
       onCompose: (_spec: NutritionPanelSpec) => {},
     };
     expect(props.initialFacts).toBeUndefined();
+  });
+
+  it("accepts controlled-mode value + onChange", () => {
+    let last: NutritionFacts | null = null;
+    const props: NutritionPanelProps = {
+      value: minimal,
+      onChange: (next) => {
+        last = next;
+      },
+    };
+    expect(props.value).toEqual(minimal);
+    props.onChange?.({ ...minimal, calories: 999 });
+    expect(last!.calories).toBe(999);
   });
 });

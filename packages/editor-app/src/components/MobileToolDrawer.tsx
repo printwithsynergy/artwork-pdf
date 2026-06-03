@@ -3,7 +3,14 @@
 import { type ReactNode, useState } from "react";
 import type { EditorConfig } from "../lib/editor-config";
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "image";
+type Tool =
+  | "select"
+  | "rect"
+  | "ellipse"
+  | "text"
+  | "image"
+  | "nutrition"
+  | "braille";
 
 /**
  * Props for the slide-in mobile tool drawer. The drawer is purely

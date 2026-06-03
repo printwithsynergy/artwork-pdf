@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Ellipse,
+  Group,
   Image as KonvaImage,
   Layer,
   Line,
@@ -21,6 +22,16 @@ import type { EditorConfig } from "../lib/editor-config";
 import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
+import {
+  type BrailleSpec,
+  MARBURG_MEDIUM,
+  composeBraille,
+} from "./BraillePanel";
+import {
+  DEFAULT_NUTRITION_FACTS,
+  composeNutritionFacts,
+  type NutritionFacts,
+} from "./NutritionPanel";
 import { RightRailAccordion } from "./RightRailAccordion";
 import { LayersPanel } from "./LayersPanel";
 import { TacOverlay } from "./TacOverlay";
@@ -69,9 +80,23 @@ type ProductionExportRequest = {
  */
 type WireSeparation = Omit<EditorSeparation, "hex">;
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "image";
+type Tool =
+  | "select"
+  | "rect"
+  | "ellipse"
+  | "text"
+  | "image"
+  | "nutrition"
+  | "braille";
 
-type ObjType = "rect" | "ellipse" | "text" | "image" | "path";
+type ObjType =
+  | "rect"
+  | "ellipse"
+  | "text"
+  | "image"
+  | "path"
+  | "nutrition"
+  | "braille";
 
 /**
  * One renderable object on the editor canvas.
@@ -112,6 +137,13 @@ export type CanvasObj = {
    *  not selectable, not transformable. Used for the dieline
    *  template rect — users shouldn't be able to move the trim. */
   locked?: boolean;
+  /** Source data for type=`"nutrition"` objects. The visual is
+   *  derived at render time via `composeNutritionFacts(facts)`; edits
+   *  to fields in the properties panel flow back into this record. */
+  nutritionFacts?: NutritionFacts;
+  /** Source data for type=`"braille"` objects. The visual (cell + dot
+   *  positions) is derived at render time via `composeBraille(spec)`. */
+  brailleSpec?: BrailleSpec;
 };
 
 type ExportStatus = "idle" | "sending" | "polling" | "done" | "error";
@@ -186,6 +218,26 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+// ── helper: default placement size for tap-to-place tools ───────────────────
+//
+// Tap-to-place tools (nutrition, braille) drop an object at the
+// pointer at a sensible default size. The user can then adjust via
+// the Transformer handles or the properties footer's W/H inputs.
+
+function defaultPlacementSize(t: Tool): { width: number; height: number } {
+  switch (t) {
+    case "nutrition":
+      // FDA panel proportions — narrow and tall.
+      return { width: 200, height: 380 };
+    case "braille":
+      // Roughly 5 cells of "HELLO" at Marburg Medium scale.
+      // Approx 35 mm × 8 mm → ~99pt × 23pt at 72/25.4.
+      return { width: 100, height: 24 };
+    default:
+      return { width: 100, height: 100 };
+  }
+}
+
 // ── helper: get pointer relative to stage content (ignoring stage transform) ──
 
 function stagePointer(stage: Konva.Stage): { x: number; y: number } {
@@ -201,13 +253,26 @@ function stagePointer(stage: Konva.Stage): { x: number; y: number } {
 type NodeProps = {
   obj: CanvasObj;
   selected: boolean;
+  /** When false, click/tap don't fire onSelect — drawing tools and
+   *  tap-to-place tools need the existing objects to stay inert so
+   *  the new placement isn't overridden by the underlying object's
+   *  synthetic Konva click. */
+  selectable: boolean;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
   onTransformEnd: (x: number, y: number, w: number, h: number) => void;
   onDblClick: (e: KonvaEventObject<MouseEvent>) => void;
 };
 
-function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClick }: NodeProps) {
+function ObjNode({
+  obj,
+  selected,
+  selectable,
+  onSelect,
+  onDragEnd,
+  onTransformEnd,
+  onDblClick,
+}: NodeProps) {
   const locked = obj.locked === true;
   // Locked objects (the dieline template rect) are inert: not
   // draggable, not selectable, not transformable, and don't
@@ -217,13 +282,12 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
     x: obj.x,
     y: obj.y,
     opacity: obj.opacity,
-    draggable: !locked,
+    draggable: !locked && selectable,
     listening: !locked,
     ...(locked
       ? {}
       : {
-          onClick: onSelect,
-          onTap: onSelect,
+          ...(selectable ? { onClick: onSelect, onTap: onSelect } : {}),
           onDblClick,
           onDragEnd: (e: KonvaEventObject<DragEvent>) => onDragEnd(e.target.x(), e.target.y()),
           onTransformEnd: (e: KonvaEventObject<Event>) => {
@@ -318,6 +382,102 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
     );
   }
 
+  if (obj.type === "nutrition" && obj.nutritionFacts) {
+    // Group the visible Text rows with an invisible Rect matching
+    // obj.width/height so Konva.Transformer (selection handles) has
+    // a stable bounding box to grab. The rect must come first so
+    // sharedProps' pointer events land on it.
+    const spec = composeNutritionFacts(obj.nutritionFacts);
+    const fontSize = 11;
+    const lineHeight = fontSize * 1.4;
+    const headerHeight = 28;
+    return (
+      <Group {...sharedProps}>
+        <Rect
+          width={obj.width}
+          height={obj.height}
+          fill={obj.fill}
+          stroke={selected ? BRAND : obj.stroke}
+          strokeWidth={selected ? Math.max(obj.strokeWidth, 1) : obj.strokeWidth}
+        />
+        <Text
+          text="Nutrition Facts"
+          x={6}
+          y={4}
+          width={obj.width - 12}
+          fontSize={16}
+          fontStyle="bold"
+          fill="#111"
+        />
+        <Text
+          text={spec.servingSize}
+          x={6}
+          y={4 + 18}
+          width={obj.width - 12}
+          fontSize={10}
+          fill="#111"
+        />
+        {spec.rows.map((row, i) => (
+          <Text
+            key={i}
+            text={`${row.label}  ${row.amount}${row.dvPct !== undefined ? `   ${row.dvPct}%` : ""}`}
+            x={6 + row.indent * 8}
+            y={headerHeight + i * lineHeight}
+            width={obj.width - 12}
+            fontSize={fontSize}
+            fontStyle={row.bold ? "bold" : "normal"}
+            fill="#111"
+          />
+        ))}
+      </Group>
+    );
+  }
+
+  if (obj.type === "braille" && obj.brailleSpec) {
+    // Each cell is 6 dots in a 2-col × 3-row grid. Marburg Medium
+    // geometry: dot diameter 1.4 mm, dot spacing 2.5 mm,
+    // intercolumn 2.5 mm, intercell 6.0 mm. Convert mm → pt at
+    // 72/25.4 and position relative to the group origin.
+    const PT_PER_MM = 72 / 25.4;
+    const result = composeBraille(obj.brailleSpec);
+    const dotR = (MARBURG_MEDIUM.dotBaseDiameterMm * PT_PER_MM) / 2;
+    const colSpacing = 2.5 * PT_PER_MM;
+    const rowSpacing = 2.5 * PT_PER_MM;
+    return (
+      <Group {...sharedProps}>
+        <Rect
+          width={obj.width}
+          height={obj.height}
+          fill="transparent"
+          stroke={selected ? BRAND : "transparent"}
+          strokeWidth={selected ? 1 : 0}
+        />
+        {result.cells.flatMap((cell, ci) =>
+          cell.dots
+            .map((on, di) => {
+              if (!on) return null;
+              const col = di < 3 ? 0 : 1;
+              const row = di % 3;
+              const cx = cell.xMm * PT_PER_MM + col * colSpacing + dotR;
+              const cy = cell.yMm * PT_PER_MM + row * rowSpacing + dotR;
+              return (
+                <Ellipse
+                  key={`${ci}-${di}`}
+                  x={cx}
+                  y={cy}
+                  radiusX={dotR}
+                  radiusY={dotR}
+                  fill={obj.fill || "#111"}
+                  listening={false}
+                />
+              );
+            })
+            .filter(Boolean),
+        )}
+      </Group>
+    );
+  }
+
   return null;
 }
 
@@ -370,6 +530,12 @@ export function EditorCanvas({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");
+  // After a tap-to-place tool fires, Konva still dispatches the
+  // synthetic `click` event on whichever object was under the
+  // pointer — that would overwrite the just-placed selection with
+  // the underlying object. The placement handler sets this ref so
+  // the next click is ignored; the click handler clears it.
+  const placementGuard = useRef(false);
   const [drawing, setDrawing] = useState<Drawing | null>(null);
 
   const [fillColor, setFillColor] = useState(BRAND);
@@ -595,8 +761,13 @@ export function EditorCanvas({
       if (e.target === stageRef.current) setSelectedId(null);
       return;
     }
+    if (tool === "image") return;
     if (!stageRef.current) return;
     e.evt.preventDefault();
+    // Clear any prior selection BEFORE drawing — otherwise the
+    // Transformer handles for the previously-selected object stay
+    // live and intercept clicks meant for the new placement.
+    if (selectedId !== null) setSelectedId(null);
     const pos = stagePointer(stageRef.current);
     setDrawing({ x: pos.x, y: pos.y, w: 0, h: 0 });
   }
@@ -613,7 +784,13 @@ export function EditorCanvas({
     if (!drawing) return;
     const { x, y, w, h } = drawing;
     setDrawing(null);
-    if (Math.abs(w) < 4 || Math.abs(h) < 4) return;
+
+    // For drag-to-place tools (rect/ellipse/text) tiny drags are
+    // treated as a misclick and ignored. For tap-to-place tools
+    // (nutrition/braille) a small drag is the *expected* path — they
+    // place at default size at the pointer.
+    const tapToPlace = tool === "nutrition" || tool === "braille";
+    if (!tapToPlace && (Math.abs(w) < 4 || Math.abs(h) < 4)) return;
 
     const nx = w < 0 ? x + w : x;
     const ny = h < 0 ? y + h : y;
@@ -622,10 +799,10 @@ export function EditorCanvas({
 
     const base = {
       id: crypto.randomUUID(),
-      x: nx,
-      y: ny,
-      width: nw,
-      height: nh,
+      x: tapToPlace ? x : nx,
+      y: tapToPlace ? y : ny,
+      width: tapToPlace ? defaultPlacementSize(tool).width : nw,
+      height: tapToPlace ? defaultPlacementSize(tool).height : nh,
       fill: fillColor,
       stroke: strokeColor,
       strokeWidth,
@@ -635,6 +812,24 @@ export function EditorCanvas({
     let obj: CanvasObj;
     if (tool === "text") {
       obj = { ...base, type: "text", text: "Text", fontSize: 16, fill: fillColor };
+    } else if (tool === "nutrition") {
+      obj = {
+        ...base,
+        type: "nutrition",
+        fill: "#ffffff",
+        stroke: "#111111",
+        strokeWidth: 1,
+        nutritionFacts: DEFAULT_NUTRITION_FACTS,
+      };
+    } else if (tool === "braille") {
+      obj = {
+        ...base,
+        type: "braille",
+        fill: "#111111",
+        stroke: "transparent",
+        strokeWidth: 0,
+        brailleSpec: { text: "HELLO", charSpacingMm: MARBURG_MEDIUM.charSpacingMm },
+      };
     } else {
       obj = { ...base, type: tool as "rect" | "ellipse" };
     }
@@ -642,6 +837,7 @@ export function EditorCanvas({
     commit([...objects, obj]);
     setSelectedId(obj.id);
     setTool("select");
+    if (tapToPlace) placementGuard.current = true;
   }
 
   function onWheel(e: KonvaEventObject<WheelEvent>) {
@@ -996,26 +1192,30 @@ export function EditorCanvas({
             flexWrap: "wrap",
           }}
         >
-          {(["select", "rect", "ellipse", "text", "image"] as Tool[]).map((t) => (
-            <ToolBtn
-              key={t}
-              active={tool === t}
-              onClick={() => {
-                setTool(t);
-                if (t === "image") imageInputRef.current?.click();
-              }}
-            >
-              {t === "select"
-                ? "↖ Select"
-                : t === "rect"
-                  ? "▭ Rect"
-                  : t === "ellipse"
-                    ? "◯ Ellipse"
-                    : t === "text"
-                      ? "T Text"
-                      : "⬚ Image"}
-            </ToolBtn>
-          ))}
+          {(
+            [
+              { id: "select", label: "↖ Select", flag: "enable_tool_select" },
+              { id: "rect", label: "▭ Rect", flag: "enable_tool_rect" },
+              { id: "ellipse", label: "◯ Ellipse", flag: "enable_tool_ellipse" },
+              { id: "text", label: "T Text", flag: "enable_tool_text" },
+              { id: "image", label: "⬚ Image", flag: "enable_tool_image" },
+              { id: "nutrition", label: "NF Nutrition", flag: "enable_tool_nutrition" },
+              { id: "braille", label: "⠿ Braille", flag: "enable_tool_braille" },
+            ] as { id: Tool; label: string; flag: keyof EditorConfig }[]
+          )
+            .filter((t) => config[t.flag] !== false)
+            .map((t) => (
+              <ToolBtn
+                key={t.id}
+                active={tool === t.id}
+                onClick={() => {
+                  setTool(t.id);
+                  if (t.id === "image") imageInputRef.current?.click();
+                }}
+              >
+                {t.label}
+              </ToolBtn>
+            ))}
 
           <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
 
@@ -1293,7 +1493,14 @@ export function EditorCanvas({
                   key={obj.id}
                   obj={obj}
                   selected={obj.id === selectedId}
-                  onSelect={() => setSelectedId(obj.id)}
+                  selectable={tool === "select"}
+                  onSelect={() => {
+                    if (placementGuard.current) {
+                      placementGuard.current = false;
+                      return;
+                    }
+                    setSelectedId(obj.id);
+                  }}
                   onDragEnd={(x, y) =>
                     commit(objects.map((o) => (o.id === obj.id ? { ...o, x, y } : o)))
                   }
@@ -1378,7 +1585,13 @@ export function EditorCanvas({
             Each section is gated by its own `enable_<feature>` flag so
             hosts using `NO_BACKEND_DEFAULTS` see only the panels that
             work without a host-supplied adapter. */}
-        {!isMobile && <RightRailAccordion config={config} />}
+        {!isMobile && (
+          <RightRailAccordion
+            config={config}
+            selectedObj={selected}
+            onUpdateSelected={updateSelected}
+          />
+        )}
       </div>
 
       {/* ── selected properties footer ── */}

@@ -112,6 +112,17 @@ export interface EditorConfig {
   enable_tool_ellipse: boolean;
   enable_tool_text: boolean;
   enable_tool_image: boolean;
+  /** Toolbar Nutrition tool — click to place a Nutrition Facts block
+   *  on the canvas, seeded with the FDA-example values. The placed
+   *  object surfaces its properties (serving size, calories, macros,
+   *  optional micronutrients) in the right-rail accordion when
+   *  selected. Default true. */
+  enable_tool_nutrition: boolean;
+  /** Toolbar Braille tool — click to place a Marburg-Medium Braille
+   *  block on the canvas, seeded with "HELLO". The placed object
+   *  surfaces its text + character-spacing properties in the
+   *  right-rail accordion when selected. Default true. */
+  enable_tool_braille: boolean;
   enable_undo_redo: boolean;
   enable_fit_button: boolean;
   enable_zoom_indicator: boolean;
@@ -508,6 +519,8 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_tool_ellipse: true,
   enable_tool_text: true,
   enable_tool_image: true,
+  enable_tool_nutrition: true,
+  enable_tool_braille: true,
   enable_undo_redo: true,
   enable_fit_button: true,
   enable_zoom_indicator: true,

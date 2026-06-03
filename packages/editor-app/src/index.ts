@@ -388,6 +388,7 @@ export {
 } from "./components/Gs1DigitalLinkPanel";
 export {
   composeNutritionFacts,
+  DEFAULT_NUTRITION_FACTS,
   FDA_DAILY_VALUES,
   NutritionPanel,
   type NutritionFacts,
@@ -402,6 +403,7 @@ export {
   type BrailleCell,
   type BrailleComposeResult,
   type BraillePanelProps,
+  type BrailleSpec,
 } from "./components/BraillePanel";
 export {
   extractMergeTokens,
