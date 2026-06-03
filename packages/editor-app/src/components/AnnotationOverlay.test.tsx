@@ -131,9 +131,7 @@ describe("describeAnnotation", () => {
   });
   it("uses Resolved as the status prefix when applicable", () => {
     const resolved: TextAnnotationInput = { ...TEXT, resolved: true };
-    expect(describeAnnotation(resolved)).toBe(
-      "Resolved text annotation: Approve before press",
-    );
+    expect(describeAnnotation(resolved)).toBe("Resolved text annotation: Approve before press");
   });
   it("truncates long bodies to 60 chars with an ellipsis", () => {
     const longText: TextAnnotationInput = {

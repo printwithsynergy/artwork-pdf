@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from "react";
 import type { EditorConfig } from "../lib/editor-config";
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "image";
+type Tool = "select" | "rect" | "ellipse" | "text" | "image" | "nutrition" | "braille";
 
 /**
  * Props for the slide-in mobile tool drawer. The drawer is purely
@@ -287,6 +287,20 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
                   label="Image…"
                   active={activeTool === "image"}
                   onClick={handle(() => onSelectTool("image"))}
+                />
+              )}
+              {config.enable_tool_nutrition && (
+                <DrawerItem
+                  label="Nutrition Facts"
+                  active={activeTool === "nutrition"}
+                  onClick={handle(() => onSelectTool("nutrition"))}
+                />
+              )}
+              {config.enable_tool_braille && (
+                <DrawerItem
+                  label="Braille"
+                  active={activeTool === "braille"}
+                  onClick={handle(() => onSelectTool("braille"))}
                 />
               )}
             </DrawerSection>

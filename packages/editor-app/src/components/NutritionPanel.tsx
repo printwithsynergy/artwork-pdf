@@ -250,7 +250,14 @@ export function composeNutritionFacts(facts: NutritionFacts): NutritionPanelSpec
 // so hosts that don't want those rows aren't forced to pass
 // `undefined` overrides — `composeNutritionFacts` already omits any
 // optional field that's not set.
-const DEFAULT_FACTS: NutritionFacts = {
+//
+// Public export — used by the editor's Nutrition tool when placing a
+// new canvas object so the placed nutrition block lights up with
+// FDA-example values that the user can then edit in the properties
+// panel.
+//
+// @public
+export const DEFAULT_NUTRITION_FACTS: NutritionFacts = {
   servingSize: "1 cup (240g)",
   servingsPerContainer: 4,
   calories: 230,
@@ -277,25 +284,64 @@ const OPTIONAL_NUTRITION_KEYS = new Set<keyof NutritionFacts>([
  * @public
  */
 export type NutritionPanelProps = {
-  /** Initial values seeded into the form. Defaults to the
-   *  illustrative FDA-example values. */
+  /** Initial values seeded into the form (uncontrolled mode).
+   *  Defaults to the illustrative FDA-example values. Ignored when
+   *  `value` is supplied. */
   initialFacts?: Partial<NutritionFacts>;
-  /** Fired when the user clicks "Compose" with the spec built from
-   *  the current form state. The host places it on the canvas as a
-   *  text block. */
-  onCompose: (spec: NutritionPanelSpec) => void;
+  /**
+   * Controlled-mode value. When supplied alongside `onChange`, the
+   * panel doesn't keep internal state — every form edit flows up via
+   * `onChange` and the panel re-renders from `value`. Used by the
+   * editor's Nutrition tool to wire the panel as a properties editor
+   * for the selected canvas object: changes mutate
+   * `canvasObj.nutritionFacts` directly.
+   *
+   * In controlled mode the **Compose** button is hidden — there's
+   * no separate "commit" step because every keystroke is already
+   * the source of truth.
+   */
+  value?: NutritionFacts;
+  /** Controlled-mode change handler. See {@link NutritionPanelProps.value}. */
+  onChange?: (next: NutritionFacts) => void;
+  /**
+   * Uncontrolled-mode compose callback — fires when the user clicks
+   * **Compose** with the spec built from the current form state.
+   * The host places it on the canvas as a text block. Required in
+   * uncontrolled mode; ignored (and the button hidden) when `value`
+   * + `onChange` are supplied.
+   */
+  onCompose?: (spec: NutritionPanelSpec) => void;
 };
 
 /**
  * Nutrition Facts data-entry panel. Surfaces the FDA panel's
  * mandatory fields (serving size, servings, calories, macros) plus
- * the optional micronutrient block. Click **Compose** and the host
- * receives the resolved {@link NutritionPanelSpec} via `onCompose`.
+ * the optional micronutrient block. Operates in two modes:
+ *
+ * - **Uncontrolled** (legacy): supply `onCompose`. Panel keeps its
+ *   own form state and emits a fully-resolved
+ *   {@link NutritionPanelSpec} when the user clicks **Compose**.
+ * - **Controlled** (new): supply `value` + `onChange`. Panel has no
+ *   internal state, no Compose button — every edit flows up
+ *   immediately. The editor's Nutrition tool uses this mode to wire
+ *   the panel as a properties editor for the selected canvas object.
  *
  * @public
  */
-export function NutritionPanel({ initialFacts, onCompose }: NutritionPanelProps) {
-  const [facts, setFacts] = useState<NutritionFacts>({ ...DEFAULT_FACTS, ...initialFacts });
+export function NutritionPanel({ initialFacts, value, onChange, onCompose }: NutritionPanelProps) {
+  const controlled = value !== undefined && onChange !== undefined;
+  const [internalFacts, setInternalFacts] = useState<NutritionFacts>({
+    ...DEFAULT_NUTRITION_FACTS,
+    ...initialFacts,
+  });
+  const facts = controlled ? value : internalFacts;
+  const setFacts = (updater: (prev: NutritionFacts) => NutritionFacts) => {
+    if (controlled) {
+      onChange(updater(value));
+    } else {
+      setInternalFacts(updater);
+    }
+  };
 
   function setNum<K extends keyof NutritionFacts>(key: K, value: NutritionFacts[K]) {
     setFacts((f) => ({ ...f, [key]: value }));
@@ -363,13 +409,15 @@ export function NutritionPanel({ initialFacts, onCompose }: NutritionPanelProps)
       {numInput("Calcium (optional)", "calciumMg", "mg")}
       {numInput("Iron (optional)", "ironMg", "mg")}
       {numInput("Potassium (optional)", "potassiumMg", "mg")}
-      <button
-        type="button"
-        onClick={() => onCompose(composeNutritionFacts(facts))}
-        style={primaryButtonStyle()}
-      >
-        Compose
-      </button>
+      {!controlled && onCompose && (
+        <button
+          type="button"
+          onClick={() => onCompose(composeNutritionFacts(facts))}
+          style={primaryButtonStyle()}
+        >
+          Compose
+        </button>
+      )}
     </div>
   );
 }

@@ -248,17 +248,41 @@ export function composeBraille(input: {
 /**
  * @public
  */
+/**
+ * Controlled-mode value shape — just the form's two inputs.
+ *
+ * @public
+ */
+export type BrailleSpec = {
+  text: string;
+  charSpacingMm: number;
+};
+
 export type BraillePanelProps = {
-  /** Fired when the user clicks "Compose" with the placed cells +
-   *  Unicode + unsupported-char report. The host renders the cells
-   *  as vector ellipses on the canvas. */
-  onCompose: (result: BrailleComposeResult) => void;
-  /** Initial text seeded into the form. Defaults to the empty
-   *  string. */
+  /** Uncontrolled-mode compose callback — fires when the user clicks
+   *  **Compose** with the placed cells + Unicode + unsupported-char
+   *  report. The host renders the cells as vector ellipses on the
+   *  canvas. Required in uncontrolled mode; ignored (and the button
+   *  hidden) when `value` + `onChange` are supplied. */
+  onCompose?: (result: BrailleComposeResult) => void;
+  /** Initial text seeded into the form (uncontrolled mode).
+   *  Defaults to the empty string. Ignored when `value` is supplied. */
   initialText?: string;
-  /** Initial character-spacing override; defaults to the Marburg
-   *  Medium constant. */
+  /** Initial character-spacing override (uncontrolled mode);
+   *  defaults to the Marburg Medium constant. */
   initialCharSpacingMm?: number;
+  /**
+   * Controlled-mode value. When supplied alongside `onChange`, the
+   * panel doesn't keep internal state — every edit flows up via
+   * `onChange` and the panel re-renders from `value`. Used by the
+   * editor's Braille tool to wire the panel as a properties editor
+   * for the selected canvas object.
+   *
+   * In controlled mode the **Compose** button is hidden.
+   */
+  value?: BrailleSpec;
+  /** Controlled-mode change handler. See {@link BraillePanelProps.value}. */
+  onChange?: (next: BrailleSpec) => void;
 };
 
 /**
@@ -271,21 +295,43 @@ export type BraillePanelProps = {
  * spherical dome) and the production process (foil-emboss vs. ink
  * + spot-UV) drive how it should be visualised.
  *
+ * Operates in two modes:
+ *
+ * - **Uncontrolled** (legacy): supply `onCompose`. Panel keeps its
+ *   own text + spacing state.
+ * - **Controlled** (new): supply `value` + `onChange`. Panel has no
+ *   internal state, no Compose button — used by the editor's Braille
+ *   tool as a properties editor for the selected canvas object.
+ *
  * @public
  */
 export function BraillePanel({
   onCompose,
   initialText = "",
   initialCharSpacingMm = MARBURG_MEDIUM.charSpacingMm,
+  value,
+  onChange,
 }: BraillePanelProps) {
-  const [text, setText] = useState(initialText);
-  const [charSpacingMm, setCharSpacingMm] = useState(initialCharSpacingMm);
+  const controlled = value !== undefined && onChange !== undefined;
+  const [internalText, setInternalText] = useState(initialText);
+  const [internalCharSpacingMm, setInternalCharSpacingMm] = useState(initialCharSpacingMm);
+  const text = controlled ? value.text : internalText;
+  const charSpacingMm = controlled ? value.charSpacingMm : internalCharSpacingMm;
+  const setText = (next: string) => {
+    if (controlled) onChange({ ...value, text: next });
+    else setInternalText(next);
+  };
+  const setCharSpacingMm = (next: number) => {
+    if (controlled) onChange({ ...value, charSpacingMm: next });
+    else setInternalCharSpacingMm(next);
+  };
+
   const [lastResult, setLastResult] = useState<BrailleComposeResult | null>(null);
 
   function handleCompose() {
     const result = composeBraille({ text, charSpacingMm });
     setLastResult(result);
-    onCompose(result);
+    onCompose?.(result);
   }
 
   return (
@@ -316,9 +362,11 @@ export function BraillePanel({
           style={{ marginLeft: "0.5rem", width: "5em" }}
         />
       </label>
-      <button type="button" onClick={handleCompose} style={primaryButtonStyle()}>
-        Compose
-      </button>
+      {!controlled && (
+        <button type="button" onClick={handleCompose} style={primaryButtonStyle()}>
+          Compose
+        </button>
+      )}
       {lastResult && (
         <div style={{ marginTop: "0.5rem" }}>
           <div style={{ fontFamily: "monospace", fontSize: "1.4em" }}>{lastResult.unicode}</div>

@@ -64,14 +64,7 @@ const BADGE_FG = "#f4ece6";
 export function DirectionIndicatorsOverlay({
   spec,
 }: DirectionIndicatorsOverlayProps): ReactElement {
-  const {
-    widthPx,
-    heightPx,
-    fluteAxis,
-    grainAxis,
-    webDirection,
-    printSide,
-  } = spec;
+  const { widthPx, heightPx, fluteAxis, grainAxis, webDirection, printSide } = spec;
 
   // Compose the legend line by line, skipping rows the host left
   // unset so dieless-print jobs don't see a stub legend.
@@ -94,16 +87,8 @@ export function DirectionIndicatorsOverlay({
         pointerEvents: "none",
       }}
     >
-      {fluteAxis && (
-        <FluteHatch
-          axis={fluteAxis}
-          widthPx={widthPx}
-          heightPx={heightPx}
-        />
-      )}
-      {webDirection && (
-        <WebArrow direction={webDirection} widthPx={widthPx} heightPx={heightPx} />
-      )}
+      {fluteAxis && <FluteHatch axis={fluteAxis} widthPx={widthPx} heightPx={heightPx} />}
+      {webDirection && <WebArrow direction={webDirection} widthPx={widthPx} heightPx={heightPx} />}
       {printSide === "inside" && (
         <div
           data-testid="direction-indicators-mirror-warning"
@@ -176,30 +161,10 @@ function FluteHatch({
         const t = (i + 0.5) / lines;
         if (isVerticalHatch) {
           const x = t * widthPx;
-          return (
-            <line
-              key={i}
-              x1={x}
-              y1={0}
-              x2={x}
-              y2={heightPx}
-              stroke="#06a"
-              strokeWidth={1}
-            />
-          );
+          return <line key={i} x1={x} y1={0} x2={x} y2={heightPx} stroke="#06a" strokeWidth={1} />;
         }
         const y = t * heightPx;
-        return (
-          <line
-            key={i}
-            x1={0}
-            y1={y}
-            x2={widthPx}
-            y2={y}
-            stroke="#06a"
-            strokeWidth={1}
-          />
-        );
+        return <line key={i} x1={0} y1={y} x2={widthPx} y2={y} stroke="#06a" strokeWidth={1} />;
       })}
     </svg>
   );

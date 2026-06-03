@@ -85,9 +85,7 @@ export type WhiteUnderbaseResult = {
  *
  * @public
  */
-export type WhiteUnderbaseGeneratorFn = (
-  spec: WhiteUnderbaseSpec,
-) => Promise<WhiteUnderbaseResult>;
+export type WhiteUnderbaseGeneratorFn = (spec: WhiteUnderbaseSpec) => Promise<WhiteUnderbaseResult>;
 
 /**
  * Pure helper — validates a spec. Returns the first error message

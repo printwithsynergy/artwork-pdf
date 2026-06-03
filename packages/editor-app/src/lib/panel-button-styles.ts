@@ -20,7 +20,6 @@ import type { CSSProperties } from "react";
 
 const BRAND = "#fc5102";
 const TEXT = "#ffffff";
-const BORDER = "#3d1a00";
 
 /**
  * Primary call-to-action style — solid BRAND background, white

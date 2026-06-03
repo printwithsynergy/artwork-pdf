@@ -3,9 +3,10 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import {
   Ellipse,
+  Group,
   Image as KonvaImage,
   Layer,
   Line,
@@ -18,19 +19,21 @@ import {
 import { DEFAULT_BLEED_MM, formatBleed } from "../lib/bleed";
 import { type DielineTemplate, templateToInitialState } from "../lib/dieline-template";
 import type { EditorConfig } from "../lib/editor-config";
+import { isPanelVisible, showFeature } from "../lib/editor-config";
 import type { PreflightReport } from "../lib/preflight/types";
+import { type EditorSeparation, findSpotByColor, registerSpot } from "../lib/separations-registry";
+import { type BrailleSpec, MARBURG_MEDIUM, composeBraille } from "./BraillePanel";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
-import { RightRailAccordion } from "./RightRailAccordion";
 import { LayersPanel } from "./LayersPanel";
-import { TacOverlay } from "./TacOverlay";
-import { isPanelVisible, showFeature } from "../lib/editor-config";
-import {
-  type EditorSeparation,
-  findSpotByColor,
-  registerSpot,
-} from "../lib/separations-registry";
 import { MobileToolDrawer } from "./MobileToolDrawer";
+import {
+  DEFAULT_NUTRITION_FACTS,
+  type NutritionFacts,
+  composeNutritionFacts,
+} from "./NutritionPanel";
+import { RightRailAccordion } from "./RightRailAccordion";
+import { TacOverlay } from "./TacOverlay";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -69,9 +72,9 @@ type ProductionExportRequest = {
  */
 type WireSeparation = Omit<EditorSeparation, "hex">;
 
-type Tool = "select" | "rect" | "ellipse" | "text" | "image";
+type Tool = "select" | "rect" | "ellipse" | "text" | "image" | "nutrition" | "braille";
 
-type ObjType = "rect" | "ellipse" | "text" | "image" | "path";
+type ObjType = "rect" | "ellipse" | "text" | "image" | "path" | "nutrition" | "braille";
 
 /**
  * One renderable object on the editor canvas.
@@ -112,6 +115,13 @@ export type CanvasObj = {
    *  not selectable, not transformable. Used for the dieline
    *  template rect — users shouldn't be able to move the trim. */
   locked?: boolean;
+  /** Source data for type=`"nutrition"` objects. The visual is
+   *  derived at render time via `composeNutritionFacts(facts)`; edits
+   *  to fields in the properties panel flow back into this record. */
+  nutritionFacts?: NutritionFacts;
+  /** Source data for type=`"braille"` objects. The visual (cell + dot
+   *  positions) is derived at render time via `composeBraille(spec)`. */
+  brailleSpec?: BrailleSpec;
 };
 
 type ExportStatus = "idle" | "sending" | "polling" | "done" | "error";
@@ -186,6 +196,26 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+// ── helper: default placement size for tap-to-place tools ───────────────────
+//
+// Tap-to-place tools (nutrition, braille) drop an object at the
+// pointer at a sensible default size. The user can then adjust via
+// the Transformer handles or the properties footer's W/H inputs.
+
+function defaultPlacementSize(t: Tool): { width: number; height: number } {
+  switch (t) {
+    case "nutrition":
+      // FDA panel proportions — narrow and tall.
+      return { width: 200, height: 380 };
+    case "braille":
+      // Roughly 5 cells of "HELLO" at Marburg Medium scale.
+      // Approx 35 mm × 8 mm → ~99pt × 23pt at 72/25.4.
+      return { width: 100, height: 24 };
+    default:
+      return { width: 100, height: 100 };
+  }
+}
+
 // ── helper: get pointer relative to stage content (ignoring stage transform) ──
 
 function stagePointer(stage: Konva.Stage): { x: number; y: number } {
@@ -198,16 +228,330 @@ function stagePointer(stage: Konva.Stage): { x: number; y: number } {
 
 // ── sub-component: single object node ────────────────────────────────────────
 
+// ── FDA Nutrition Facts visual ────────────────────────────────────
+//
+// Renders a placed nutrition canvas object as a real FDA Nutrition
+// Facts panel — bold "Nutrition Facts" header, thick black rules,
+// right-aligned Calories number, right-aligned % Daily Value column,
+// indented sub-nutrients, micronutrient footer. Layout proportions
+// derive from the 2020 FDA spec (21 CFR §101.9); the visual is a
+// reasonable approximation, not pixel-perfect for filing.
+//
+// All measurements are in PDF points (the canvas's working unit).
+
+type NutritionFactsVisualProps = {
+  facts: NutritionFacts;
+  width: number;
+  height: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+};
+
+function NutritionFactsVisual({
+  facts,
+  width,
+  height,
+  fill,
+  stroke,
+  strokeWidth,
+}: NutritionFactsVisualProps) {
+  const spec = composeNutritionFacts(facts);
+  const PAD = 6;
+  const CONTENT_W = width - PAD * 2;
+  const TEXT = "#0a0a0a";
+
+  // Right-column widths for the DV% percentages.
+  const DV_W = 36;
+  // Amount column sits to the left of DV%; label column eats the
+  // remaining space.
+  const AMT_W = 60;
+  const LABEL_W = CONTENT_W - AMT_W - DV_W;
+
+  // Calories block content.
+  const caloriesValue = String(facts.calories);
+
+  // Build the row list. The composer produces canonical FDA order +
+  // bold/indent flags; we render a thin rule between every row and
+  // a thick rule after Protein (the last macro). Micronutrients
+  // follow with a different layout (label + DV% only — no amount).
+  const isMicro = (label: string): boolean =>
+    label === "Vitamin D" || label === "Calcium" || label === "Iron" || label === "Potassium";
+
+  const macroRows = spec.rows.filter((r) => !isMicro(r.label));
+  const microRows = spec.rows.filter((r) => isMicro(r.label));
+
+  // Row heights.
+  const ROW_H = 14;
+
+  // Accumulate y as we render.
+  const elements: ReactNode[] = [];
+  let y = PAD;
+
+  // Title — bold extra-large. The FDA spec calls for "highly visible"
+  // typography; we cap at 28pt and scale down for narrow panels.
+  const titleSize = Math.min(28, CONTENT_W / 7.5);
+  elements.push(
+    <Text
+      key="title"
+      text="Nutrition Facts"
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      fontSize={titleSize}
+      fontStyle="bold"
+      fontFamily="Helvetica"
+      fill={TEXT}
+    />,
+  );
+  y += titleSize + 4;
+
+  // Thin rule under title.
+  elements.push(<Rect key="r1" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
+  y += 4;
+
+  // Servings line.
+  elements.push(
+    <Text
+      key="servings"
+      text={spec.servingsLine}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      fontSize={9}
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Serving size — "Serving size" label left, value bold right.
+  elements.push(
+    <Text key="ssz-label" text="Serving size" x={PAD} y={y} fontSize={9} fill={TEXT} />,
+    <Text
+      key="ssz-value"
+      text={spec.servingSize}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={11}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 14;
+
+  // Thick rule (the iconic FDA black band).
+  elements.push(<Rect key="r-thick-1" x={PAD} y={y} width={CONTENT_W} height={6} fill={TEXT} />);
+  y += 10;
+
+  // "Amount per serving" + Calories number on the right.
+  elements.push(
+    <Text
+      key="amount-per"
+      text="Amount per serving"
+      x={PAD}
+      y={y}
+      fontSize={8}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Calories — "Calories" label bold large left, number bold huge right.
+  elements.push(
+    <Text
+      key="cal-label"
+      text="Calories"
+      x={PAD}
+      y={y + 3}
+      fontSize={16}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+    <Text
+      key="cal-value"
+      text={caloriesValue}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={22}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 26;
+
+  // Medium rule.
+  elements.push(<Rect key="r2" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
+  y += 3;
+
+  // "% Daily Value*" right-aligned, small bold.
+  elements.push(
+    <Text
+      key="dv-header"
+      text="% Daily Value*"
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={8}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Thin rule below DV header.
+  elements.push(<Rect key="r3" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
+  y += 2;
+
+  // Macro rows with thin separators.
+  for (const [i, row] of macroRows.entries()) {
+    const indentX = PAD + row.indent * 10;
+    // Bold label (e.g. "Total Fat") + amount inline.
+    elements.push(
+      <Text
+        key={`m-${i}-label`}
+        text={row.label}
+        x={indentX}
+        y={y}
+        width={LABEL_W - row.indent * 10}
+        fontSize={10}
+        fontStyle={row.bold ? "bold" : "normal"}
+        fill={TEXT}
+      />,
+      <Text
+        key={`m-${i}-amt`}
+        text={row.amount}
+        x={PAD + LABEL_W}
+        y={y}
+        width={AMT_W}
+        fontSize={10}
+        fill={TEXT}
+      />,
+    );
+    if (row.dvPct !== undefined) {
+      elements.push(
+        <Text
+          key={`m-${i}-dv`}
+          text={`${row.dvPct}%`}
+          x={PAD + LABEL_W + AMT_W}
+          y={y}
+          width={DV_W}
+          align="right"
+          fontSize={10}
+          fontStyle="bold"
+          fill={TEXT}
+        />,
+      );
+    }
+    y += ROW_H;
+    elements.push(
+      <Rect key={`m-${i}-rule`} x={PAD} y={y - 2} width={CONTENT_W} height={0.5} fill={TEXT} />,
+    );
+  }
+
+  if (microRows.length > 0) {
+    // Thick rule before the micronutrient block.
+    elements.push(<Rect key="r-thick-2" x={PAD} y={y} width={CONTENT_W} height={4} fill={TEXT} />);
+    y += 6;
+
+    for (const [i, row] of microRows.entries()) {
+      elements.push(
+        <Text
+          key={`u-${i}-label`}
+          text={row.label}
+          x={PAD}
+          y={y}
+          width={LABEL_W + AMT_W}
+          fontSize={9}
+          fill={TEXT}
+        />,
+        <Text
+          key={`u-${i}-amt`}
+          text={row.amount}
+          x={PAD + LABEL_W}
+          y={y}
+          width={AMT_W}
+          fontSize={9}
+          fill={TEXT}
+        />,
+      );
+      if (row.dvPct !== undefined) {
+        elements.push(
+          <Text
+            key={`u-${i}-dv`}
+            text={`${row.dvPct}%`}
+            x={PAD + LABEL_W + AMT_W}
+            y={y}
+            width={DV_W}
+            align="right"
+            fontSize={9}
+            fontStyle="bold"
+            fill={TEXT}
+          />,
+        );
+      }
+      y += ROW_H - 1;
+      if (i < microRows.length - 1) {
+        elements.push(
+          <Rect key={`u-${i}-rule`} x={PAD} y={y - 2} width={CONTENT_W} height={0.5} fill={TEXT} />,
+        );
+      }
+    }
+  }
+
+  // Thick rule + footnote at the bottom — only if vertical space allows.
+  if (y < height - 30) {
+    elements.push(<Rect key="r-thick-3" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
+    y += 5;
+    elements.push(
+      <Text
+        key="footnote"
+        text="* The % Daily Value tells you how much a nutrient in a serving of food contributes to a daily diet."
+        x={PAD}
+        y={y}
+        width={CONTENT_W}
+        fontSize={7}
+        fill={TEXT}
+      />,
+    );
+  }
+
+  return (
+    <>
+      <Rect width={width} height={height} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      {elements}
+    </>
+  );
+}
+
 type NodeProps = {
   obj: CanvasObj;
   selected: boolean;
+  /** When false, click/tap don't fire onSelect — drawing tools and
+   *  tap-to-place tools need the existing objects to stay inert so
+   *  the new placement isn't overridden by the underlying object's
+   *  synthetic Konva click. */
+  selectable: boolean;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
   onTransformEnd: (x: number, y: number, w: number, h: number) => void;
   onDblClick: (e: KonvaEventObject<MouseEvent>) => void;
 };
 
-function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClick }: NodeProps) {
+function ObjNode({
+  obj,
+  selected,
+  selectable,
+  onSelect,
+  onDragEnd,
+  onTransformEnd,
+  onDblClick,
+}: NodeProps) {
   const locked = obj.locked === true;
   // Locked objects (the dieline template rect) are inert: not
   // draggable, not selectable, not transformable, and don't
@@ -217,13 +561,12 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
     x: obj.x,
     y: obj.y,
     opacity: obj.opacity,
-    draggable: !locked,
+    draggable: !locked && selectable,
     listening: !locked,
     ...(locked
       ? {}
       : {
-          onClick: onSelect,
-          onTap: onSelect,
+          ...(selectable ? { onClick: onSelect, onTap: onSelect } : {}),
           onDblClick,
           onDragEnd: (e: KonvaEventObject<DragEvent>) => onDragEnd(e.target.x(), e.target.y()),
           onTransformEnd: (e: KonvaEventObject<Event>) => {
@@ -318,6 +661,66 @@ function ObjNode({ obj, selected, onSelect, onDragEnd, onTransformEnd, onDblClic
     );
   }
 
+  if (obj.type === "nutrition" && obj.nutritionFacts) {
+    return (
+      <Group {...sharedProps}>
+        <NutritionFactsVisual
+          facts={obj.nutritionFacts}
+          width={obj.width}
+          height={obj.height}
+          fill={obj.fill}
+          stroke={selected ? BRAND : obj.stroke}
+          strokeWidth={selected ? Math.max(obj.strokeWidth, 1) : obj.strokeWidth}
+        />
+      </Group>
+    );
+  }
+
+  if (obj.type === "braille" && obj.brailleSpec) {
+    // Each cell is 6 dots in a 2-col × 3-row grid. Marburg Medium
+    // geometry: dot diameter 1.4 mm, dot spacing 2.5 mm,
+    // intercolumn 2.5 mm, intercell 6.0 mm. Convert mm → pt at
+    // 72/25.4 and position relative to the group origin.
+    const PT_PER_MM = 72 / 25.4;
+    const result = composeBraille(obj.brailleSpec);
+    const dotR = (MARBURG_MEDIUM.dotBaseDiameterMm * PT_PER_MM) / 2;
+    const colSpacing = 2.5 * PT_PER_MM;
+    const rowSpacing = 2.5 * PT_PER_MM;
+    return (
+      <Group {...sharedProps}>
+        <Rect
+          width={obj.width}
+          height={obj.height}
+          fill="transparent"
+          stroke={selected ? BRAND : "transparent"}
+          strokeWidth={selected ? 1 : 0}
+        />
+        {result.cells.flatMap((cell, ci) =>
+          cell.dots
+            .map((on, di) => {
+              if (!on) return null;
+              const col = di < 3 ? 0 : 1;
+              const row = di % 3;
+              const cx = cell.xMm * PT_PER_MM + col * colSpacing + dotR;
+              const cy = cell.yMm * PT_PER_MM + row * rowSpacing + dotR;
+              return (
+                <Ellipse
+                  key={`${ci}-${di}`}
+                  x={cx}
+                  y={cy}
+                  radiusX={dotR}
+                  radiusY={dotR}
+                  fill={obj.fill || "#111"}
+                  listening={false}
+                />
+              );
+            })
+            .filter(Boolean),
+        )}
+      </Group>
+    );
+  }
+
   return null;
 }
 
@@ -360,9 +763,7 @@ export function EditorCanvas({
   // AI4 spot registry — per-page; threaded into JobSubmitRequest's
   // separationsOverride at export time. Pure local state; parent
   // (EditorApp) round-trips via onSeparationsChange.
-  const [separations, setSeparationsState] = useState<EditorSeparation[]>(
-    initialSeparations ?? [],
-  );
+  const [separations, setSeparationsState] = useState<EditorSeparation[]>(initialSeparations ?? []);
   function updateSeparations(next: EditorSeparation[]) {
     setSeparationsState(next);
     onSeparationsChange?.(next);
@@ -370,6 +771,12 @@ export function EditorCanvas({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");
+  // After a tap-to-place tool fires, Konva still dispatches the
+  // synthetic `click` event on whichever object was under the
+  // pointer — that would overwrite the just-placed selection with
+  // the underlying object. The placement handler sets this ref so
+  // the next click is ignored; the click handler clears it.
+  const placementGuard = useRef(false);
   const [drawing, setDrawing] = useState<Drawing | null>(null);
 
   const [fillColor, setFillColor] = useState(BRAND);
@@ -515,9 +922,7 @@ export function EditorCanvas({
     // Drop oldest entries when over the cap. The cursor lands on the
     // last entry (newest) because we just committed it.
     const capped =
-      truncated.length > HISTORY_MAX
-        ? truncated.slice(truncated.length - HISTORY_MAX)
-        : truncated;
+      truncated.length > HISTORY_MAX ? truncated.slice(truncated.length - HISTORY_MAX) : truncated;
     setHistory(capped);
     setHistoryIdx(capped.length - 1);
     setObjects(next);
@@ -591,12 +996,24 @@ export function EditorCanvas({
   // ── stage pointer events (mouse + touch) ───────────────────────────────────
 
   function onStagePointerDown(e: KonvaEventObject<MouseEvent | TouchEvent>) {
+    // Reset the placement guard on every new pointer-down: the guard
+    // only ever exists to swallow the SINGLE synthetic click Konva
+    // fires immediately after a placement pointer-up. If the user
+    // hasn't generated that synthetic click (clicked elsewhere
+    // first), the guard would otherwise leak and silently swallow
+    // a future legitimate selection click.
+    placementGuard.current = false;
     if (tool === "select") {
       if (e.target === stageRef.current) setSelectedId(null);
       return;
     }
+    if (tool === "image") return;
     if (!stageRef.current) return;
     e.evt.preventDefault();
+    // Clear any prior selection BEFORE drawing — otherwise the
+    // Transformer handles for the previously-selected object stay
+    // live and intercept clicks meant for the new placement.
+    if (selectedId !== null) setSelectedId(null);
     const pos = stagePointer(stageRef.current);
     setDrawing({ x: pos.x, y: pos.y, w: 0, h: 0 });
   }
@@ -613,7 +1030,13 @@ export function EditorCanvas({
     if (!drawing) return;
     const { x, y, w, h } = drawing;
     setDrawing(null);
-    if (Math.abs(w) < 4 || Math.abs(h) < 4) return;
+
+    // For drag-to-place tools (rect/ellipse/text) tiny drags are
+    // treated as a misclick and ignored. For tap-to-place tools
+    // (nutrition/braille) a small drag is the *expected* path — they
+    // place at default size at the pointer.
+    const tapToPlace = tool === "nutrition" || tool === "braille";
+    if (!tapToPlace && (Math.abs(w) < 4 || Math.abs(h) < 4)) return;
 
     const nx = w < 0 ? x + w : x;
     const ny = h < 0 ? y + h : y;
@@ -622,10 +1045,10 @@ export function EditorCanvas({
 
     const base = {
       id: crypto.randomUUID(),
-      x: nx,
-      y: ny,
-      width: nw,
-      height: nh,
+      x: tapToPlace ? x : nx,
+      y: tapToPlace ? y : ny,
+      width: tapToPlace ? defaultPlacementSize(tool).width : nw,
+      height: tapToPlace ? defaultPlacementSize(tool).height : nh,
       fill: fillColor,
       stroke: strokeColor,
       strokeWidth,
@@ -635,6 +1058,24 @@ export function EditorCanvas({
     let obj: CanvasObj;
     if (tool === "text") {
       obj = { ...base, type: "text", text: "Text", fontSize: 16, fill: fillColor };
+    } else if (tool === "nutrition") {
+      obj = {
+        ...base,
+        type: "nutrition",
+        fill: "#ffffff",
+        stroke: "#111111",
+        strokeWidth: 1,
+        nutritionFacts: DEFAULT_NUTRITION_FACTS,
+      };
+    } else if (tool === "braille") {
+      obj = {
+        ...base,
+        type: "braille",
+        fill: "#111111",
+        stroke: "transparent",
+        strokeWidth: 0,
+        brailleSpec: { text: "HELLO", charSpacingMm: MARBURG_MEDIUM.charSpacingMm },
+      };
     } else {
       obj = { ...base, type: tool as "rect" | "ellipse" };
     }
@@ -642,6 +1083,7 @@ export function EditorCanvas({
     commit([...objects, obj]);
     setSelectedId(obj.id);
     setTool("select");
+    if (tapToPlace) placementGuard.current = true;
   }
 
   function onWheel(e: KonvaEventObject<WheelEvent>) {
@@ -996,26 +1438,30 @@ export function EditorCanvas({
             flexWrap: "wrap",
           }}
         >
-          {(["select", "rect", "ellipse", "text", "image"] as Tool[]).map((t) => (
-            <ToolBtn
-              key={t}
-              active={tool === t}
-              onClick={() => {
-                setTool(t);
-                if (t === "image") imageInputRef.current?.click();
-              }}
-            >
-              {t === "select"
-                ? "↖ Select"
-                : t === "rect"
-                  ? "▭ Rect"
-                  : t === "ellipse"
-                    ? "◯ Ellipse"
-                    : t === "text"
-                      ? "T Text"
-                      : "⬚ Image"}
-            </ToolBtn>
-          ))}
+          {(
+            [
+              { id: "select", label: "↖ Select", flag: "enable_tool_select" },
+              { id: "rect", label: "▭ Rect", flag: "enable_tool_rect" },
+              { id: "ellipse", label: "◯ Ellipse", flag: "enable_tool_ellipse" },
+              { id: "text", label: "T Text", flag: "enable_tool_text" },
+              { id: "image", label: "⬚ Image", flag: "enable_tool_image" },
+              { id: "nutrition", label: "NF Nutrition", flag: "enable_tool_nutrition" },
+              { id: "braille", label: "⠿ Braille", flag: "enable_tool_braille" },
+            ] as { id: Tool; label: string; flag: keyof EditorConfig }[]
+          )
+            .filter((t) => config[t.flag] !== false)
+            .map((t) => (
+              <ToolBtn
+                key={t.id}
+                active={tool === t.id}
+                onClick={() => {
+                  setTool(t.id);
+                  if (t.id === "image") imageInputRef.current?.click();
+                }}
+              >
+                {t.label}
+              </ToolBtn>
+            ))}
 
           <div style={{ width: 1, height: 20, background: BORDER, margin: "0 0.25rem" }} />
 
@@ -1117,9 +1563,7 @@ export function EditorCanvas({
               <button
                 type="button"
                 onClick={() => {
-                  const name = window.prompt(
-                    `Register ${fillColor} as a spot ink. Name:`,
-                  );
+                  const name = window.prompt(`Register ${fillColor} as a spot ink. Name:`);
                   if (name?.trim()) {
                     updateSeparations(registerSpot(separations, fillColor, name.trim()));
                   }
@@ -1293,7 +1737,14 @@ export function EditorCanvas({
                   key={obj.id}
                   obj={obj}
                   selected={obj.id === selectedId}
-                  onSelect={() => setSelectedId(obj.id)}
+                  selectable={tool === "select"}
+                  onSelect={() => {
+                    if (placementGuard.current) {
+                      placementGuard.current = false;
+                      return;
+                    }
+                    setSelectedId(obj.id);
+                  }}
                   onDragEnd={(x, y) =>
                     commit(objects.map((o) => (o.id === obj.id ? { ...o, x, y } : o)))
                   }
@@ -1378,7 +1829,13 @@ export function EditorCanvas({
             Each section is gated by its own `enable_<feature>` flag so
             hosts using `NO_BACKEND_DEFAULTS` see only the panels that
             work without a host-supplied adapter. */}
-        {!isMobile && <RightRailAccordion config={config} />}
+        {!isMobile && (
+          <RightRailAccordion
+            config={config}
+            selectedObj={selected}
+            onUpdateSelected={updateSelected}
+          />
+        )}
       </div>
 
       {/* ── selected properties footer ── */}

@@ -254,9 +254,7 @@ export function SwatchesPicker({
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {spot.name}
-                </span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{spot.name}</span>
               </button>
             );
           })}

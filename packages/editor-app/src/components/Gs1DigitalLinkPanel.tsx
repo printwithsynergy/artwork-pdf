@@ -25,10 +25,7 @@
  * @public
  */
 import { useState } from "react";
-import {
-  primaryButtonStyle,
-  secondaryButtonStyle,
-} from "../lib/panel-button-styles";
+import { primaryButtonStyle, secondaryButtonStyle } from "../lib/panel-button-styles";
 
 import type { BarcodeRenderFn, BarcodeRenderResult } from "./BarcodeGeneratorPanel";
 
@@ -333,11 +330,7 @@ export function Gs1DigitalLinkPanel({
           style={{ marginLeft: "0.5rem", width: "8em" }}
         />
       </label>
-      <button
-        type="button"
-        onClick={handlePreview}
-        style={secondaryButtonStyle()}
-      >
+      <button type="button" onClick={handlePreview} style={secondaryButtonStyle()}>
         Preview URL
       </button>
       {renderer && (

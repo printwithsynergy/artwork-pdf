@@ -142,11 +142,7 @@ export function StreamingRenderProgress({
             width: `${summary.percent}%`,
             height: "100%",
             background:
-              summary.status === "error"
-                ? "#a00"
-                : summary.status === "done"
-                  ? "#080"
-                  : "#06a",
+              summary.status === "error" ? "#a00" : summary.status === "done" ? "#080" : "#06a",
             transition: "width 200ms linear",
           }}
         />
@@ -196,9 +192,7 @@ export function StreamingRenderProgress({
         </div>
       )}
       {!connect && (
-        <div style={{ fontSize: "0.75rem", color: "#595959" }}>
-          Streaming adapter not wired.
-        </div>
+        <div style={{ fontSize: "0.75rem", color: "#595959" }}>Streaming adapter not wired.</div>
       )}
     </div>
   );

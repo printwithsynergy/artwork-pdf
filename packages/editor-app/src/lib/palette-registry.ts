@@ -69,7 +69,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "image-generation": { slot: "panel.right", label: "Image generator" },
   "auto-layout": { slot: "panel.right", label: "Auto layout" },
   "ocr-rebuild": { slot: "panel.right", label: "OCR rebuild" },
-  "localization": { slot: "panel.right", label: "Localization" },
+  localization: { slot: "panel.right", label: "Localization" },
   "design-handoff": { slot: "panel.right", label: "Design handoff" },
   "ecommerce-connector": { slot: "panel.right", label: "Products" },
   "pim-connector": { slot: "panel.right", label: "PIM fields" },

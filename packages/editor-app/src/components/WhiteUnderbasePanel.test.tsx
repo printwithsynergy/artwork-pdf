@@ -6,10 +6,7 @@ import type {
   WhiteUnderbaseResult,
   WhiteUnderbaseSpec,
 } from "./WhiteUnderbasePanel";
-import {
-  DEFAULT_WHITE_UNDERBASE_SPEC,
-  validateWhiteUnderbaseSpec,
-} from "./WhiteUnderbasePanel";
+import { DEFAULT_WHITE_UNDERBASE_SPEC, validateWhiteUnderbaseSpec } from "./WhiteUnderbasePanel";
 
 /**
  * Contract tests for WhiteUnderbasePanel (Wave 3 C2).
@@ -73,21 +70,17 @@ describe("validateWhiteUnderbaseSpec", () => {
   });
 
   it("rejects opacity outside [0, 1]", () => {
-    expect(
-      validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: -0.1 }),
-    ).toMatch(/opacity/i);
-    expect(
-      validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 1.5 }),
-    ).toMatch(/opacity/i);
+    expect(validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: -0.1 })).toMatch(
+      /opacity/i,
+    );
+    expect(validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 1.5 })).toMatch(
+      /opacity/i,
+    );
   });
 
   it("accepts opacity 0 and 1 (endpoints)", () => {
-    expect(
-      validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 0 }),
-    ).toBeNull();
-    expect(
-      validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 1 }),
-    ).toBeNull();
+    expect(validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 0 })).toBeNull();
+    expect(validateWhiteUnderbaseSpec({ ...DEFAULT_WHITE_UNDERBASE_SPEC, opacity: 1 })).toBeNull();
   });
 
   it("rejects negative choke", () => {

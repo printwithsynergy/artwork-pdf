@@ -23,11 +23,15 @@ const ICONS: Record<CanvasObj["type"], string> = {
   text: "T",
   image: "▣",
   path: "↯",
+  nutrition: "NF",
+  braille: "⠿",
 };
 
 function label(o: CanvasObj): string {
   if (o.name) return o.name;
   if (o.type === "text") return o.text?.slice(0, 24) || "Text";
+  if (o.type === "nutrition") return "Nutrition Facts";
+  if (o.type === "braille") return `Braille: ${o.brailleSpec?.text?.slice(0, 16) || ""}`;
   return `${o.type.charAt(0).toUpperCase()}${o.type.slice(1)}`;
 }
 

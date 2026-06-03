@@ -4,6 +4,7 @@ import {
   type BrailleCell,
   type BrailleComposeResult,
   type BraillePanelProps,
+  type BrailleSpec,
   MARBURG_MEDIUM,
   composeBraille,
 } from "./BraillePanel";
@@ -143,11 +144,31 @@ describe("public type contracts", () => {
     expect(result.unicode).toBe("");
   });
 
-  it("BraillePanelProps requires onCompose; optional initialText and initialCharSpacingMm", () => {
+  it("BraillePanelProps accepts uncontrolled onCompose mode", () => {
     const minimal: BraillePanelProps = {
       onCompose: (_r: BrailleComposeResult) => {},
     };
     expect(minimal.initialText).toBeUndefined();
     expect(minimal.initialCharSpacingMm).toBeUndefined();
+  });
+
+  it("BraillePanelProps accepts controlled value + onChange mode", () => {
+    const sink: { last: BrailleSpec | null } = { last: null };
+    const props: BraillePanelProps = {
+      value: { text: "abc", charSpacingMm: MARBURG_MEDIUM.charSpacingMm },
+      onChange: (next) => {
+        sink.last = next;
+      },
+    };
+    expect(props.value?.text).toBe("abc");
+    props.onChange?.({ text: "xyz", charSpacingMm: 7 });
+    expect(sink.last?.text).toBe("xyz");
+    expect(sink.last?.charSpacingMm).toBe(7);
+  });
+
+  it("BrailleSpec carries text + charSpacingMm", () => {
+    const s: BrailleSpec = { text: "abc", charSpacingMm: 5 };
+    expect(s.text).toBe("abc");
+    expect(s.charSpacingMm).toBe(5);
   });
 });
