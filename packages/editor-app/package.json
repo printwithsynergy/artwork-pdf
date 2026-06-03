@@ -1,6 +1,6 @@
 {
   "name": "@printwithsynergy/artwork-pdf-editor",
-  "version": "0.5.7",
+  "version": "0.6.0",
   "description": "artworkPDF WYSIWYG editor as a host-customizable React component. Drop-in mountable in Next.js, Astro, Remix, etc.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
