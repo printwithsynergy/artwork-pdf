@@ -468,6 +468,34 @@ export interface EditorConfig {
    *  Disable for hosts that don't deal with food / supplement
    *  labelling. */
   enable_nutrition_panel: boolean;
+  /** Selection-aware rect properties panel. When enabled and a rect
+   *  canvas object is selected, the right-rail accordion mounts
+   *  {@link RectPropertiesPanel} so users can edit fill, stroke,
+   *  dash style, corner radius, and opacity inline. */
+  enable_rect_properties_panel: boolean;
+  /** Selection-aware ellipse properties panel. When enabled and an
+   *  ellipse canvas object is selected, the right-rail accordion
+   *  mounts {@link EllipsePropertiesPanel} so users can edit fill,
+   *  stroke, dash style, and opacity inline. */
+  enable_ellipse_properties_panel: boolean;
+  /** Selection-aware text properties panel. When enabled and a text
+   *  canvas object is selected, the right-rail accordion mounts
+   *  {@link TextPropertiesPanel} so users can edit Illustrator-grade
+   *  typography (font family, size, weight, italic, alignment,
+   *  letter-spacing, line-height, decoration, fill, opacity) and
+   *  open the inline-edit overlay. */
+  enable_text_properties_panel: boolean;
+  /** Selection-aware image properties panel. When enabled and an
+   *  image canvas object is selected, the right-rail accordion
+   *  mounts {@link ImagePropertiesPanel} so users can edit object
+   *  fit, opacity, and replace the underlying bitmap. */
+  enable_image_properties_panel: boolean;
+  /** Selection-aware path properties panel. When enabled and a path
+   *  canvas object is selected, the right-rail accordion mounts
+   *  {@link PathPropertiesPanel} with the dieline-stroke colour
+   *  surfaced read-only (cut / crease / perf / bleed is structural
+   *  intent — editing the colour would destroy that contract). */
+  enable_path_properties_panel: boolean;
 
   // ── Optional gating layers (host or backend supplied) ────────────
   /**
@@ -594,6 +622,11 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_nutrition_panel: true,
   enable_braille_panel: true,
   enable_variable_data_merge: true,
+  enable_rect_properties_panel: true,
+  enable_ellipse_properties_panel: true,
+  enable_text_properties_panel: true,
+  enable_image_properties_panel: true,
+  enable_path_properties_panel: true,
 };
 
 /**

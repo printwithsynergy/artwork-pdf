@@ -2,6 +2,8 @@
 "use client";
 import { type ReactNode, useState } from "react";
 import type { EditorConfig } from "../lib/editor-config";
+import type { CanvasObj } from "./EditorCanvas";
+import { type PropertiesSectionHooks, resolvePropertiesSection } from "./properties-sections";
 
 type Tool = "select" | "rect" | "ellipse" | "text" | "image" | "nutrition" | "braille";
 
@@ -47,6 +49,17 @@ export type MobileToolDrawerProps = {
   /** Extra collapsible sections appended to the drawer (used for the
    *  Layers / Separations panels in pro mode on mobile). */
   extraSections?: Array<{ title: string; content: ReactNode; defaultOpen?: boolean }>;
+  /** The currently-selected canvas object, when one exists. Mirrors
+   *  the desktop right-rail wiring: a "Properties" section appears
+   *  at the top of the drawer when a selection is present and
+   *  {@link MobileToolDrawerProps.onUpdateSelected} is wired. */
+  selectedObj?: CanvasObj | null;
+  /** Patch-style update for the currently-selected canvas object. */
+  onUpdateSelected?: (patch: Partial<CanvasObj>) => void;
+  /** Optional host-wired callbacks the properties dispatcher threads
+   *  into per-type panels (see {@link
+   *  RightRailAccordionProps.propertiesHooks}). */
+  propertiesHooks?: PropertiesSectionHooks;
 };
 
 const PANEL_BG = "#1a0f08";
@@ -170,7 +183,17 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
     exportLabel,
     exportBusy,
     extraSections = [],
+    selectedObj,
+    onUpdateSelected,
+    propertiesHooks,
   } = props;
+
+  const propertiesSection = resolvePropertiesSection(
+    selectedObj,
+    onUpdateSelected,
+    config,
+    propertiesHooks,
+  );
 
   const handle = (fn: () => void) => () => {
     fn();
@@ -252,6 +275,11 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
         </div>
 
         <div style={{ flex: 1, overflowY: "auto" }}>
+          {propertiesSection && (
+            <DrawerSection title={`${propertiesSection.label} properties`}>
+              {propertiesSection.element}
+            </DrawerSection>
+          )}
           {toolsEnabled && (
             <DrawerSection title="Tools">
               {config.enable_tool_select && (

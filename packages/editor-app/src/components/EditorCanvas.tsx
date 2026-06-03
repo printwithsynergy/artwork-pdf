@@ -128,6 +128,48 @@ export type CanvasObj = {
   /** Source data for type=`"braille"` objects. The visual (cell + dot
    *  positions) is derived at render time via `composeBraille(spec)`. */
   brailleSpec?: BrailleSpec;
+  /** Rotation in degrees, clockwise about the object's origin
+   *  (top-left). Absent / `undefined` is equivalent to `0`. The Konva
+   *  Transformer authors this field when the user drags a rotate
+   *  handle; the structural export carries it through to compile-pdf
+   *  so the rendered PDF matches the canvas. */
+  rotation?: number;
+  /** Uniform corner radius (in pt) for type=`"rect"` objects. Konva's
+   *  `Rect` accepts a `cornerRadius` prop directly. Absent → square
+   *  corners. */
+  cornerRadius?: number;
+  /** Stroke dash pattern, in Konva's `[on, off, on, off, …]` form. The
+   *  rect properties panel surfaces three presets: solid
+   *  (`undefined`), dashed (`[6, 4]`), dotted (`[1, 3]`). Hosts can
+   *  set arbitrary patterns directly. */
+  strokeDashArray?: number[];
+  /** Font weight for type=`"text"` objects. Maps to Konva Text's
+   *  `fontStyle` (which encodes weight + italic in one CSS-like
+   *  token); the editor composes it together with {@link fontStyle}
+   *  at render time. */
+  fontWeight?: "normal" | "bold";
+  /** Italic toggle for type=`"text"` objects. See {@link fontWeight}
+   *  for the composition rule. */
+  fontStyle?: "normal" | "italic";
+  /** Horizontal text alignment within the text box for type=`"text"`
+   *  objects. Maps to Konva Text's `align` prop. */
+  textAlign?: "left" | "center" | "right" | "justify";
+  /** Vertical alignment within the text box for type=`"text"`
+   *  objects. Maps to Konva Text's `verticalAlign` prop. */
+  verticalAlign?: "top" | "middle" | "bottom";
+  /** Inter-character spacing in pt for type=`"text"` objects. Maps to
+   *  Konva Text's `letterSpacing` prop. Default 0. */
+  letterSpacing?: number;
+  /** Line-height multiplier for type=`"text"` objects (1.0 = single
+   *  line). Maps to Konva Text's `lineHeight` prop. */
+  lineHeight?: number;
+  /** Text decoration for type=`"text"` objects. Maps to Konva Text's
+   *  `textDecoration` prop. */
+  textDecoration?: "none" | "underline" | "line-through";
+  /** Object-fit behaviour for type=`"image"` objects, mirroring CSS
+   *  `object-fit`. Defaults to `"fill"` (stretch to the box) when
+   *  absent — that's the historical Konva default. */
+  imageFit?: "fill" | "contain" | "cover" | "none";
 };
 
 type ExportStatus = "idle" | "sending" | "polling" | "done" | "error";
@@ -613,7 +655,7 @@ type NodeProps = {
   selectable: boolean;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
-  onTransformEnd: (x: number, y: number, w: number, h: number) => void;
+  onTransformEnd: (x: number, y: number, w: number, h: number, rotation: number) => void;
   onDblClick: (e: KonvaEventObject<MouseEvent>) => void;
 };
 
@@ -634,6 +676,7 @@ function ObjNode({
     id: obj.id,
     x: obj.x,
     y: obj.y,
+    rotation: obj.rotation ?? 0,
     opacity: obj.opacity,
     draggable: !locked && selectable,
     listening: !locked,
@@ -654,6 +697,7 @@ function ObjNode({
               node.y(),
               Math.max(4, node.width() * scaleX),
               Math.max(4, node.height() * scaleY),
+              node.rotation(),
             );
           },
         }),
@@ -668,6 +712,8 @@ function ObjNode({
         fill={obj.fill}
         stroke={selected ? BRAND : obj.stroke}
         strokeWidth={selected ? Math.max(obj.strokeWidth, 1) : obj.strokeWidth}
+        cornerRadius={obj.cornerRadius ?? 0}
+        {...(obj.strokeDashArray !== undefined ? { dash: obj.strokeDashArray } : {})}
       />
     );
   }
@@ -683,18 +729,39 @@ function ObjNode({
         fill={obj.fill}
         stroke={selected ? BRAND : obj.stroke}
         strokeWidth={selected ? Math.max(obj.strokeWidth, 1) : obj.strokeWidth}
+        {...(obj.strokeDashArray !== undefined ? { dash: obj.strokeDashArray } : {})}
       />
     );
   }
 
   if (obj.type === "text") {
+    // Konva packs weight + italic into a single `fontStyle` token:
+    // "normal" | "bold" | "italic" | "italic bold". Compose it here.
+    const weight = obj.fontWeight ?? "normal";
+    const italic = obj.fontStyle === "italic";
+    const fontStyleToken =
+      italic && weight === "bold"
+        ? "italic bold"
+        : italic
+          ? "italic"
+          : weight === "bold"
+            ? "bold"
+            : "normal";
     return (
       <Text
         {...sharedProps}
         text={obj.text ?? "Text"}
         fontSize={obj.fontSize ?? 16}
+        {...(obj.fontFamily !== undefined ? { fontFamily: obj.fontFamily } : {})}
+        fontStyle={fontStyleToken}
+        align={obj.textAlign ?? "left"}
+        verticalAlign={obj.verticalAlign ?? "top"}
+        letterSpacing={obj.letterSpacing ?? 0}
+        lineHeight={obj.lineHeight ?? 1}
+        textDecoration={obj.textDecoration ?? ""}
         fill={obj.fill}
         width={obj.width}
+        height={obj.height}
       />
     );
   }
@@ -1361,10 +1428,20 @@ export function EditorCanvas({
             stroke: o.stroke,
             ...(o.strokeWidth !== undefined ? { strokeWidth: o.strokeWidth } : {}),
             ...(o.opacity !== undefined ? { opacity: o.opacity } : {}),
+            ...(o.rotation !== undefined && o.rotation !== 0 ? { rotation: o.rotation } : {}),
+            ...(o.cornerRadius !== undefined ? { cornerRadius: o.cornerRadius } : {}),
+            ...(o.strokeDashArray !== undefined ? { strokeDashArray: o.strokeDashArray } : {}),
             ...(o.text !== undefined ? { text: o.text } : {}),
             ...(o.fontSize !== undefined ? { fontSize: o.fontSize } : {}),
             ...(o.fontFamily !== undefined ? { fontFamily: o.fontFamily } : {}),
+            ...(o.fontWeight !== undefined ? { fontWeight: o.fontWeight } : {}),
+            ...(o.fontStyle !== undefined ? { fontStyle: o.fontStyle } : {}),
+            ...(o.textAlign !== undefined ? { textAlign: o.textAlign } : {}),
+            ...(o.letterSpacing !== undefined ? { letterSpacing: o.letterSpacing } : {}),
+            ...(o.lineHeight !== undefined ? { lineHeight: o.lineHeight } : {}),
+            ...(o.textDecoration !== undefined ? { textDecoration: o.textDecoration } : {}),
             ...(o.src !== undefined ? { src: o.src } : {}),
+            ...(o.imageFit !== undefined ? { imageFit: o.imageFit } : {}),
             ...(o.pathData !== undefined ? { pathData: o.pathData } : {}),
           })),
         },
@@ -1824,10 +1901,10 @@ export function EditorCanvas({
                   onDragEnd={(x, y) =>
                     commit(objects.map((o) => (o.id === obj.id ? { ...o, x, y } : o)))
                   }
-                  onTransformEnd={(x, y, w, h) =>
+                  onTransformEnd={(x, y, w, h, rotation) =>
                     commit(
                       objects.map((o) =>
-                        o.id === obj.id ? { ...o, x, y, width: w, height: h } : o,
+                        o.id === obj.id ? { ...o, x, y, width: w, height: h, rotation } : o,
                       ),
                     )
                   }
@@ -1843,7 +1920,9 @@ export function EditorCanvas({
                 anchorStroke={BRAND}
                 anchorFill="#fff"
                 anchorSize={8}
-                rotateEnabled={false}
+                rotateEnabled={true}
+                rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                rotationSnapTolerance={5}
                 keepRatio={false}
               />
 
@@ -1910,6 +1989,19 @@ export function EditorCanvas({
             config={config}
             selectedObj={selected}
             onUpdateSelected={updateSelected}
+            propertiesHooks={{
+              onEditText: () => {
+                if (!selected || selected.type !== "text") return;
+                const stage = stageRef.current;
+                if (!stage) return;
+                const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
+                if (!node) return;
+                onTextDblClick(selected.id, {
+                  target: node,
+                } as unknown as KonvaEventObject<MouseEvent>);
+              },
+              onReplaceImage: () => imageInputRef.current?.click(),
+            }}
           />
         )}
       </div>
@@ -1952,78 +2044,11 @@ export function EditorCanvas({
             value={Math.round(selected.height)}
             onChange={(v) => updateSelected({ height: Math.max(1, v) })}
           />
-
-          <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            Fill
-            <input
-              type="color"
-              value={selected.fill === "transparent" ? "#ffffff" : selected.fill}
-              onChange={(e) => updateSelected({ fill: e.target.value })}
-              style={{
-                width: 22,
-                height: 18,
-                border: "none",
-                padding: 0,
-                background: "none",
-                cursor: "pointer",
-              }}
-            />
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            Stroke
-            <input
-              type="color"
-              value={selected.stroke === "transparent" ? "#000000" : selected.stroke}
-              onChange={(e) => updateSelected({ stroke: e.target.value })}
-              style={{
-                width: 22,
-                height: 18,
-                border: "none",
-                padding: 0,
-                background: "none",
-                cursor: "pointer",
-              }}
-            />
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            Opacity
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={selected.opacity}
-              onChange={(e) => updateSelected({ opacity: Number(e.target.value) })}
-              style={{ width: 60 }}
-            />
-            <span>{Math.round(selected.opacity * 100)}%</span>
-          </label>
-
-          {selected.type === "text" && (
-            <>
-              <PropNum
-                label="Size"
-                value={selected.fontSize ?? 16}
-                onChange={(v) => updateSelected({ fontSize: Math.max(4, v) })}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  // Spawn inline text edit by focusing textarea overlay
-                  const stage = stageRef.current;
-                  if (!stage) return;
-                  const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
-                  if (!node) return;
-                  onTextDblClick(selected.id, {
-                    target: node,
-                  } as unknown as KonvaEventObject<MouseEvent>);
-                }}
-                style={{ ...iconBtnStyle(false), fontSize: "0.72rem" }}
-              >
-                Edit text
-              </button>
-            </>
-          )}
+          <PropNum
+            label="Rot°"
+            value={Math.round(selected.rotation ?? 0)}
+            onChange={(v) => updateSelected({ rotation: ((v % 360) + 360) % 360 })}
+          />
 
           <button
             type="button"
@@ -2074,6 +2099,21 @@ export function EditorCanvas({
           onClose={() => onMenuOpenChange?.(false)}
           config={config}
           activeTool={tool}
+          selectedObj={selected}
+          onUpdateSelected={updateSelected}
+          propertiesHooks={{
+            onEditText: () => {
+              if (!selected || selected.type !== "text") return;
+              const stage = stageRef.current;
+              if (!stage) return;
+              const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
+              if (!node) return;
+              onTextDblClick(selected.id, {
+                target: node,
+              } as unknown as KonvaEventObject<MouseEvent>);
+            },
+            onReplaceImage: () => imageInputRef.current?.click(),
+          }}
           onSelectTool={(t) => {
             setTool(t);
             if (t === "image") imageInputRef.current?.click();
