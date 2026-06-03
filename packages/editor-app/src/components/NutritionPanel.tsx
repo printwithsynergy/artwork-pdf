@@ -328,12 +328,7 @@ export type NutritionPanelProps = {
  *
  * @public
  */
-export function NutritionPanel({
-  initialFacts,
-  value,
-  onChange,
-  onCompose,
-}: NutritionPanelProps) {
+export function NutritionPanel({ initialFacts, value, onChange, onCompose }: NutritionPanelProps) {
   const controlled = value !== undefined && onChange !== undefined;
   const [internalFacts, setInternalFacts] = useState<NutritionFacts>({
     ...DEFAULT_NUTRITION_FACTS,

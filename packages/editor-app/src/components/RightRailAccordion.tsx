@@ -1,58 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import {
-  type CSSProperties,
-  type ReactElement,
-  type ReactNode,
-  useEffect,
-  useState,
-} from "react";
+import { type CSSProperties, type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { type EditorConfig, isPanelVisible } from "../lib/editor-config";
-import {
-  BraillePanel,
-  type BrailleComposeResult,
-  type BrailleSpec,
-} from "./BraillePanel";
+import { type BrailleComposeResult, BraillePanel, type BrailleSpec } from "./BraillePanel";
+import { type DielineParameters, DielineParametersPanel } from "./DielineParametersPanel";
 import type { CanvasObj } from "./EditorCanvas";
-import {
-  DielineParametersPanel,
-  type DielineParameters,
-} from "./DielineParametersPanel";
-import {
-  FoldEditorPanel,
-  type FoldEditorPanelValue,
-} from "./FoldEditorPanel";
-import {
-  Gs1DigitalLinkPanel,
-  type Gs1DigitalLinkResult,
-} from "./Gs1DigitalLinkPanel";
-import {
-  ImposePanel,
-  type ImposePanelValue,
-} from "./ImposePanel";
-import {
-  JobSetupPanel,
-  type JobSetupValue,
-} from "./JobSetupPanel";
-import {
-  LocalizationPanel,
-  type LocalizationVariant,
-} from "./wave4-extras";
-import {
-  NutritionPanel,
-  type NutritionFacts,
-  type NutritionPanelSpec,
-} from "./NutritionPanel";
+import { FoldEditorPanel, type FoldEditorPanelValue } from "./FoldEditorPanel";
+import { Gs1DigitalLinkPanel, type Gs1DigitalLinkResult } from "./Gs1DigitalLinkPanel";
+import { ImposePanel, type ImposePanelValue } from "./ImposePanel";
+import { JobSetupPanel, type JobSetupValue } from "./JobSetupPanel";
+import { type NutritionFacts, NutritionPanel, type NutritionPanelSpec } from "./NutritionPanel";
 import { StreamingRenderProgress } from "./StreamingRenderProgress";
-import {
-  TrapEditorPanel,
-  type TrapEditorValue,
-} from "./TrapEditorPanel";
-import {
-  VariantMatrixPanel,
-  type VariantMatrixPanelValue,
-} from "./VariantMatrixPanel";
+import { TrapEditorPanel, type TrapEditorValue } from "./TrapEditorPanel";
+import { VariantMatrixPanel, type VariantMatrixPanelValue } from "./VariantMatrixPanel";
 import { WhiteUnderbasePanel } from "./WhiteUnderbasePanel";
+import { LocalizationPanel, type LocalizationVariant } from "./wave4-extras";
 
 const BORDER = "#3d1a00";
 const PANEL_BG = "#1a0f08";
@@ -115,24 +77,34 @@ export function RightRailAccordion({
   useEffect(() => {
     if (selectedObj?.type === "nutrition") setOpenId("nutrition-properties");
     else if (selectedObj?.type === "braille") setOpenId("braille-properties");
-  }, [selectedObj?.id, selectedObj?.type]);
+  }, [selectedObj?.type]);
 
   const sections: AccordionSection[] = [
     {
       id: "nutrition-properties",
       label: "Nutrition properties",
+      // Gate on `onUpdateSelected` too — without an update callback
+      // the inputs would render but writes would no-op, which is
+      // a confusing "read-only-but-editable-looking" state.
       visible:
         config.enable_nutrition_panel &&
         selectedObj?.type === "nutrition" &&
-        selectedObj.nutritionFacts !== undefined,
-      render: () => (
-        <NutritionPropertiesSection
-          value={selectedObj!.nutritionFacts!}
-          onChange={(nutritionFacts: NutritionFacts) =>
-            onUpdateSelected?.({ nutritionFacts })
-          }
-        />
-      ),
+        selectedObj.nutritionFacts !== undefined &&
+        onUpdateSelected !== undefined,
+      render: () => {
+        // The visibility check above guarantees both fields are
+        // present, but TypeScript can't propagate the narrowing into
+        // this closure; widen + guard explicitly to satisfy Biome's
+        // noNonNullAssertion rule.
+        const facts = selectedObj?.nutritionFacts;
+        if (!facts || !onUpdateSelected) return null;
+        return (
+          <NutritionPropertiesSection
+            value={facts}
+            onChange={(nutritionFacts: NutritionFacts) => onUpdateSelected({ nutritionFacts })}
+          />
+        );
+      },
     },
     {
       id: "braille-properties",
@@ -140,15 +112,18 @@ export function RightRailAccordion({
       visible:
         config.enable_braille_panel &&
         selectedObj?.type === "braille" &&
-        selectedObj.brailleSpec !== undefined,
-      render: () => (
-        <BraillePropertiesSection
-          value={selectedObj!.brailleSpec!}
-          onChange={(brailleSpec: BrailleSpec) =>
-            onUpdateSelected?.({ brailleSpec })
-          }
-        />
-      ),
+        selectedObj.brailleSpec !== undefined &&
+        onUpdateSelected !== undefined,
+      render: () => {
+        const spec = selectedObj?.brailleSpec;
+        if (!spec || !onUpdateSelected) return null;
+        return (
+          <BraillePropertiesSection
+            value={spec}
+            onChange={(brailleSpec: BrailleSpec) => onUpdateSelected({ brailleSpec })}
+          />
+        );
+      },
     },
     {
       id: "job-setup",
@@ -293,9 +268,7 @@ function Section({
         }}
       >
         <span>{label}</span>
-        <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
-          {open ? "−" : "+"}
-        </span>
+        <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>{open ? "−" : "+"}</span>
       </button>
       <div
         id={panelId}
@@ -336,11 +309,7 @@ function JobSetupSection(): ReactElement {
   const [hidden, setHidden] = useState(false);
   if (hidden) {
     return (
-      <button
-        type="button"
-        onClick={() => setHidden(false)}
-        style={ghostButtonStyle()}
-      >
+      <button type="button" onClick={() => setHidden(false)} style={ghostButtonStyle()}>
         Reopen Job setup
       </button>
     );

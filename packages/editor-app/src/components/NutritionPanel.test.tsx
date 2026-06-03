@@ -120,15 +120,15 @@ describe("NutritionPanelProps contract", () => {
   });
 
   it("accepts controlled-mode value + onChange", () => {
-    let last: NutritionFacts | null = null;
+    const sink: { last: NutritionFacts | null } = { last: null };
     const props: NutritionPanelProps = {
       value: minimal,
       onChange: (next) => {
-        last = next;
+        sink.last = next;
       },
     };
     expect(props.value).toEqual(minimal);
     props.onChange?.({ ...minimal, calories: 999 });
-    expect(last!.calories).toBe(999);
+    expect(sink.last?.calories).toBe(999);
   });
 });

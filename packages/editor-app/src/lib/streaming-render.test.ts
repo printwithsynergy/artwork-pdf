@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import {
-  parseStreamingRenderEvent,
   type StreamingRenderEvent,
+  parseStreamingRenderEvent,
   summarizeStreamingProgress,
 } from "./streaming-render";
 
@@ -90,9 +90,7 @@ describe("summarizeStreamingProgress", () => {
   });
 
   it("tracks the in-flight page after page-start", () => {
-    const events: StreamingRenderEvent[] = [
-      { kind: "page-start", pageIndex: 0, totalPages: 3 },
-    ];
+    const events: StreamingRenderEvent[] = [{ kind: "page-start", pageIndex: 0, totalPages: 3 }];
     const s = summarizeStreamingProgress(events);
     expect(s.currentPage).toBe(0);
     expect(s.completedPages).toBe(0);

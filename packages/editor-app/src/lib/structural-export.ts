@@ -78,9 +78,7 @@ export function emitCf2(dieline: StructuralExportDieline): string {
       const b = path.points[i + 1];
       if (a === undefined || b === undefined) continue;
       // CF2 L1 segment: L<line_type> <x1> <y1> <x2> <y2>
-      lines.push(
-        `L${lt} ${a.x.toFixed(3)} ${a.y.toFixed(3)} ${b.x.toFixed(3)} ${b.y.toFixed(3)}`,
-      );
+      lines.push(`L${lt} ${a.x.toFixed(3)} ${a.y.toFixed(3)} ${b.x.toFixed(3)} ${b.y.toFixed(3)}`);
     }
   }
   lines.push("END");

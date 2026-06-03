@@ -11,9 +11,21 @@ import {
 } from "./ContrastLegibilityPanel";
 
 const FINDINGS: ContrastLegibilityFinding[] = [
-  { id: "e1", category: "contrast", severity: "error", summary: "Black on dark kraft fails", deltaE: 4.2 },
+  {
+    id: "e1",
+    category: "contrast",
+    severity: "error",
+    summary: "Black on dark kraft fails",
+    deltaE: 4.2,
+  },
   { id: "w1", category: "text-size", severity: "warn", summary: "Reverse text below 6pt" },
-  { id: "i1", category: "neutral-density", severity: "info", summary: "Density borderline", deltaE: 2.8 },
+  {
+    id: "i1",
+    category: "neutral-density",
+    severity: "info",
+    summary: "Density borderline",
+    deltaE: 2.8,
+  },
   { id: "w2", category: "reverse-on-image", severity: "warn", summary: "Reverse on busy image" },
 ];
 

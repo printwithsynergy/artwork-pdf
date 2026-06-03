@@ -436,7 +436,9 @@ export function AutoLayoutPanel({
       <header style={{ marginBottom: "0.375rem" }}>
         <h3 style={{ margin: 0, fontSize: "0.875rem" }}>Auto layout</h3>
       </header>
-      <div style={{ fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+      <div
+        style={{ fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}
+      >
         <label>
           <input
             type="checkbox"
@@ -887,9 +889,7 @@ function LoaderPanel<T extends { id: string }>({
         </div>
       )}
       {!error && !items && (
-        <output style={{ display: "block", fontSize: "0.75rem", opacity: 0.6 }}>
-          Loading…
-        </output>
+        <output style={{ display: "block", fontSize: "0.75rem", opacity: 0.6 }}>Loading…</output>
       )}
       {items && items.length === 0 && (
         <div style={{ fontSize: "0.75rem", opacity: 0.6 }}>None.</div>

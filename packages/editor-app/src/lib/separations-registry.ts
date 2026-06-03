@@ -95,10 +95,7 @@ export function registerSpot(
  *
  * @public
  */
-export function unregisterSpot(
-  seps: readonly EditorSeparation[],
-  hex: string,
-): EditorSeparation[] {
+export function unregisterSpot(seps: readonly EditorSeparation[], hex: string): EditorSeparation[] {
   const normalized = hex.toLowerCase();
   return seps.filter((s) => s.hex.toLowerCase() !== normalized);
 }

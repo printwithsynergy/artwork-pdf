@@ -153,17 +153,17 @@ describe("public type contracts", () => {
   });
 
   it("BraillePanelProps accepts controlled value + onChange mode", () => {
-    let last: BrailleSpec | null = null;
+    const sink: { last: BrailleSpec | null } = { last: null };
     const props: BraillePanelProps = {
       value: { text: "abc", charSpacingMm: MARBURG_MEDIUM.charSpacingMm },
       onChange: (next) => {
-        last = next;
+        sink.last = next;
       },
     };
     expect(props.value?.text).toBe("abc");
     props.onChange?.({ text: "xyz", charSpacingMm: 7 });
-    expect(last!.text).toBe("xyz");
-    expect(last!.charSpacingMm).toBe(7);
+    expect(sink.last?.text).toBe("xyz");
+    expect(sink.last?.charSpacingMm).toBe(7);
   });
 
   it("BrailleSpec carries text + charSpacingMm", () => {

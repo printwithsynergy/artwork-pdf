@@ -6,7 +6,7 @@ import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { usePreflight } from "../hooks/usePreflight";
 import { DEFAULT_BLEED_MM } from "../lib/bleed";
-import { dielineToPage, type Page } from "../lib/dieline-template";
+import { type Page, dielineToPage } from "../lib/dieline-template";
 import {
   type EditorConfig,
   type PaletteId,

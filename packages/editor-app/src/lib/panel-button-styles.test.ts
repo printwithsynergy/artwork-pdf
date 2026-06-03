@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import {
-  primaryButtonStyle,
-  secondaryButtonStyle,
-} from "./panel-button-styles";
+import { primaryButtonStyle, secondaryButtonStyle } from "./panel-button-styles";
 
 const BRAND = "#fc5102";
 

@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   type JobSetupValue,
   type PreflightContext,
-  preflightContextOf,
   type PrintProcess,
   type SubstrateClass,
+  preflightContextOf,
 } from "./JobSetupPanel";
 
 // P1 — type-and-behaviour contract for the JobSetupValue → lint-pdf

@@ -3,7 +3,7 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { PDFDocument } from "pdf-lib";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import {
   Ellipse,
   Group,
@@ -19,29 +19,21 @@ import {
 import { DEFAULT_BLEED_MM, formatBleed } from "../lib/bleed";
 import { type DielineTemplate, templateToInitialState } from "../lib/dieline-template";
 import type { EditorConfig } from "../lib/editor-config";
+import { isPanelVisible, showFeature } from "../lib/editor-config";
 import type { PreflightReport } from "../lib/preflight/types";
+import { type EditorSeparation, findSpotByColor, registerSpot } from "../lib/separations-registry";
+import { type BrailleSpec, MARBURG_MEDIUM, composeBraille } from "./BraillePanel";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
-import {
-  type BrailleSpec,
-  MARBURG_MEDIUM,
-  composeBraille,
-} from "./BraillePanel";
+import { LayersPanel } from "./LayersPanel";
+import { MobileToolDrawer } from "./MobileToolDrawer";
 import {
   DEFAULT_NUTRITION_FACTS,
-  composeNutritionFacts,
   type NutritionFacts,
+  composeNutritionFacts,
 } from "./NutritionPanel";
 import { RightRailAccordion } from "./RightRailAccordion";
-import { LayersPanel } from "./LayersPanel";
 import { TacOverlay } from "./TacOverlay";
-import { isPanelVisible, showFeature } from "../lib/editor-config";
-import {
-  type EditorSeparation,
-  findSpotByColor,
-  registerSpot,
-} from "../lib/separations-registry";
-import { MobileToolDrawer } from "./MobileToolDrawer";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -80,23 +72,9 @@ type ProductionExportRequest = {
  */
 type WireSeparation = Omit<EditorSeparation, "hex">;
 
-type Tool =
-  | "select"
-  | "rect"
-  | "ellipse"
-  | "text"
-  | "image"
-  | "nutrition"
-  | "braille";
+type Tool = "select" | "rect" | "ellipse" | "text" | "image" | "nutrition" | "braille";
 
-type ObjType =
-  | "rect"
-  | "ellipse"
-  | "text"
-  | "image"
-  | "path"
-  | "nutrition"
-  | "braille";
+type ObjType = "rect" | "ellipse" | "text" | "image" | "path" | "nutrition" | "braille";
 
 /**
  * One renderable object on the editor canvas.
@@ -250,6 +228,307 @@ function stagePointer(stage: Konva.Stage): { x: number; y: number } {
 
 // ── sub-component: single object node ────────────────────────────────────────
 
+// ── FDA Nutrition Facts visual ────────────────────────────────────
+//
+// Renders a placed nutrition canvas object as a real FDA Nutrition
+// Facts panel — bold "Nutrition Facts" header, thick black rules,
+// right-aligned Calories number, right-aligned % Daily Value column,
+// indented sub-nutrients, micronutrient footer. Layout proportions
+// derive from the 2020 FDA spec (21 CFR §101.9); the visual is a
+// reasonable approximation, not pixel-perfect for filing.
+//
+// All measurements are in PDF points (the canvas's working unit).
+
+type NutritionFactsVisualProps = {
+  facts: NutritionFacts;
+  width: number;
+  height: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+};
+
+function NutritionFactsVisual({
+  facts,
+  width,
+  height,
+  fill,
+  stroke,
+  strokeWidth,
+}: NutritionFactsVisualProps) {
+  const spec = composeNutritionFacts(facts);
+  const PAD = 6;
+  const CONTENT_W = width - PAD * 2;
+  const TEXT = "#0a0a0a";
+
+  // Right-column widths for the DV% percentages.
+  const DV_W = 36;
+  // Amount column sits to the left of DV%; label column eats the
+  // remaining space.
+  const AMT_W = 60;
+  const LABEL_W = CONTENT_W - AMT_W - DV_W;
+
+  // Calories block content.
+  const caloriesValue = String(facts.calories);
+
+  // Build the row list. The composer produces canonical FDA order +
+  // bold/indent flags; we render a thin rule between every row and
+  // a thick rule after Protein (the last macro). Micronutrients
+  // follow with a different layout (label + DV% only — no amount).
+  const isMicro = (label: string): boolean =>
+    label === "Vitamin D" || label === "Calcium" || label === "Iron" || label === "Potassium";
+
+  const macroRows = spec.rows.filter((r) => !isMicro(r.label));
+  const microRows = spec.rows.filter((r) => isMicro(r.label));
+
+  // Row heights.
+  const ROW_H = 14;
+
+  // Accumulate y as we render.
+  const elements: ReactNode[] = [];
+  let y = PAD;
+
+  // Title — bold extra-large. The FDA spec calls for "highly visible"
+  // typography; we cap at 28pt and scale down for narrow panels.
+  const titleSize = Math.min(28, CONTENT_W / 7.5);
+  elements.push(
+    <Text
+      key="title"
+      text="Nutrition Facts"
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      fontSize={titleSize}
+      fontStyle="bold"
+      fontFamily="Helvetica"
+      fill={TEXT}
+    />,
+  );
+  y += titleSize + 4;
+
+  // Thin rule under title.
+  elements.push(<Rect key="r1" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
+  y += 4;
+
+  // Servings line.
+  elements.push(
+    <Text
+      key="servings"
+      text={spec.servingsLine}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      fontSize={9}
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Serving size — "Serving size" label left, value bold right.
+  elements.push(
+    <Text key="ssz-label" text="Serving size" x={PAD} y={y} fontSize={9} fill={TEXT} />,
+    <Text
+      key="ssz-value"
+      text={spec.servingSize}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={11}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 14;
+
+  // Thick rule (the iconic FDA black band).
+  elements.push(<Rect key="r-thick-1" x={PAD} y={y} width={CONTENT_W} height={6} fill={TEXT} />);
+  y += 10;
+
+  // "Amount per serving" + Calories number on the right.
+  elements.push(
+    <Text
+      key="amount-per"
+      text="Amount per serving"
+      x={PAD}
+      y={y}
+      fontSize={8}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Calories — "Calories" label bold large left, number bold huge right.
+  elements.push(
+    <Text
+      key="cal-label"
+      text="Calories"
+      x={PAD}
+      y={y + 3}
+      fontSize={16}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+    <Text
+      key="cal-value"
+      text={caloriesValue}
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={22}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 26;
+
+  // Medium rule.
+  elements.push(<Rect key="r2" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
+  y += 3;
+
+  // "% Daily Value*" right-aligned, small bold.
+  elements.push(
+    <Text
+      key="dv-header"
+      text="% Daily Value*"
+      x={PAD}
+      y={y}
+      width={CONTENT_W}
+      align="right"
+      fontSize={8}
+      fontStyle="bold"
+      fill={TEXT}
+    />,
+  );
+  y += 11;
+
+  // Thin rule below DV header.
+  elements.push(<Rect key="r3" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
+  y += 2;
+
+  // Macro rows with thin separators.
+  for (const [i, row] of macroRows.entries()) {
+    const indentX = PAD + row.indent * 10;
+    // Bold label (e.g. "Total Fat") + amount inline.
+    elements.push(
+      <Text
+        key={`m-${i}-label`}
+        text={row.label}
+        x={indentX}
+        y={y}
+        width={LABEL_W - row.indent * 10}
+        fontSize={10}
+        fontStyle={row.bold ? "bold" : "normal"}
+        fill={TEXT}
+      />,
+      <Text
+        key={`m-${i}-amt`}
+        text={row.amount}
+        x={PAD + LABEL_W}
+        y={y}
+        width={AMT_W}
+        fontSize={10}
+        fill={TEXT}
+      />,
+    );
+    if (row.dvPct !== undefined) {
+      elements.push(
+        <Text
+          key={`m-${i}-dv`}
+          text={`${row.dvPct}%`}
+          x={PAD + LABEL_W + AMT_W}
+          y={y}
+          width={DV_W}
+          align="right"
+          fontSize={10}
+          fontStyle="bold"
+          fill={TEXT}
+        />,
+      );
+    }
+    y += ROW_H;
+    elements.push(
+      <Rect key={`m-${i}-rule`} x={PAD} y={y - 2} width={CONTENT_W} height={0.5} fill={TEXT} />,
+    );
+  }
+
+  if (microRows.length > 0) {
+    // Thick rule before the micronutrient block.
+    elements.push(<Rect key="r-thick-2" x={PAD} y={y} width={CONTENT_W} height={4} fill={TEXT} />);
+    y += 6;
+
+    for (const [i, row] of microRows.entries()) {
+      elements.push(
+        <Text
+          key={`u-${i}-label`}
+          text={row.label}
+          x={PAD}
+          y={y}
+          width={LABEL_W + AMT_W}
+          fontSize={9}
+          fill={TEXT}
+        />,
+        <Text
+          key={`u-${i}-amt`}
+          text={row.amount}
+          x={PAD + LABEL_W}
+          y={y}
+          width={AMT_W}
+          fontSize={9}
+          fill={TEXT}
+        />,
+      );
+      if (row.dvPct !== undefined) {
+        elements.push(
+          <Text
+            key={`u-${i}-dv`}
+            text={`${row.dvPct}%`}
+            x={PAD + LABEL_W + AMT_W}
+            y={y}
+            width={DV_W}
+            align="right"
+            fontSize={9}
+            fontStyle="bold"
+            fill={TEXT}
+          />,
+        );
+      }
+      y += ROW_H - 1;
+      if (i < microRows.length - 1) {
+        elements.push(
+          <Rect key={`u-${i}-rule`} x={PAD} y={y - 2} width={CONTENT_W} height={0.5} fill={TEXT} />,
+        );
+      }
+    }
+  }
+
+  // Thick rule + footnote at the bottom — only if vertical space allows.
+  if (y < height - 30) {
+    elements.push(<Rect key="r-thick-3" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
+    y += 5;
+    elements.push(
+      <Text
+        key="footnote"
+        text="* The % Daily Value tells you how much a nutrient in a serving of food contributes to a daily diet."
+        x={PAD}
+        y={y}
+        width={CONTENT_W}
+        fontSize={7}
+        fill={TEXT}
+      />,
+    );
+  }
+
+  return (
+    <>
+      <Rect width={width} height={height} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+      {elements}
+    </>
+  );
+}
+
 type NodeProps = {
   obj: CanvasObj;
   selected: boolean;
@@ -383,52 +662,16 @@ function ObjNode({
   }
 
   if (obj.type === "nutrition" && obj.nutritionFacts) {
-    // Group the visible Text rows with an invisible Rect matching
-    // obj.width/height so Konva.Transformer (selection handles) has
-    // a stable bounding box to grab. The rect must come first so
-    // sharedProps' pointer events land on it.
-    const spec = composeNutritionFacts(obj.nutritionFacts);
-    const fontSize = 11;
-    const lineHeight = fontSize * 1.4;
-    const headerHeight = 28;
     return (
       <Group {...sharedProps}>
-        <Rect
+        <NutritionFactsVisual
+          facts={obj.nutritionFacts}
           width={obj.width}
           height={obj.height}
           fill={obj.fill}
           stroke={selected ? BRAND : obj.stroke}
           strokeWidth={selected ? Math.max(obj.strokeWidth, 1) : obj.strokeWidth}
         />
-        <Text
-          text="Nutrition Facts"
-          x={6}
-          y={4}
-          width={obj.width - 12}
-          fontSize={16}
-          fontStyle="bold"
-          fill="#111"
-        />
-        <Text
-          text={spec.servingSize}
-          x={6}
-          y={4 + 18}
-          width={obj.width - 12}
-          fontSize={10}
-          fill="#111"
-        />
-        {spec.rows.map((row, i) => (
-          <Text
-            key={i}
-            text={`${row.label}  ${row.amount}${row.dvPct !== undefined ? `   ${row.dvPct}%` : ""}`}
-            x={6 + row.indent * 8}
-            y={headerHeight + i * lineHeight}
-            width={obj.width - 12}
-            fontSize={fontSize}
-            fontStyle={row.bold ? "bold" : "normal"}
-            fill="#111"
-          />
-        ))}
       </Group>
     );
   }
@@ -520,9 +763,7 @@ export function EditorCanvas({
   // AI4 spot registry — per-page; threaded into JobSubmitRequest's
   // separationsOverride at export time. Pure local state; parent
   // (EditorApp) round-trips via onSeparationsChange.
-  const [separations, setSeparationsState] = useState<EditorSeparation[]>(
-    initialSeparations ?? [],
-  );
+  const [separations, setSeparationsState] = useState<EditorSeparation[]>(initialSeparations ?? []);
   function updateSeparations(next: EditorSeparation[]) {
     setSeparationsState(next);
     onSeparationsChange?.(next);
@@ -681,9 +922,7 @@ export function EditorCanvas({
     // Drop oldest entries when over the cap. The cursor lands on the
     // last entry (newest) because we just committed it.
     const capped =
-      truncated.length > HISTORY_MAX
-        ? truncated.slice(truncated.length - HISTORY_MAX)
-        : truncated;
+      truncated.length > HISTORY_MAX ? truncated.slice(truncated.length - HISTORY_MAX) : truncated;
     setHistory(capped);
     setHistoryIdx(capped.length - 1);
     setObjects(next);
@@ -757,6 +996,13 @@ export function EditorCanvas({
   // ── stage pointer events (mouse + touch) ───────────────────────────────────
 
   function onStagePointerDown(e: KonvaEventObject<MouseEvent | TouchEvent>) {
+    // Reset the placement guard on every new pointer-down: the guard
+    // only ever exists to swallow the SINGLE synthetic click Konva
+    // fires immediately after a placement pointer-up. If the user
+    // hasn't generated that synthetic click (clicked elsewhere
+    // first), the guard would otherwise leak and silently swallow
+    // a future legitimate selection click.
+    placementGuard.current = false;
     if (tool === "select") {
       if (e.target === stageRef.current) setSelectedId(null);
       return;
@@ -1317,9 +1563,7 @@ export function EditorCanvas({
               <button
                 type="button"
                 onClick={() => {
-                  const name = window.prompt(
-                    `Register ${fillColor} as a spot ink. Name:`,
-                  );
+                  const name = window.prompt(`Register ${fillColor} as a spot ink. Name:`);
                   if (name?.trim()) {
                     updateSeparations(registerSpot(separations, fillColor, name.trim()));
                   }
