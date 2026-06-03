@@ -9,7 +9,13 @@ import { FoldEditorPanel, type FoldEditorPanelValue } from "./FoldEditorPanel";
 import { Gs1DigitalLinkPanel, type Gs1DigitalLinkResult } from "./Gs1DigitalLinkPanel";
 import { ImposePanel, type ImposePanelValue } from "./ImposePanel";
 import { JobSetupPanel, type JobSetupValue } from "./JobSetupPanel";
-import { type NutritionFacts, NutritionPanel, type NutritionPanelSpec } from "./NutritionPanel";
+import {
+  DEFAULT_NUTRITION_STYLE,
+  type NutritionFacts,
+  NutritionPanel,
+  type NutritionPanelSpec,
+  type NutritionStyle,
+} from "./NutritionPanel";
 import { StreamingRenderProgress } from "./StreamingRenderProgress";
 import { TrapEditorPanel, type TrapEditorValue } from "./TrapEditorPanel";
 import { VariantMatrixPanel, type VariantMatrixPanelValue } from "./VariantMatrixPanel";
@@ -98,10 +104,15 @@ export function RightRailAccordion({
         // noNonNullAssertion rule.
         const facts = selectedObj?.nutritionFacts;
         if (!facts || !onUpdateSelected) return null;
+        const style = selectedObj?.nutritionStyle ?? DEFAULT_NUTRITION_STYLE;
         return (
           <NutritionPropertiesSection
             value={facts}
             onChange={(nutritionFacts: NutritionFacts) => onUpdateSelected({ nutritionFacts })}
+            style={style}
+            onStyleChange={(nutritionStyle: NutritionStyle) =>
+              onUpdateSelected({ nutritionStyle })
+            }
           />
         );
       },
@@ -384,11 +395,22 @@ function LocalizationSection(): ReactElement {
 function NutritionPropertiesSection({
   value,
   onChange,
+  style,
+  onStyleChange,
 }: {
   value: NutritionFacts;
   onChange: (next: NutritionFacts) => void;
+  style: NutritionStyle;
+  onStyleChange: (next: NutritionStyle) => void;
 }): ReactElement {
-  return <NutritionPanel value={value} onChange={onChange} />;
+  return (
+    <NutritionPanel
+      value={value}
+      onChange={onChange}
+      style={style}
+      onStyleChange={onStyleChange}
+    />
+  );
 }
 
 /**

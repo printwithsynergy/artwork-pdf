@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_NUTRITION_STYLE,
   FDA_DAILY_VALUES,
   type NutritionFacts,
   type NutritionPanelProps,
   type NutritionPanelSpec,
+  type NutritionStyle,
   composeNutritionFacts,
 } from "./NutritionPanel";
 
@@ -130,5 +132,31 @@ describe("NutritionPanelProps contract", () => {
     expect(props.value).toEqual(minimal);
     props.onChange?.({ ...minimal, calories: 999 });
     expect(sink.last?.calories).toBe(999);
+  });
+
+  it("accepts controlled-mode style + onStyleChange", () => {
+    const sink: { last: NutritionStyle | null } = { last: null };
+    const props: NutritionPanelProps = {
+      value: minimal,
+      onChange: () => {},
+      style: DEFAULT_NUTRITION_STYLE,
+      onStyleChange: (next) => {
+        sink.last = next;
+      },
+    };
+    expect(props.style).toEqual(DEFAULT_NUTRITION_STYLE);
+    props.onStyleChange?.({ ...DEFAULT_NUTRITION_STYLE, scale: 1.25, fontFamily: "Arial" });
+    expect(sink.last?.scale).toBeCloseTo(1.25);
+    expect(sink.last?.fontFamily).toBe("Arial");
+  });
+});
+
+describe("DEFAULT_NUTRITION_STYLE", () => {
+  it("matches FDA-baseline values (Helvetica, 1.0 across the board)", () => {
+    expect(DEFAULT_NUTRITION_STYLE.fontFamily).toBe("Helvetica");
+    expect(DEFAULT_NUTRITION_STYLE.scale).toBe(1);
+    expect(DEFAULT_NUTRITION_STYLE.titleScale).toBe(1);
+    expect(DEFAULT_NUTRITION_STYLE.caloriesScale).toBe(1);
+    expect(DEFAULT_NUTRITION_STYLE.bodyScale).toBe(1);
   });
 });

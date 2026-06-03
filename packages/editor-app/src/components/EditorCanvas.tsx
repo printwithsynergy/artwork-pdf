@@ -29,7 +29,9 @@ import { LayersPanel } from "./LayersPanel";
 import { MobileToolDrawer } from "./MobileToolDrawer";
 import {
   DEFAULT_NUTRITION_FACTS,
+  DEFAULT_NUTRITION_STYLE,
   type NutritionFacts,
+  type NutritionStyle,
   composeNutritionFacts,
 } from "./NutritionPanel";
 import { RightRailAccordion } from "./RightRailAccordion";
@@ -119,6 +121,10 @@ export type CanvasObj = {
    *  derived at render time via `composeNutritionFacts(facts)`; edits
    *  to fields in the properties panel flow back into this record. */
   nutritionFacts?: NutritionFacts;
+  /** Optional style overrides for type=`"nutrition"` objects (font
+   *  family + per-role scale multipliers). Missing → FDA baseline
+   *  via {@link DEFAULT_NUTRITION_STYLE}. */
+  nutritionStyle?: NutritionStyle;
   /** Source data for type=`"braille"` objects. The visual (cell + dot
    *  positions) is derived at render time via `composeBraille(spec)`. */
   brailleSpec?: BrailleSpec;
@@ -241,6 +247,9 @@ function stagePointer(stage: Konva.Stage): { x: number; y: number } {
 
 type NutritionFactsVisualProps = {
   facts: NutritionFacts;
+  /** Style overrides; defaults to FDA baseline via
+   *  {@link DEFAULT_NUTRITION_STYLE}. */
+  style?: NutritionStyle;
   width: number;
   height: number;
   fill: string;
@@ -248,8 +257,31 @@ type NutritionFactsVisualProps = {
   strokeWidth: number;
 };
 
+// Baseline FDA sizes (in pt) — multiplied by `style.scale * style.<role>Scale`
+// at render time. The ratios match §101.9(d)(1)(ii): title largest,
+// Calories second-largest, body small, footnote smallest.
+const NF_BASE = {
+  pad: 6,
+  rowH: 14,
+  titleMaxPt: 28,
+  // Title shrinks to fit narrow panels — CONTENT_W / titleFitDivisor
+  // is the upper bound when below the cap.
+  titleFitDivisor: 7.5,
+  servingsLinePt: 9,
+  servingSizeLabelPt: 9,
+  servingSizeValuePt: 11,
+  amountPerPt: 8,
+  caloriesLabelPt: 16,
+  caloriesValuePt: 22,
+  dvHeaderPt: 8,
+  macroRowPt: 10,
+  microRowPt: 9,
+  footnotePt: 7,
+};
+
 function NutritionFactsVisual({
   facts,
+  style,
   width,
   height,
   fill,
@@ -257,15 +289,24 @@ function NutritionFactsVisual({
   strokeWidth,
 }: NutritionFactsVisualProps) {
   const spec = composeNutritionFacts(facts);
-  const PAD = 6;
+  const s = style ?? DEFAULT_NUTRITION_STYLE;
+  // Compound multipliers — global scale × per-role scale.
+  const layoutMul = s.scale;
+  const titleMul = s.scale * s.titleScale;
+  const caloriesMul = s.scale * s.caloriesScale;
+  const bodyMul = s.scale * s.bodyScale;
+  const fontFamily = s.fontFamily;
+
+  const PAD = NF_BASE.pad * layoutMul;
   const CONTENT_W = width - PAD * 2;
   const TEXT = "#0a0a0a";
 
-  // Right-column widths for the DV% percentages.
-  const DV_W = 36;
+  // Right-column widths for the DV% percentages — scale with body
+  // size since they sit next to the macro/micro rows.
+  const DV_W = 36 * bodyMul;
   // Amount column sits to the left of DV%; label column eats the
   // remaining space.
-  const AMT_W = 60;
+  const AMT_W = 60 * bodyMul;
   const LABEL_W = CONTENT_W - AMT_W - DV_W;
 
   // Calories block content.
@@ -281,16 +322,20 @@ function NutritionFactsVisual({
   const macroRows = spec.rows.filter((r) => !isMicro(r.label));
   const microRows = spec.rows.filter((r) => isMicro(r.label));
 
-  // Row heights.
-  const ROW_H = 14;
+  // Row heights scale with body text.
+  const ROW_H = NF_BASE.rowH * bodyMul;
 
   // Accumulate y as we render.
   const elements: ReactNode[] = [];
   let y = PAD;
 
   // Title — bold extra-large. The FDA spec calls for "highly visible"
-  // typography; we cap at 28pt and scale down for narrow panels.
-  const titleSize = Math.min(28, CONTENT_W / 7.5);
+  // typography; we cap at the baseline 28pt × titleMul and scale down
+  // for narrow panels using the same divisor.
+  const titleSize = Math.min(
+    NF_BASE.titleMaxPt * titleMul,
+    (CONTENT_W / NF_BASE.titleFitDivisor) * titleMul,
+  );
   elements.push(
     <Text
       key="title"
@@ -300,15 +345,15 @@ function NutritionFactsVisual({
       width={CONTENT_W}
       fontSize={titleSize}
       fontStyle="bold"
-      fontFamily="Helvetica"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += titleSize + 4;
+  y += titleSize + 4 * layoutMul;
 
   // Thin rule under title.
   elements.push(<Rect key="r1" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
-  y += 4;
+  y += 4 * layoutMul;
 
   // Servings line.
   elements.push(
@@ -318,15 +363,24 @@ function NutritionFactsVisual({
       x={PAD}
       y={y}
       width={CONTENT_W}
-      fontSize={9}
+      fontSize={NF_BASE.servingsLinePt * bodyMul}
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += 11;
+  y += 11 * bodyMul;
 
   // Serving size — "Serving size" label left, value bold right.
   elements.push(
-    <Text key="ssz-label" text="Serving size" x={PAD} y={y} fontSize={9} fill={TEXT} />,
+    <Text
+      key="ssz-label"
+      text="Serving size"
+      x={PAD}
+      y={y}
+      fontSize={NF_BASE.servingSizeLabelPt * bodyMul}
+      fontFamily={fontFamily}
+      fill={TEXT}
+    />,
     <Text
       key="ssz-value"
       text={spec.servingSize}
@@ -334,16 +388,19 @@ function NutritionFactsVisual({
       y={y}
       width={CONTENT_W}
       align="right"
-      fontSize={11}
+      fontSize={NF_BASE.servingSizeValuePt * bodyMul}
       fontStyle="bold"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += 14;
+  y += 14 * bodyMul;
 
   // Thick rule (the iconic FDA black band).
-  elements.push(<Rect key="r-thick-1" x={PAD} y={y} width={CONTENT_W} height={6} fill={TEXT} />);
-  y += 10;
+  elements.push(
+    <Rect key="r-thick-1" x={PAD} y={y} width={CONTENT_W} height={6 * layoutMul} fill={TEXT} />,
+  );
+  y += 10 * layoutMul;
 
   // "Amount per serving" + Calories number on the right.
   elements.push(
@@ -352,12 +409,13 @@ function NutritionFactsVisual({
       text="Amount per serving"
       x={PAD}
       y={y}
-      fontSize={8}
+      fontSize={NF_BASE.amountPerPt * bodyMul}
       fontStyle="bold"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += 11;
+  y += 11 * bodyMul;
 
   // Calories — "Calories" label bold large left, number bold huge right.
   elements.push(
@@ -365,9 +423,10 @@ function NutritionFactsVisual({
       key="cal-label"
       text="Calories"
       x={PAD}
-      y={y + 3}
-      fontSize={16}
+      y={y + 3 * caloriesMul}
+      fontSize={NF_BASE.caloriesLabelPt * caloriesMul}
       fontStyle="bold"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
     <Text
@@ -377,16 +436,19 @@ function NutritionFactsVisual({
       y={y}
       width={CONTENT_W}
       align="right"
-      fontSize={22}
+      fontSize={NF_BASE.caloriesValuePt * caloriesMul}
       fontStyle="bold"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += 26;
+  y += 26 * caloriesMul;
 
   // Medium rule.
-  elements.push(<Rect key="r2" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
-  y += 3;
+  elements.push(
+    <Rect key="r2" x={PAD} y={y} width={CONTENT_W} height={2 * layoutMul} fill={TEXT} />,
+  );
+  y += 3 * layoutMul;
 
   // "% Daily Value*" right-aligned, small bold.
   elements.push(
@@ -397,30 +459,32 @@ function NutritionFactsVisual({
       y={y}
       width={CONTENT_W}
       align="right"
-      fontSize={8}
+      fontSize={NF_BASE.dvHeaderPt * bodyMul}
       fontStyle="bold"
+      fontFamily={fontFamily}
       fill={TEXT}
     />,
   );
-  y += 11;
+  y += 11 * bodyMul;
 
   // Thin rule below DV header.
   elements.push(<Rect key="r3" x={PAD} y={y} width={CONTENT_W} height={1} fill={TEXT} />);
-  y += 2;
+  y += 2 * layoutMul;
 
   // Macro rows with thin separators.
   for (const [i, row] of macroRows.entries()) {
-    const indentX = PAD + row.indent * 10;
-    // Bold label (e.g. "Total Fat") + amount inline.
+    const indentPx = row.indent * 10 * bodyMul;
+    const indentX = PAD + indentPx;
     elements.push(
       <Text
         key={`m-${i}-label`}
         text={row.label}
         x={indentX}
         y={y}
-        width={LABEL_W - row.indent * 10}
-        fontSize={10}
+        width={LABEL_W - indentPx}
+        fontSize={NF_BASE.macroRowPt * bodyMul}
         fontStyle={row.bold ? "bold" : "normal"}
+        fontFamily={fontFamily}
         fill={TEXT}
       />,
       <Text
@@ -429,7 +493,8 @@ function NutritionFactsVisual({
         x={PAD + LABEL_W}
         y={y}
         width={AMT_W}
-        fontSize={10}
+        fontSize={NF_BASE.macroRowPt * bodyMul}
+        fontFamily={fontFamily}
         fill={TEXT}
       />,
     );
@@ -442,8 +507,9 @@ function NutritionFactsVisual({
           y={y}
           width={DV_W}
           align="right"
-          fontSize={10}
+          fontSize={NF_BASE.macroRowPt * bodyMul}
           fontStyle="bold"
+          fontFamily={fontFamily}
           fill={TEXT}
         />,
       );
@@ -456,8 +522,10 @@ function NutritionFactsVisual({
 
   if (microRows.length > 0) {
     // Thick rule before the micronutrient block.
-    elements.push(<Rect key="r-thick-2" x={PAD} y={y} width={CONTENT_W} height={4} fill={TEXT} />);
-    y += 6;
+    elements.push(
+      <Rect key="r-thick-2" x={PAD} y={y} width={CONTENT_W} height={4 * layoutMul} fill={TEXT} />,
+    );
+    y += 6 * layoutMul;
 
     for (const [i, row] of microRows.entries()) {
       elements.push(
@@ -467,7 +535,8 @@ function NutritionFactsVisual({
           x={PAD}
           y={y}
           width={LABEL_W + AMT_W}
-          fontSize={9}
+          fontSize={NF_BASE.microRowPt * bodyMul}
+          fontFamily={fontFamily}
           fill={TEXT}
         />,
         <Text
@@ -476,7 +545,8 @@ function NutritionFactsVisual({
           x={PAD + LABEL_W}
           y={y}
           width={AMT_W}
-          fontSize={9}
+          fontSize={NF_BASE.microRowPt * bodyMul}
+          fontFamily={fontFamily}
           fill={TEXT}
         />,
       );
@@ -489,8 +559,9 @@ function NutritionFactsVisual({
             y={y}
             width={DV_W}
             align="right"
-            fontSize={9}
+            fontSize={NF_BASE.microRowPt * bodyMul}
             fontStyle="bold"
+            fontFamily={fontFamily}
             fill={TEXT}
           />,
         );
@@ -505,9 +576,11 @@ function NutritionFactsVisual({
   }
 
   // Thick rule + footnote at the bottom — only if vertical space allows.
-  if (y < height - 30) {
-    elements.push(<Rect key="r-thick-3" x={PAD} y={y} width={CONTENT_W} height={2} fill={TEXT} />);
-    y += 5;
+  if (y < height - 30 * layoutMul) {
+    elements.push(
+      <Rect key="r-thick-3" x={PAD} y={y} width={CONTENT_W} height={2 * layoutMul} fill={TEXT} />,
+    );
+    y += 5 * layoutMul;
     elements.push(
       <Text
         key="footnote"
@@ -515,7 +588,8 @@ function NutritionFactsVisual({
         x={PAD}
         y={y}
         width={CONTENT_W}
-        fontSize={7}
+        fontSize={NF_BASE.footnotePt * bodyMul}
+        fontFamily={fontFamily}
         fill={TEXT}
       />,
     );
@@ -666,6 +740,7 @@ function ObjNode({
       <Group {...sharedProps}>
         <NutritionFactsVisual
           facts={obj.nutritionFacts}
+          style={obj.nutritionStyle ?? DEFAULT_NUTRITION_STYLE}
           width={obj.width}
           height={obj.height}
           fill={obj.fill}
@@ -1066,6 +1141,7 @@ export function EditorCanvas({
         stroke: "#111111",
         strokeWidth: 1,
         nutritionFacts: DEFAULT_NUTRITION_FACTS,
+        nutritionStyle: DEFAULT_NUTRITION_STYLE,
       };
     } else if (tool === "braille") {
       obj = {
