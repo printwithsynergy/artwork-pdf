@@ -25,6 +25,10 @@
  * @public
  */
 import { useState } from "react";
+import {
+  primaryButtonStyle,
+  secondaryButtonStyle,
+} from "../lib/panel-button-styles";
 
 import type { BarcodeRenderFn, BarcodeRenderResult } from "./BarcodeGeneratorPanel";
 
@@ -332,7 +336,7 @@ export function Gs1DigitalLinkPanel({
       <button
         type="button"
         onClick={handlePreview}
-        style={{ padding: "0.4rem 0.8rem", marginRight: "0.5rem" }}
+        style={secondaryButtonStyle()}
       >
         Preview URL
       </button>
@@ -341,7 +345,7 @@ export function Gs1DigitalLinkPanel({
           type="button"
           onClick={handleGenerate}
           disabled={busy}
-          style={{ padding: "0.4rem 0.8rem" }}
+          style={primaryButtonStyle(busy)}
         >
           {busy ? "Generating…" : "Generate QR"}
         </button>

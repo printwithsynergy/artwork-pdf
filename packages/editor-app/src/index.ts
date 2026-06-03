@@ -443,6 +443,10 @@ export {
 } from "./lib/editor-config";
 export { markUnwired, isUnwired } from "./lib/unwired";
 export {
+  primaryButtonStyle,
+  secondaryButtonStyle,
+} from "./lib/panel-button-styles";
+export {
   type EditorDielinePanel,
   isPointInPanel,
   findPanelAt,

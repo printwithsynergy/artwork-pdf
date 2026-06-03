@@ -21,6 +21,7 @@
  * @public
  */
 import { useState } from "react";
+import { primaryButtonStyle } from "../lib/panel-button-styles";
 
 /**
  * Marburg Medium dot-geometry defaults (EN 15823). Re-exported so
@@ -315,7 +316,7 @@ export function BraillePanel({
           style={{ marginLeft: "0.5rem", width: "5em" }}
         />
       </label>
-      <button type="button" onClick={handleCompose} style={{ padding: "0.4rem 0.8rem" }}>
+      <button type="button" onClick={handleCompose} style={primaryButtonStyle()}>
         Compose
       </button>
       {lastResult && (
