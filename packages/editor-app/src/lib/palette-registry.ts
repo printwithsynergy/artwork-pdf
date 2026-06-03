@@ -60,6 +60,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "palette-to-spot": { slot: "panel.right", label: "Palette → spot" },
   "white-underbase": { slot: "panel.right", label: "White underbase" },
   "streaming-render": { slot: "panel.right", label: "Render progress" },
+  "direction-indicators": { slot: "overlay.canvas", label: "Direction indicators" },
 };
 
 /**

@@ -43,7 +43,8 @@ export type PaletteId =
   | "accessibility-hints"
   | "palette-to-spot"
   | "white-underbase"
-  | "streaming-render";
+  | "streaming-render"
+  | "direction-indicators";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -158,6 +159,16 @@ export interface EditorConfig {
    *  `POST /v1/compose/stream` SSE endpoint. Hosts that don't run
    *  the streaming endpoint opt out via this flag. */
   enable_streaming_render: boolean;
+  /** S5 — structural export (CF2 / DXF). When enabled, hosts can
+   *  surface a "download structural file" affordance backed by
+   *  {@link emitStructural}; the editor emits the dieline as
+   *  CF2 (die-maker default) or DXF (CAD interchange). */
+  enable_structural_export: boolean;
+  /** S6 — direction indicators overlay. When enabled, hosts can
+   *  mount {@link DirectionIndicatorsOverlay} on top of the canvas
+   *  to surface non-printing flute / grain / web-direction
+   *  indicators + an inside-print mirror warning. */
+  enable_direction_indicators: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -479,6 +490,8 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_swatches: true,
   enable_white_underbase: true,
   enable_streaming_render: true,
+  enable_structural_export: true,
+  enable_direction_indicators: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,

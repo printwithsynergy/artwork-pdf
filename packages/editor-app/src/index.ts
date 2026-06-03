@@ -238,6 +238,19 @@ export {
   summarizeStreamingProgress,
 } from "./lib/streaming-render";
 export {
+  emitCf2,
+  emitDxf,
+  emitStructural,
+  type StructuralExportDieline,
+  type StructuralExportFormat,
+  type StructuralPath,
+} from "./lib/structural-export";
+export {
+  DirectionIndicatorsOverlay,
+  type DirectionIndicatorsOverlayProps,
+  type DirectionIndicatorsSpec,
+} from "./components/DirectionIndicatorsOverlay";
+export {
   ComplianceFindingsPanel,
   type ComplianceFinding,
   type ComplianceFindingsPanelProps,
