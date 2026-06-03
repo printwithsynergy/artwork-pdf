@@ -21,6 +21,7 @@ import type { EditorConfig } from "../lib/editor-config";
 import type { PreflightReport } from "../lib/preflight/types";
 import { DielineLibraryModal } from "./DielineLibraryModal";
 import { HistoryPanel } from "./HistoryPanel";
+import { RightRailAccordion } from "./RightRailAccordion";
 import { LayersPanel } from "./LayersPanel";
 import { TacOverlay } from "./TacOverlay";
 import { isPanelVisible, showFeature } from "../lib/editor-config";
@@ -1372,6 +1373,12 @@ export function EditorCanvas({
             onSelect={seekHistory}
           />
         )}
+
+        {/* ── right rail: accordion of in-browser-only Wave 1–4 panels ──
+            Each section is gated by its own `enable_<feature>` flag so
+            hosts using `NO_BACKEND_DEFAULTS` see only the panels that
+            work without a host-supplied adapter. */}
+        {!isMobile && <RightRailAccordion config={config} />}
       </div>
 
       {/* ── selected properties footer ── */}

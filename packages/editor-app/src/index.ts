@@ -20,6 +20,10 @@ export { TopBar, ArtworkPdfLogo, type TopBarProps, type TopBarButton } from "./c
 export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/MobileToolDrawer";
 export { HistoryPanel, type HistoryPanelProps } from "./components/HistoryPanel";
 export {
+  RightRailAccordion,
+  type RightRailAccordionProps,
+} from "./components/RightRailAccordion";
+export {
   DielineParametersPanel,
   type DielineParameters,
   type DielineParametersPanelProps,
@@ -432,6 +436,7 @@ export {
   DEFAULT_EDITOR_CONFIG,
   BASIC_MODE_OVERRIDES,
   PRO_MODE_OVERRIDES,
+  NO_BACKEND_DEFAULTS,
   resolveConfig,
   showFeature,
   isPanelVisible,
