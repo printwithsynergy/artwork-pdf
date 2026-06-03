@@ -1,15 +1,20 @@
 {
-  "name": "@artworkpdf/dieline-parser",
-  "version": "0.1.0",
+  "name": "@printwithsynergy/dieline-parser",
+  "version": "0.5.2",
   "description": "Structural dieline import: CF2, DDES, ARD formats",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
-  "devDependencies": { "typescript": "^5.7.0", "vitest": "^4.1.0" }
+  "devDependencies": { "typescript": "^5.7.0", "vitest": "^4.1.0" },
+  "publishConfig": {
+    "access": "public"
+  }
 }

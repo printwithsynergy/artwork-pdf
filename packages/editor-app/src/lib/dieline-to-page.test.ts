@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { parseARD, parseCF2, parseDDES } from "@artworkpdf/dieline-parser";
+import { parseARD, parseCF2, parseDDES } from "@printwithsynergy/dieline-parser";
 import { describe, expect, it } from "vitest";
 import { dielineToPage } from "./dieline-template";
 

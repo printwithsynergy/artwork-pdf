@@ -151,7 +151,7 @@ importers:
 
   packages/editor-app:
     dependencies:
-      '@artworkpdf/dieline-parser':
+      '@printwithsynergy/dieline-parser':
         specifier: workspace:*
         version: link:../dieline-parser
       pdf-lib:

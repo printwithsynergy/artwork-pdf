@@ -374,7 +374,7 @@ export type Layer = {
  * structure (pouch, bottle wrap, carton, etc.).
  *
  * `dielineData` carries the parsed CF2/DDES/ARD structure (shape
- * depends on the source format; see `@artworkpdf/dieline-parser`).
+ * depends on the source format; see `@printwithsynergy/dieline-parser`).
  * `previewSvg` is an inline SVG suitable for thumbnail rendering in
  * the template-picker UI. `tags` and `category` drive editor
  * filtering.

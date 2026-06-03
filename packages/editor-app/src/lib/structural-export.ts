@@ -18,7 +18,7 @@
 
 /**
  * One structural path emitted to the file. Mirrors the
- * `DielinePath` shape from `@artworkpdf/dieline-parser` so the
+ * `DielinePath` shape from `@printwithsynergy/dieline-parser` so the
  * editor can pass parsed dielines straight through.
  *
  * @public
