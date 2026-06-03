@@ -61,6 +61,18 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "white-underbase": { slot: "panel.right", label: "White underbase" },
   "streaming-render": { slot: "panel.right", label: "Render progress" },
   "direction-indicators": { slot: "overlay.canvas", label: "Direction indicators" },
+  "substrate-sim": { slot: "overlay.canvas", label: "Substrate simulation" },
+  "contrast-legibility": { slot: "panel.right", label: "Contrast & legibility" },
+  "dam-assets": { slot: "panel.right", label: "DAM assets" },
+  "approved-master-diff": { slot: "panel.right", label: "Master diff" },
+  "copy-generation": { slot: "panel.right", label: "Copy generator" },
+  "image-generation": { slot: "panel.right", label: "Image generator" },
+  "auto-layout": { slot: "panel.right", label: "Auto layout" },
+  "ocr-rebuild": { slot: "panel.right", label: "OCR rebuild" },
+  "localization": { slot: "panel.right", label: "Localization" },
+  "design-handoff": { slot: "panel.right", label: "Design handoff" },
+  "ecommerce-connector": { slot: "panel.right", label: "Products" },
+  "pim-connector": { slot: "panel.right", label: "PIM fields" },
 };
 
 /**
