@@ -181,6 +181,7 @@ export function RightRailAccordion({
       {visible.map((section) => (
         <Section
           key={section.id}
+          id={section.id}
           open={openId === section.id}
           onToggle={() => setOpenId((cur) => (cur === section.id ? null : section.id))}
           label={section.label}
@@ -200,22 +201,28 @@ type AccordionSection = {
 };
 
 function Section({
+  id,
   open,
   onToggle,
   label,
   children,
 }: {
+  id: string;
   open: boolean;
   onToggle: () => void;
   label: string;
   children: ReactNode;
 }): ReactElement {
+  const buttonId = `rra-${id}-header`;
+  const panelId = `rra-${id}-panel`;
   return (
     <section style={{ borderBottom: `1px solid ${BORDER}` }}>
       <button
+        id={buttonId}
         type="button"
         onClick={onToggle}
         aria-expanded={open}
+        aria-controls={panelId}
         style={{
           width: "100%",
           padding: "0.55rem 0.85rem",
@@ -237,18 +244,24 @@ function Section({
           {open ? "−" : "+"}
         </span>
       </button>
-      {open && (
-        <div
-          style={{
-            maxHeight: 480,
-            overflowY: "auto",
-            borderTop: `1px solid ${BORDER}`,
-            background: "#120a05",
-          }}
-        >
-          {children}
-        </div>
-      )}
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        hidden={!open}
+        style={
+          open
+            ? {
+                maxHeight: 480,
+                overflowY: "auto",
+                borderTop: `1px solid ${BORDER}`,
+                background: "#120a05",
+              }
+            : undefined
+        }
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -342,40 +355,76 @@ function LocalizationSection(): ReactElement {
 }
 
 function NutritionSection(): ReactElement {
+  const [composed, setComposed] = useState<NutritionPanelSpec | null>(null);
   return (
-    <NutritionPanel
-      onCompose={(spec: NutritionPanelSpec) => {
-        // The host normally lays the composed spec onto the canvas;
-        // in the in-browser sidebar we surface a confirmation only.
-        if (typeof window !== "undefined") {
-          window.alert(`Composed nutrition panel: ${spec.rows.length} rows`);
-        }
-      }}
-    />
+    <>
+      <NutritionPanel onCompose={setComposed} />
+      {composed && (
+        <ResultChip>
+          Composed nutrition panel — {composed.rows.length} rows ready to drop on the canvas.
+        </ResultChip>
+      )}
+    </>
   );
 }
 
 function Gs1Section(): ReactElement {
+  const [link, setLink] = useState<Gs1DigitalLinkResult | null>(null);
   return (
-    <Gs1DigitalLinkPanel
-      onLink={(result: Gs1DigitalLinkResult) => {
-        if (typeof window !== "undefined") {
-          window.prompt("GS1 Digital Link URL", result.url);
-        }
-      }}
-    />
+    <>
+      <Gs1DigitalLinkPanel onLink={setLink} />
+      {link && (
+        <ResultChip>
+          <div style={{ marginBottom: "0.25rem", color: MUTED }}>GS1 Digital Link URL</div>
+          <code
+            style={{
+              display: "block",
+              wordBreak: "break-all",
+              fontFamily: "ui-monospace, monospace",
+              fontSize: "0.7rem",
+              color: TEXT,
+            }}
+          >
+            {link.url}
+          </code>
+        </ResultChip>
+      )}
+    </>
   );
 }
 
 function BrailleSection(): ReactElement {
+  const [composed, setComposed] = useState<BrailleComposeResult | null>(null);
   return (
-    <BraillePanel
-      onCompose={(result: BrailleComposeResult) => {
-        if (typeof window !== "undefined") {
-          window.alert(`Composed ${result.cells.length} Braille cells`);
-        }
+    <>
+      <BraillePanel onCompose={setComposed} />
+      {composed && (
+        <ResultChip>
+          Composed {composed.cells.length} Braille cells ready to drop on the canvas.
+        </ResultChip>
+      )}
+    </>
+  );
+}
+
+function ResultChip({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        margin: "0.5rem",
+        padding: "0.5rem 0.65rem",
+        background: "rgba(252,81,2,0.08)",
+        border: `1px solid ${BORDER}`,
+        borderRadius: 4,
+        color: TEXT,
+        fontSize: "0.75rem",
+        lineHeight: 1.4,
       }}
-    />
+    >
+      {children}
+    </div>
   );
 }
 
