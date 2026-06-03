@@ -2,24 +2,17 @@
 "use client";
 import { type CSSProperties, type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { type EditorConfig, isPanelVisible } from "../lib/editor-config";
-import { type BrailleComposeResult, BraillePanel, type BrailleSpec } from "./BraillePanel";
 import { type DielineParameters, DielineParametersPanel } from "./DielineParametersPanel";
 import type { CanvasObj } from "./EditorCanvas";
 import { FoldEditorPanel, type FoldEditorPanelValue } from "./FoldEditorPanel";
 import { Gs1DigitalLinkPanel, type Gs1DigitalLinkResult } from "./Gs1DigitalLinkPanel";
 import { ImposePanel, type ImposePanelValue } from "./ImposePanel";
 import { JobSetupPanel, type JobSetupValue } from "./JobSetupPanel";
-import {
-  DEFAULT_NUTRITION_STYLE,
-  type NutritionFacts,
-  NutritionPanel,
-  type NutritionPanelSpec,
-  type NutritionStyle,
-} from "./NutritionPanel";
 import { StreamingRenderProgress } from "./StreamingRenderProgress";
 import { TrapEditorPanel, type TrapEditorValue } from "./TrapEditorPanel";
 import { VariantMatrixPanel, type VariantMatrixPanelValue } from "./VariantMatrixPanel";
 import { WhiteUnderbasePanel } from "./WhiteUnderbasePanel";
+import { type PropertiesSectionHooks, resolvePropertiesSection } from "./properties-sections";
 import { LocalizationPanel, type LocalizationVariant } from "./wave4-extras";
 
 const BORDER = "#3d1a00";
@@ -39,19 +32,26 @@ export type RightRailAccordionProps = {
   config: EditorConfig;
   /**
    * The currently selected canvas object, if any. When supplied, the
-   * accordion shows per-type properties sections (Nutrition
-   * properties, Braille properties) when the selected object matches.
-   * Existing always-visible sections (Job setup, Trap editor, etc.)
-   * still render normally.
+   * accordion mounts the matching per-type Properties panel at the
+   * top of the stack (rect, ellipse, text, image, path, nutrition,
+   * braille). Existing always-visible sections (Job setup, Trap
+   * editor, etc.) still render normally.
    */
   selectedObj?: CanvasObj | null;
   /**
    * Patches the currently selected object. The accordion calls this
    * from a properties section to update the selection in place
-   * (e.g. when a Nutrition field changes the host writes the new
-   * `nutritionFacts` back into the canvas state).
+   * (e.g. when a fill colour changes, the host writes the new
+   * value back into the canvas state).
    */
   onUpdateSelected?: (patch: Partial<CanvasObj>) => void;
+  /**
+   * Optional hooks the dispatcher threads into per-type panels when
+   * supplied. The text panel surfaces an "Edit text…" button when
+   * `propertiesHooks.onEditText` is wired; the image panel surfaces
+   * "Replace image…" when `propertiesHooks.onReplaceImage` is wired.
+   */
+  propertiesHooks?: PropertiesSectionHooks;
 };
 
 /**
@@ -75,67 +75,36 @@ export function RightRailAccordion({
   config,
   selectedObj,
   onUpdateSelected,
+  propertiesHooks,
 }: RightRailAccordionProps): ReactElement | null {
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // Auto-open the matching properties section when a tool-placed
-  // object is selected.
+  const propertiesSection = resolvePropertiesSection(
+    selectedObj,
+    onUpdateSelected,
+    config,
+    propertiesHooks,
+  );
+
+  // Auto-open the resolved properties section whenever the selection
+  // type changes. Keeps the rail in sync with the canvas without
+  // stealing focus from a section the user manually opened mid-edit
+  // (only fires on type changes, not every field tweak).
   useEffect(() => {
-    if (selectedObj?.type === "nutrition") setOpenId("nutrition-properties");
-    else if (selectedObj?.type === "braille") setOpenId("braille-properties");
-  }, [selectedObj?.type]);
+    if (propertiesSection) setOpenId(propertiesSection.id);
+  }, [propertiesSection?.id]);
 
   const sections: AccordionSection[] = [
-    {
-      id: "nutrition-properties",
-      label: "Nutrition properties",
-      // Gate on `onUpdateSelected` too — without an update callback
-      // the inputs would render but writes would no-op, which is
-      // a confusing "read-only-but-editable-looking" state.
-      visible:
-        config.enable_nutrition_panel &&
-        selectedObj?.type === "nutrition" &&
-        selectedObj.nutritionFacts !== undefined &&
-        onUpdateSelected !== undefined,
-      render: () => {
-        // The visibility check above guarantees both fields are
-        // present, but TypeScript can't propagate the narrowing into
-        // this closure; widen + guard explicitly to satisfy Biome's
-        // noNonNullAssertion rule.
-        const facts = selectedObj?.nutritionFacts;
-        if (!facts || !onUpdateSelected) return null;
-        const style = selectedObj?.nutritionStyle ?? DEFAULT_NUTRITION_STYLE;
-        return (
-          <NutritionPropertiesSection
-            value={facts}
-            onChange={(nutritionFacts: NutritionFacts) => onUpdateSelected({ nutritionFacts })}
-            style={style}
-            onStyleChange={(nutritionStyle: NutritionStyle) =>
-              onUpdateSelected({ nutritionStyle })
-            }
-          />
-        );
-      },
-    },
-    {
-      id: "braille-properties",
-      label: "Braille properties",
-      visible:
-        config.enable_braille_panel &&
-        selectedObj?.type === "braille" &&
-        selectedObj.brailleSpec !== undefined &&
-        onUpdateSelected !== undefined,
-      render: () => {
-        const spec = selectedObj?.brailleSpec;
-        if (!spec || !onUpdateSelected) return null;
-        return (
-          <BraillePropertiesSection
-            value={spec}
-            onChange={(brailleSpec: BrailleSpec) => onUpdateSelected({ brailleSpec })}
-          />
-        );
-      },
-    },
+    ...(propertiesSection
+      ? [
+          {
+            id: propertiesSection.id,
+            label: `${propertiesSection.label} properties`,
+            visible: true,
+            render: () => propertiesSection.element,
+          },
+        ]
+      : []),
     {
       id: "job-setup",
       label: "Job setup",
@@ -385,47 +354,6 @@ function LocalizationSection(): ReactElement {
     { language: "de-DE", texts: { headline: "Cold Brew", tagline: "Sanft, nie bitter" } },
   ];
   return <LocalizationPanel variants={variants} />;
-}
-
-/**
- * Selection-aware properties section — mounted when a nutrition
- * canvas object is selected. Renders NutritionPanel in controlled
- * mode so every edit flows back into the object via `onChange`.
- */
-function NutritionPropertiesSection({
-  value,
-  onChange,
-  style,
-  onStyleChange,
-}: {
-  value: NutritionFacts;
-  onChange: (next: NutritionFacts) => void;
-  style: NutritionStyle;
-  onStyleChange: (next: NutritionStyle) => void;
-}): ReactElement {
-  return (
-    <NutritionPanel
-      value={value}
-      onChange={onChange}
-      style={style}
-      onStyleChange={onStyleChange}
-    />
-  );
-}
-
-/**
- * Selection-aware properties section — mounted when a braille
- * canvas object is selected. Renders BraillePanel in controlled
- * mode.
- */
-function BraillePropertiesSection({
-  value,
-  onChange,
-}: {
-  value: BrailleSpec;
-  onChange: (next: BrailleSpec) => void;
-}): ReactElement {
-  return <BraillePanel value={value} onChange={onChange} />;
 }
 
 function Gs1Section(): ReactElement {

@@ -24,6 +24,31 @@ export {
   type RightRailAccordionProps,
 } from "./components/RightRailAccordion";
 export {
+  RectPropertiesPanel,
+  type RectPropertiesPanelProps,
+} from "./components/RectPropertiesPanel";
+export {
+  EllipsePropertiesPanel,
+  type EllipsePropertiesPanelProps,
+} from "./components/EllipsePropertiesPanel";
+export {
+  TextPropertiesPanel,
+  type TextPropertiesPanelProps,
+} from "./components/TextPropertiesPanel";
+export {
+  ImagePropertiesPanel,
+  type ImagePropertiesPanelProps,
+} from "./components/ImagePropertiesPanel";
+export {
+  PathPropertiesPanel,
+  type PathPropertiesPanelProps,
+} from "./components/PathPropertiesPanel";
+export {
+  resolvePropertiesSection,
+  type PropertiesSectionHooks,
+  type ResolvedPropertiesSection,
+} from "./components/properties-sections";
+export {
   DielineParametersPanel,
   type DielineParameters,
   type DielineParametersPanelProps,
