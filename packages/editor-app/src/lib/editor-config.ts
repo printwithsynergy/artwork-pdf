@@ -603,6 +603,62 @@ export const BASIC_MODE_OVERRIDES: Partial<EditorConfig> = {
 export const PRO_MODE_OVERRIDES: Partial<EditorConfig> = {};
 
 /**
+ * **No-backend preset.** Turns off every flag for a panel that needs
+ * a host-supplied adapter (PANTONE search, separations extraction,
+ * AI generators, OCR, ICC soft proof, DAM, PIM, ecommerce, lint
+ * services, etc.). Hosts that don't wire backends — marketing demos,
+ * client previews, offline editors — merge this into their config to
+ * keep the surface honest. Backend-backed panels stay opt-in; flip
+ * each flag back on once the matching adapter ships.
+ *
+ * Pure in-browser panels (Job setup, trap editor, impose, dieline
+ * parameters, nutrition, barcode, GS1, Braille, variant matrix,
+ * localization, history, fold editor, white-underbase read-only,
+ * streaming-render "ready" mode, MIS estimate with no-op submit)
+ * stay on — they work entirely client-side.
+ *
+ * @public
+ */
+export const NO_BACKEND_DEFAULTS: Partial<EditorConfig> = {
+  // Color & inks (need spot search / separations extraction / ICC math)
+  enable_swatches: false,
+  enable_inks_panel: false,
+  enable_smart_spot_match: false,
+  enable_palette_to_spot: false,
+  enable_soft_proof: false,
+  // Preflight / QA findings (need lint-pdf / analyzer services)
+  enable_preflight_autofix: false,
+  enable_contrast_legibility: false,
+  enable_accessibility_hints: false,
+  enable_brand_consistency: false,
+  enable_design_suggestions: false,
+  enable_process_rules_panel: false,
+  enable_compliance_panel: false,
+  enable_preflight_diff: false,
+  enable_process_preflight: false,
+  enable_trap_preview: false,
+  // Assets & integrations (need DAM / PIM / ecommerce APIs)
+  enable_dam_assets: false,
+  enable_brand_assets_panel: false,
+  enable_design_handoff: false,
+  enable_ecommerce_connector: false,
+  enable_pim_connector: false,
+  // AI generators (need LLM / image-gen / OCR / solver services)
+  enable_copy_generation: false,
+  enable_image_generation: false,
+  enable_auto_layout: false,
+  enable_ocr_rebuild: false,
+  // Notifications (need host integrations)
+  enable_slack_notify: false,
+  enable_email_notify: false,
+  enable_webhook_notify: false,
+  // Other backend-dependent surfaces
+  enable_annotations_sidebar: false,
+  enable_approved_master_diff: false,
+  enable_mark_library: false,
+};
+
+/**
  * Merge defaults, the mode preset, and per-instance overrides into a
  * concrete `EditorConfig`. Per-instance always wins.
  *

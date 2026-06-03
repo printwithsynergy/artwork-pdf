@@ -80,6 +80,41 @@ Resolution order: `DEFAULT_EDITOR_CONFIG` → `{BASIC,PRO}_MODE_OVERRIDES`
 → instance overrides. The full flag list is in
 [`src/lib/editor-config.ts`](src/lib/editor-config.ts).
 
+### Stock right-rail panels
+
+The editor mounts a `RightRailAccordion` next to the canvas on desktop
+that surfaces every Wave 1–4 panel that works without a host-supplied
+adapter: Job setup, dieline parameters, trap editor, impose builder,
+fold editor, variant matrix, localization, nutrition facts, GS1
+digital link, Braille layout, white underbase, streaming render.
+Each section is gated by its own `enable_<feature>` flag, so the
+existing config surface continues to control visibility.
+
+### Hosts without a backend (marketing demos, offline editors)
+
+Backend-dependent panels (PANTONE search, separations extraction, AI
+generators, OCR, ICC soft proof, DAM / PIM / ecommerce, lint findings,
+notifications) need host-supplied adapters. Hosts that don't wire them
+import the `NO_BACKEND_DEFAULTS` preset and merge it into the config:
+
+```tsx
+import {
+  EditorApp,
+  DEFAULT_EDITOR_CONFIG,
+  NO_BACKEND_DEFAULTS,
+} from "@printwithsynergy/artwork-pdf-editor";
+
+<EditorApp
+  demo
+  preferMode="pro"
+  config={{ ...DEFAULT_EDITOR_CONFIG, ...NO_BACKEND_DEFAULTS }}
+/>
+```
+
+The marketing demo at artworkpdf.com is a stock install of this
+exact mount — every panel that's clickable in the live demo works
+purely in-browser.
+
 ## Bleed
 
 Bleed defaults to industry-standard 0.125 in (3.175 mm). Override per

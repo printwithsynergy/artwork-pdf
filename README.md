@@ -69,6 +69,13 @@ const { objects, pageSize } = templateToInitialState(getDefaultTemplate());
 Full prop reference: [`packages/editor-app/src/lib/editor-config.ts`](packages/editor-app/src/lib/editor-config.ts)
 and [`packages/editor-app/src/components/TopBar.tsx`](packages/editor-app/src/components/TopBar.tsx).
 
+Hosts without a backend (offline editors, marketing demos) import
+`NO_BACKEND_DEFAULTS` to disable every panel that needs a host
+adapter — PANTONE search, AI generators, lint findings, etc. — so
+the visible surface only includes panels that work in-browser. The
+artworkpdf.com demo is a stock install of this preset; see
+[`packages/editor-app/README.md`](packages/editor-app/README.md#hosts-without-a-backend-marketing-demos-offline-editors).
+
 ## AGPL §13 Network Use
 
 If you run artworkPDF as a network service (SaaS), you must make the
