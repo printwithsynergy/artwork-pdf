@@ -59,6 +59,7 @@ export const PALETTE_REGISTRY: Record<PaletteId, PaletteRegistryEntry> = {
   "accessibility-hints": { slot: "panel.right", label: "Accessibility hints" },
   "palette-to-spot": { slot: "panel.right", label: "Palette → spot" },
   "white-underbase": { slot: "panel.right", label: "White underbase" },
+  "streaming-render": { slot: "panel.right", label: "Render progress" },
 };
 
 /**
