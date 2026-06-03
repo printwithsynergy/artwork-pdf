@@ -297,14 +297,17 @@ export function ImageGenerationPanel({
   const [h, setH] = useState(defaultHeightMm);
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [result, setResult] = useState<ImageGenerationResult | null>(null);
+  const [err, setErr] = useState<string | null>(null);
   const generate = async () => {
     setStatus("loading");
+    setErr(null);
     try {
       const r = await generator({ prompt, widthMm: w, heightMm: h, dpi: 300 });
       setResult(r);
       setStatus("done");
       onResult?.(r);
-    } catch {
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Image generation failed.");
       setStatus("error");
     }
   };
@@ -352,6 +355,11 @@ export function ImageGenerationPanel({
       {result && (
         <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "#595959" }}>
           {result.widthPx}×{result.heightPx}px · {result.provenance}
+        </div>
+      )}
+      {err && (
+        <div role="alert" style={{ marginTop: "0.375rem", fontSize: "0.75rem", color: "#a00" }}>
+          {err}
         </div>
       )}
     </div>
@@ -403,18 +411,25 @@ export function AutoLayoutPanel({
 }: AutoLayoutPanelProps): ReactElement {
   const [respectBleed, setRespectBleed] = useState(true);
   const [respectAnchors, setRespectAnchors] = useState(true);
-  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [ops, setOps] = useState<readonly AutoLayoutOperation[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
   const run = async () => {
     setStatus("loading");
-    const next = await solver({
-      objectIds,
-      respectBleed,
-      respectPanelAnchors: respectAnchors,
-    });
-    setOps(next);
-    setStatus("done");
-    onSolved?.(next);
+    setErr(null);
+    try {
+      const next = await solver({
+        objectIds,
+        respectBleed,
+        respectPanelAnchors: respectAnchors,
+      });
+      setOps(next);
+      setStatus("done");
+      onSolved?.(next);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Auto-layout failed.");
+      setStatus("error");
+    }
   };
   return (
     <div data-testid="auto-layout-panel" style={{ padding: "0.5rem" }}>
@@ -452,8 +467,32 @@ export function AutoLayoutPanel({
           {ops.length} operation(s) emitted
         </div>
       )}
+      {err && (
+        <div role="alert" style={{ marginTop: "0.375rem", fontSize: "0.75rem", color: "#a00" }}>
+          {err}
+        </div>
+      )}
     </div>
   );
+}
+
+/**
+ * Encode an ArrayBuffer to base64 in 32 KB chunks so we don't blow
+ * past `String.fromCharCode.apply` argument-length limits on large
+ * files. `btoa` is Latin-1, which is fine here because each byte
+ * of the buffer becomes one code unit ≤ 0xFF.
+ *
+ * @internal
+ */
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunk) {
+    const slice = bytes.subarray(i, Math.min(i + chunk, bytes.length));
+    binary += String.fromCharCode.apply(null, Array.from(slice));
+  }
+  return btoa(binary);
 }
 
 // ── AI5 OCR rebuild ──────────────────────────────────────────
@@ -503,7 +542,7 @@ export function OcrRebuildPanel({ ocr, onObjects }: OcrRebuildPanelProps): React
     setStatus("loading");
     try {
       const buf = await file.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const b64 = arrayBufferToBase64(buf);
       const objs = await ocr({ imageB64: b64 });
       setCount(objs.length);
       setStatus("done");
