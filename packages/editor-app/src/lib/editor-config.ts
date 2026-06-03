@@ -44,7 +44,19 @@ export type PaletteId =
   | "palette-to-spot"
   | "white-underbase"
   | "streaming-render"
-  | "direction-indicators";
+  | "direction-indicators"
+  | "substrate-sim"
+  | "contrast-legibility"
+  | "dam-assets"
+  | "approved-master-diff"
+  | "copy-generation"
+  | "image-generation"
+  | "auto-layout"
+  | "ocr-rebuild"
+  | "localization"
+  | "design-handoff"
+  | "ecommerce-connector"
+  | "pim-connector";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -169,6 +181,30 @@ export interface EditorConfig {
    *  to surface non-printing flute / grain / web-direction
    *  indicators + an inside-print mirror warning. */
   enable_direction_indicators: boolean;
+  /** P2 — substrate show-through simulation overlay. */
+  enable_substrate_sim: boolean;
+  /** P4 — print contrast / legibility findings panel. */
+  enable_contrast_legibility: boolean;
+  /** B2 — DAM hookup browser (host wires the DAM adapter). */
+  enable_dam_assets: boolean;
+  /** X3 — approved-master diff panel. */
+  enable_approved_master_diff: boolean;
+  /** AI1 — copy generation panel. */
+  enable_copy_generation: boolean;
+  /** AI2 — print-resolution image generation panel. */
+  enable_image_generation: boolean;
+  /** AI3 — auto-layout / auto-fit panel. */
+  enable_auto_layout: boolean;
+  /** AI5 — competitor-pack OCR rebuild panel. */
+  enable_ocr_rebuild: boolean;
+  /** V3 — localization + text-expansion warnings panel. */
+  enable_localization: boolean;
+  /** I1 — Figma / Adobe handoff importer. */
+  enable_design_handoff: boolean;
+  /** I2 — ecommerce (Shopify) product picker. */
+  enable_ecommerce_connector: boolean;
+  /** I3 — PIM connector panel. */
+  enable_pim_connector: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -492,6 +528,18 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_streaming_render: true,
   enable_structural_export: true,
   enable_direction_indicators: true,
+  enable_substrate_sim: true,
+  enable_contrast_legibility: true,
+  enable_dam_assets: true,
+  enable_approved_master_diff: true,
+  enable_copy_generation: true,
+  enable_image_generation: true,
+  enable_auto_layout: true,
+  enable_ocr_rebuild: true,
+  enable_localization: true,
+  enable_design_handoff: true,
+  enable_ecommerce_connector: true,
+  enable_pim_connector: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
