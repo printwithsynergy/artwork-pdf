@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import type { Dieline } from "@artworkpdf/dieline-parser";
+import type { Dieline } from "@printwithsynergy/dieline-parser";
 import { useEffect, useState } from "react";
 import { type EditorMode, useEditorMode } from "../hooks/useEditorMode";
 import { useIsMobile } from "../hooks/useIsMobile";

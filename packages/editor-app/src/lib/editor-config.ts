@@ -245,7 +245,7 @@ export interface EditorConfig {
   enable_history: boolean;
   /** S2 — dieline import (CF2 / DDES / ARD file-drop). When enabled,
    *  {@link FileDropZone} accepts the three legacy packaging-industry
-   *  formats and routes them through `@artworkpdf/dieline-parser` →
+   *  formats and routes them through `@printwithsynergy/dieline-parser` →
    *  {@link dielineToPage}, bypassing the PDF preflight phase and
    *  seeding the canvas directly. Disable for hosts that only ship
    *  PDF artwork (the dropzone falls back to PDF-only). */

@@ -8,12 +8,12 @@
 // browser-only editor bundle.
 //
 // `dielineToPage()` is the parallel ingress for user-supplied CF2 /
-// DDES / ARD files (parsed via `@artworkpdf/dieline-parser`'s
+// DDES / ARD files (parsed via `@printwithsynergy/dieline-parser`'s
 // `parseCF2` / `parseDDES` / `parseARD`) — each parsed `Dieline`
 // becomes a single-page `Page` seeded with one locked path per
 // `DielinePath`.
 
-import type { Dieline, DielinePath } from "@artworkpdf/dieline-parser";
+import type { Dieline, DielinePath } from "@printwithsynergy/dieline-parser";
 import type { CanvasObj } from "../components/EditorCanvas";
 import library from "../data/dielines.json";
 import type { EditorSeparation } from "./separations-registry";

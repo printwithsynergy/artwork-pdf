@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// `@artworkpdf/dieline-parser` — structural dieline import for the
+// `@printwithsynergy/dieline-parser` — structural dieline import for the
 // three legacy ASCII formats the packaging industry still ships:
 // CF2 (ISO 12182:2012), DDES (Barco Die Design Electronic Standard 2),
 // and ARD (ArtiosCAD ASCII export).

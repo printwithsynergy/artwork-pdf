@@ -36,12 +36,23 @@ jobs:
       # then discover the other's tsc errored out mid-release. The
       # `...` syntax pulls in each target's workspace dependencies
       # (dieline-parser, document-model, etc.) so the build sees a
-      # populated `dist/` rather than a missing module.
+      # populated `dist/` rather than a missing module. We also build
+      # dieline-parser explicitly — it ships as its own published
+      # package and the explicit step makes a missing `dist/` fail
+      # here rather than mid-publish.
+      - name: Build @printwithsynergy/dieline-parser
+        run: pnpm --filter @printwithsynergy/dieline-parser build
+
       - name: Build @printwithsynergy/artwork-pdf (+ workspace deps)
         run: pnpm --filter '@printwithsynergy/artwork-pdf...' build
 
       - name: Build @printwithsynergy/artwork-pdf-editor (+ workspace deps)
         run: pnpm --filter '@printwithsynergy/artwork-pdf-editor...' build
+
+      - name: Publish @printwithsynergy/dieline-parser
+        run: pnpm --filter @printwithsynergy/dieline-parser publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @printwithsynergy/artwork-pdf
         run: pnpm --filter @printwithsynergy/artwork-pdf publish --no-git-checks --access public

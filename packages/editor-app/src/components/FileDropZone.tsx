@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
-import { type Dieline, parseARD, parseCF2, parseDDES } from "@artworkpdf/dieline-parser";
+import { type Dieline, parseARD, parseCF2, parseDDES } from "@printwithsynergy/dieline-parser";
 import { useCallback, useRef, useState } from "react";
 
 type Props = {
