@@ -389,12 +389,15 @@ export {
 export {
   composeNutritionFacts,
   DEFAULT_NUTRITION_FACTS,
+  DEFAULT_NUTRITION_STYLE,
   FDA_DAILY_VALUES,
   NutritionPanel,
   type NutritionFacts,
   type NutritionPanelProps,
   type NutritionPanelSpec,
   type NutritionRow,
+  type NutritionStyle,
+  type NutritionStyleFontFamily,
 } from "./components/NutritionPanel";
 export {
   BraillePanel,

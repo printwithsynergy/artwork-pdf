@@ -281,6 +281,57 @@ const OPTIONAL_NUTRITION_KEYS = new Set<keyof NutritionFacts>([
 ]);
 
 /**
+ * Visual style overrides for the rendered Nutrition Facts panel.
+ *
+ * The FDA spec (§101.9(d)(1)(ii)) fixes type-size *ratios* — title
+ * largest, Calories second-largest, body small, footnote smallest —
+ * but lets producers pick the family and the absolute size as long
+ * as legibility is preserved. We expose:
+ *
+ * - `fontFamily` — the typeface. Helvetica is canonical; Arial is the
+ *   common drop-in, Times/Courier are escape hatches for compliance
+ *   with non-FDA jurisdictions.
+ * - `scale` — global multiplier applied to all sizes + padding +
+ *   row height. Use this to fit a label into a tight box without
+ *   losing the FDA proportions.
+ * - `titleScale` / `caloriesScale` / `bodyScale` — independent
+ *   multipliers (compounded with `scale`) for fine-tuning when a
+ *   panel still looks off after the global knob. 1.0 = FDA baseline.
+ *
+ * @public
+ */
+export type NutritionStyleFontFamily = "Helvetica" | "Arial" | "Times" | "Courier";
+
+/** @public */
+export type NutritionStyle = {
+  fontFamily: NutritionStyleFontFamily;
+  scale: number;
+  titleScale: number;
+  caloriesScale: number;
+  bodyScale: number;
+};
+
+/**
+ * FDA-baseline style: Helvetica (canonical), all scales 1.0.
+ *
+ * @public
+ */
+export const DEFAULT_NUTRITION_STYLE: NutritionStyle = {
+  fontFamily: "Helvetica",
+  scale: 1,
+  titleScale: 1,
+  caloriesScale: 1,
+  bodyScale: 1,
+};
+
+const NUTRITION_FONT_FAMILIES: readonly NutritionStyleFontFamily[] = [
+  "Helvetica",
+  "Arial",
+  "Times",
+  "Courier",
+];
+
+/**
  * @public
  */
 export type NutritionPanelProps = {
@@ -303,6 +354,15 @@ export type NutritionPanelProps = {
   value?: NutritionFacts;
   /** Controlled-mode change handler. See {@link NutritionPanelProps.value}. */
   onChange?: (next: NutritionFacts) => void;
+  /**
+   * Controlled-mode style value. Renders the "Style" section
+   * (font family + scale sliders) when supplied alongside
+   * `onStyleChange`. When omitted, the style section is hidden
+   * (back-compat for hosts that only want data entry).
+   */
+  style?: NutritionStyle;
+  /** Controlled-mode style change handler. See {@link NutritionPanelProps.style}. */
+  onStyleChange?: (next: NutritionStyle) => void;
   /**
    * Uncontrolled-mode compose callback — fires when the user clicks
    * **Compose** with the spec built from the current form state.
@@ -328,7 +388,14 @@ export type NutritionPanelProps = {
  *
  * @public
  */
-export function NutritionPanel({ initialFacts, value, onChange, onCompose }: NutritionPanelProps) {
+export function NutritionPanel({
+  initialFacts,
+  value,
+  onChange,
+  style,
+  onStyleChange,
+  onCompose,
+}: NutritionPanelProps) {
   const controlled = value !== undefined && onChange !== undefined;
   const [internalFacts, setInternalFacts] = useState<NutritionFacts>({
     ...DEFAULT_NUTRITION_FACTS,
@@ -409,6 +476,64 @@ export function NutritionPanel({ initialFacts, value, onChange, onCompose }: Nut
       {numInput("Calcium (optional)", "calciumMg", "mg")}
       {numInput("Iron (optional)", "ironMg", "mg")}
       {numInput("Potassium (optional)", "potassiumMg", "mg")}
+      {style !== undefined && onStyleChange !== undefined && (
+        <fieldset
+          data-testid="nutrition-style-section"
+          style={{
+            border: "1px solid #5a3a25",
+            borderRadius: 4,
+            padding: "0.5rem",
+            margin: "0.75rem 0 0.5rem 0",
+          }}
+        >
+          <legend style={{ padding: "0 0.25rem", fontSize: "0.85rem" }}>Style</legend>
+          <label style={{ display: "block", marginBottom: "0.35rem" }}>
+            Font family
+            <select
+              aria-label="Font family"
+              value={style.fontFamily}
+              onChange={(e) =>
+                onStyleChange({
+                  ...style,
+                  fontFamily: e.target.value as NutritionStyleFontFamily,
+                })
+              }
+              style={{ marginLeft: "0.5rem" }}
+            >
+              {NUTRITION_FONT_FAMILIES.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </label>
+          {(
+            [
+              ["Overall scale", "scale"],
+              ["Title scale", "titleScale"],
+              ["Calories scale", "caloriesScale"],
+              ["Body scale", "bodyScale"],
+            ] as const
+          ).map(([label, key]) => (
+            <label key={key} style={{ display: "block", marginBottom: "0.25rem" }}>
+              {label}
+              <input
+                type="range"
+                min={0.5}
+                max={2}
+                step={0.05}
+                value={style[key]}
+                aria-label={label}
+                onChange={(e) => onStyleChange({ ...style, [key]: Number(e.target.value) })}
+                style={{ marginLeft: "0.5rem", width: "10em", verticalAlign: "middle" }}
+              />
+              <span style={{ marginLeft: "0.5rem", fontVariantNumeric: "tabular-nums" }}>
+                {style[key].toFixed(2)}×
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       {!controlled && onCompose && (
         <button
           type="button"
