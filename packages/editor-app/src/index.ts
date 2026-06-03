@@ -227,6 +227,17 @@ export {
   type WhiteUnderbaseSpec,
 } from "./components/WhiteUnderbasePanel";
 export {
+  StreamingRenderProgress,
+  type StreamingRenderConnectFn,
+  type StreamingRenderProgressProps,
+} from "./components/StreamingRenderProgress";
+export {
+  parseStreamingRenderEvent,
+  type StreamingProgress,
+  type StreamingRenderEvent,
+  summarizeStreamingProgress,
+} from "./lib/streaming-render";
+export {
   ComplianceFindingsPanel,
   type ComplianceFinding,
   type ComplianceFindingsPanelProps,

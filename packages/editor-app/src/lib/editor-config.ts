@@ -42,7 +42,8 @@ export type PaletteId =
   | "email-notify"
   | "accessibility-hints"
   | "palette-to-spot"
-  | "white-underbase";
+  | "white-underbase"
+  | "streaming-render";
 
 /**
  * Helper type — only the boolean `enable_*` keys of {@link EditorConfig}
@@ -151,6 +152,12 @@ export interface EditorConfig {
    *  Hosts that don't run the white-underbase producer opt out via
    *  this flag. */
   enable_white_underbase: boolean;
+  /** O3 — streaming render progress panel. When enabled, hosts can
+   *  mount {@link StreamingRenderProgress} to surface live per-page
+   *  progress during long renders served by compile-pdf's
+   *  `POST /v1/compose/stream` SSE endpoint. Hosts that don't run
+   *  the streaming endpoint opt out via this flag. */
+  enable_streaming_render: boolean;
   /** S3 — panel-anchored objects. When enabled, hosts can bind
    *  artwork objects to a specific {@link DielinePanel} via
    *  `anchorPanelId`; objects re-position with their parent panel
@@ -471,6 +478,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   enable_inks_panel: true,
   enable_swatches: true,
   enable_white_underbase: true,
+  enable_streaming_render: true,
   enable_panel_anchored_objects: true,
   enable_compliance_panel: true,
   enable_process_rules_panel: true,
