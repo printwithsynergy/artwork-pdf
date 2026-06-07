@@ -5,6 +5,18 @@ import { getBoss } from "./db/boss.js";
 import { makeRenderJob } from "./handlers/render.js";
 
 /**
+ * The pg-boss queues the render handler serves. `POST /jobs` routes a submit to
+ * exactly one of these by `output.format`. Exported so the submit route can
+ * `createQueue` its target before `send` (pg-boss v10+ rejects sends to a queue
+ * that doesn't exist yet).
+ */
+export const ARTWORK_QUEUES = [
+  "artwork.render",
+  "artwork.thumbnail",
+  "artwork.preview-separations",
+] as const;
+
+/**
  * Boot the artwork-pdf pg-boss worker.
  *
  * Constructs a single shared {@link CompilePdfClient} and registers
@@ -34,8 +46,11 @@ export async function startWorker(): Promise<void> {
   // Codex runs after render to emit CodexFinding[]; unconfigured (no
   // CODEX_API_BASE_URL) → the handler self-skips findings.
   const renderJob = makeRenderJob(new CompilePdfClient(), new CodexClient());
-  await boss.work<Record<string, unknown>>("artwork.render", renderJob);
-  await boss.work<Record<string, unknown>>("artwork.thumbnail", renderJob);
-  await boss.work<Record<string, unknown>>("artwork.preview-separations", renderJob);
+  // pg-boss v10+ requires a queue to exist before work()/send(); create them
+  // up front (idempotent) so a fresh database doesn't crash the worker.
+  for (const queue of ARTWORK_QUEUES) {
+    await boss.createQueue(queue);
+    await boss.work<Record<string, unknown>>(queue, renderJob);
+  }
   console.log("artworkPDF worker started — listening on artwork.* queues");
 }
