@@ -8,6 +8,7 @@ import type {
 } from "@artworkpdf/document-model";
 import { eq } from "drizzle-orm";
 import type { Job } from "pg-boss";
+import { CodexClient, type CodexFinding } from "../codex-client.js";
 import type { CompilePdfClient } from "../compile-pdf-client.js";
 import { getDb } from "../db/client.js";
 import { jobs } from "../db/schema.js";
@@ -73,6 +74,7 @@ type RenderJobData = Record<string, unknown> & {
  */
 export function makeRenderJob(
   client: CompilePdfClient,
+  codexClient: CodexClient = new CodexClient(),
 ): (batch: Job<Record<string, unknown>>[]) => Promise<void> {
   return async (batch) => {
     for (const job of batch) {
@@ -119,11 +121,27 @@ export function makeRenderJob(
           ({ bytes, cacheKey } = await client.impose(imposeTemplate, bytes));
         }
 
+        // After render, extract located findings from the produced PDF via
+        // codex — the ecosystem-canonical `CodexFinding[]` (1-indexed page +
+        // PDF-point bbox), which hosts feed straight to lens-pdf's
+        // `fromCodexFindings()`. Service-skip: an unwired or failing codex must
+        // degrade to "no findings", never fail the writer path.
+        let codexFindings: CodexFinding[] = [];
+        if (codexClient.isConfigured()) {
+          try {
+            codexFindings = await codexClient.extractFindings(bytes);
+          } catch (err) {
+            const reason = err instanceof Error ? err.message : "codex extract failed";
+            console.warn(`codex findings extraction failed for job ${job.id}: ${reason}`);
+          }
+        }
+
         const result = {
           format: "pdf-x4",
           pdfBase64: Buffer.from(bytes).toString("base64"),
           filename: "artwork.pdf",
           cacheKey,
+          codexFindings,
         };
 
         if (db && dbJobId) {

@@ -2,6 +2,7 @@
 import type { DocumentModel } from "@artworkpdf/document-model";
 import type { Job } from "pg-boss";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CodexClient } from "../codex-client.js";
 import { CompilePdfClient } from "../compile-pdf-client.js";
 import { makeRenderJob } from "./render.js";
 
@@ -227,5 +228,50 @@ describe("makeRenderJob — producer chaining", () => {
 
     // Compose is in-process; marks/trap/impose stay on the wire.
     expect(calls.map((c) => c.url)).toEqual([ENDPOINT.marks, ENDPOINT.trap, ENDPOINT.impose]);
+  });
+
+  it("calls codex /v1/extract after render when codex is configured", async () => {
+    const codexCalls: string[] = [];
+    const codexFetch = (async (input: unknown) => {
+      codexCalls.push(String(input));
+      return new Response(
+        JSON.stringify({
+          findings: [
+            {
+              id: "f1",
+              type: "low_dpi",
+              severity: "warning",
+              page: 1,
+              bbox: [0, 0, 10, 10],
+              message: "x",
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }) as typeof globalThis.fetch;
+    const codexClient = new CodexClient({ baseUrl: "http://codex.local", fetch: codexFetch });
+    const client = makeClient(() => okResponse("k"));
+    const renderJob = makeRenderJob(client, codexClient);
+
+    await renderJob([makeJob({ document: SAMPLE_DOC, marksTemplate: { trim: true } })]);
+
+    expect(codexCalls.some((u) => u.endsWith("/v1/extract"))).toBe(true);
+  });
+
+  it("self-skips codex (no extract call) when unconfigured", async () => {
+    const codexCalls: string[] = [];
+    const codexFetch = (async (input: unknown) => {
+      codexCalls.push(String(input));
+      return new Response("{}", { status: 200 });
+    }) as typeof globalThis.fetch;
+    // No baseUrl → isConfigured() === false → the handler must not call codex.
+    const codexClient = new CodexClient({ fetch: codexFetch });
+    const client = makeClient(() => okResponse("k"));
+    const renderJob = makeRenderJob(client, codexClient);
+
+    await renderJob([makeJob({ document: SAMPLE_DOC })]);
+
+    expect(codexCalls).toHaveLength(0);
   });
 });
