@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { CodexClient } from "./codex-client.js";
 import { CompilePdfClient } from "./compile-pdf-client.js";
 import { getBoss } from "./db/boss.js";
 import { makeRenderJob } from "./handlers/render.js";
@@ -30,7 +31,9 @@ export async function startWorker(): Promise<void> {
     return;
   }
 
-  const renderJob = makeRenderJob(new CompilePdfClient());
+  // Codex runs after render to emit CodexFinding[]; unconfigured (no
+  // CODEX_API_BASE_URL) → the handler self-skips findings.
+  const renderJob = makeRenderJob(new CompilePdfClient(), new CodexClient());
   await boss.work<Record<string, unknown>>("artwork.render", renderJob);
   await boss.work<Record<string, unknown>>("artwork.thumbnail", renderJob);
   await boss.work<Record<string, unknown>>("artwork.preview-separations", renderJob);
