@@ -232,8 +232,12 @@ describe("makeRenderJob — producer chaining", () => {
 
   it("calls codex /v1/extract after render when codex is configured", async () => {
     const codexCalls: string[] = [];
-    const codexFetch = (async (input: unknown) => {
+    let sawPdfField = false;
+    const codexFetch = (async (input: unknown, init?: RequestInit) => {
       codexCalls.push(String(input));
+      // codex requires the multipart field named `pdf` (not `file`).
+      const body = init?.body;
+      if (body instanceof FormData) sawPdfField = body.has("pdf");
       return new Response(
         JSON.stringify({
           findings: [
@@ -257,6 +261,7 @@ describe("makeRenderJob — producer chaining", () => {
     await renderJob([makeJob({ document: SAMPLE_DOC, marksTemplate: { trim: true } })]);
 
     expect(codexCalls.some((u) => u.endsWith("/v1/extract"))).toBe(true);
+    expect(sawPdfField).toBe(true);
   });
 
   it("self-skips codex (no extract call) when unconfigured", async () => {

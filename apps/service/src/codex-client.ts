@@ -100,7 +100,8 @@ export class CodexClient {
     }
     const bytes = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes);
     const form = new FormData();
-    form.append("file", new Blob([bytes], { type: "application/pdf" }), "artwork.pdf");
+    // codex's POST /v1/extract requires the multipart field named `pdf`.
+    form.append("pdf", new Blob([bytes], { type: "application/pdf" }), "artwork.pdf");
 
     const headers: Record<string, string> = { "X-Codex-Fields": "findings" };
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
