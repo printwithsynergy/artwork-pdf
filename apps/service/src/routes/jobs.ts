@@ -63,6 +63,9 @@ jobsRouter.post("/", async (c) => {
 
   const boss = await getBoss();
   if (boss) {
+    // pg-boss v10+ requires the queue to exist before send(); createQueue is
+    // idempotent, so this is safe even when the worker already created it.
+    await boss.createQueue(queueName);
     await boss.send(queueName, { dbJobId: row.id, ...body } as Record<string, unknown>);
   }
 
