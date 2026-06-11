@@ -67,3 +67,19 @@ jobs:
 
       - name: Check license boundary
         run: node scripts/check-license-boundary.mjs
+
+  spectral:
+    name: OpenAPI spectral lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+      - name: Lint OpenAPI spec
+        run: spectral lint docs/openapi.yaml --ruleset .spectral.yaml
