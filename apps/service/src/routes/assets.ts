@@ -7,6 +7,28 @@ import { getDb } from "../db/client.js";
 import { assets } from "../db/schema.js";
 
 /**
+ * Build a safe `Content-Disposition` header value for a stored filename.
+ *
+ * The filename is caller-supplied at upload time, so interpolating it
+ * raw lets a CR/LF or `"` inject extra response headers or break out of
+ * the quoted-string. Strip control characters (incl. CR/LF), quotes, and
+ * backslashes for the legacy `filename=` token, and additionally emit an
+ * RFC 5987 `filename*` so non-ASCII names still round-trip.
+ */
+export function contentDisposition(filename: string): string {
+  // Keep only printable ASCII (drops CR/LF and every control char that
+  // could inject a header), then drop the quote/backslash that would
+  // break the quoted-string. `filename*` carries the full UTF-8 name.
+  const asciiSafe =
+    filename
+      .replace(/[^\x20-\x7e]/g, "")
+      .replace(/["\\]/g, "")
+      .slice(0, 255) || "download";
+  const encoded = encodeURIComponent(filename);
+  return `inline; filename="${asciiSafe}"; filename*=UTF-8''${encoded}`;
+}
+
+/**
  * `/assets` — upload + serve asset bytes referenced by document models.
  *
  * Two endpoints:
@@ -73,7 +95,7 @@ assetsRouter.get("/:id", async (c) => {
   return new Response(buffer, {
     headers: {
       "Content-Type": row.mimeType,
-      "Content-Disposition": `inline; filename="${row.filename}"`,
+      "Content-Disposition": contentDisposition(row.filename),
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });
