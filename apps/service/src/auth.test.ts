@@ -13,13 +13,17 @@ function appWith(): Hono {
 const PRIOR = process.env.ARTWORK_SERVICE_TOKEN;
 
 afterEach(() => {
-  process.env.ARTWORK_SERVICE_TOKEN = PRIOR ?? "";
+  // Restore exactly: remove the key when it was originally absent rather
+  // than coercing it to "". Reflect.deleteProperty avoids the `delete`
+  // operator that biome's lint flags.
+  if (PRIOR === undefined) Reflect.deleteProperty(process.env, "ARTWORK_SERVICE_TOKEN");
+  else process.env.ARTWORK_SERVICE_TOKEN = PRIOR;
 });
 
 describe("optionalBearerAuth", () => {
   describe("when ARTWORK_SERVICE_TOKEN is unset", () => {
     beforeEach(() => {
-      process.env.ARTWORK_SERVICE_TOKEN = "";
+      Reflect.deleteProperty(process.env, "ARTWORK_SERVICE_TOKEN");
     });
 
     it("passes requests through (open posture)", async () => {
