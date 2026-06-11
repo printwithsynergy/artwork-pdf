@@ -1,0 +1,298 @@
+openapi: 3.1.0
+info:
+  title: artwork-pdf service
+  description: |
+    HTTP API for the artworkPDF service — render-job orchestration, asset
+    upload/serve, and effective preflight-rule resolution. Consumed by external
+    hosts and orchestrated by the synergy engine.
+
+    The data routes (`/jobs`, `/assets`, `/preflight-rules`) support optional
+    bearer auth: when `ARTWORK_SERVICE_TOKEN` is set they require
+    `Authorization: Bearer <token>`; when unset they are open (for trusted
+    private-network deployments). Health, AGPL source, and the synergy node
+    descriptor are always public.
+  version: 0.1.0
+  contact:
+    name: Print With Synergy
+    url: https://github.com/printwithsynergy/artwork-pdf
+  license:
+    name: AGPL-3.0-or-later
+servers:
+  - url: /
+    description: The artwork-pdf service instance.
+tags:
+  - name: health
+  - name: jobs
+  - name: assets
+  - name: preflight
+  - name: meta
+security:
+  - bearerAuth: []
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      operationId: getHealthz
+      summary: Liveness probe
+      description: Always returns 200 while the process is alive (no dependency checks).
+      security: []
+      responses:
+        "200":
+          description: Service is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+                  service: { type: string, const: artwork-pdf }
+  /source:
+    get:
+      tags: [meta]
+      operationId: getSource
+      summary: AGPL §13 source offer
+      description: Redirects to the GitHub source archive pinned to the running commit (or main).
+      security: []
+      responses:
+        "302":
+          description: Redirect to the source tarball.
+          headers:
+            Location: { schema: { type: string, format: uri } }
+  /.well-known/synergy-node.json:
+    get:
+      tags: [meta]
+      operationId: getSynergyNodeDescriptor
+      summary: Synergy node-capabilities descriptor
+      description: Advertises the artwork.* capabilities (with scheduling tier) for synergy discovery.
+      security: []
+      responses:
+        "200":
+          description: Node descriptor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type: { type: string, const: artwork }
+                  version: { type: string }
+                  displayName: { type: string }
+                  license: { type: string }
+                  source: { type: string }
+                  capabilities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type: { type: string }
+                        description: { type: string }
+                        tier: { type: string, enum: [CPU, GPU, IO] }
+                  http:
+                    type: object
+                    additionalProperties: { type: string }
+  /jobs:
+    post:
+      tags: [jobs]
+      operationId: submitJob
+      summary: Submit a render job
+      description: Queues an artwork render job; returns the job id + queued status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "JobSubmitRequest (from @artworkpdf/document-model) — document model + output options."
+              additionalProperties: true
+      responses:
+        "202":
+          description: Job queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  status: { type: string, const: queued }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+  /jobs/{id}:
+    get:
+      tags: [jobs]
+      operationId: getJob
+      summary: Poll job status
+      description: Returns the current status of a submitted render job.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /jobs/{id}/events:
+    get:
+      tags: [jobs]
+      operationId: streamJobEvents
+      summary: Stream job status events (SSE)
+      description: Server-Sent Events of status changes + heartbeats; terminates on done/failed or client abort.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: SSE stream.
+          content:
+            text/event-stream:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /jobs/{id}/result:
+    get:
+      tags: [jobs]
+      operationId: getJobResult
+      summary: Fetch the render result
+      description: Returns the rendered PDF (base64) + metadata once the job is complete, or 202 while still running.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Render result (PDF base64 + metadata).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  format: { type: string }
+                  pdfBase64: { type: string }
+                  filename: { type: string }
+                  cacheKey: { type: string }
+                additionalProperties: true
+        "202":
+          description: Not ready yet.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, const: not_ready }
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assets:
+    post:
+      tags: [assets]
+      operationId: uploadAsset
+      summary: Upload an asset (multipart)
+      description: Multipart form upload with a `file` field; stores the bytes and returns the asset id + URL.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "201":
+          description: Asset stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  url: { type: string }
+        "400":
+          description: Missing or invalid file.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, const: no_file }
+        "401": { $ref: "#/components/responses/Error" }
+  /assets/{id}:
+    get:
+      tags: [assets]
+      operationId: getAsset
+      summary: Stream asset bytes
+      description: Streams the stored bytes with the original MIME type and a sanitized Content-Disposition.
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      responses:
+        "200":
+          description: Asset bytes.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "503":
+          description: No database configured.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, const: no_db }
+  /preflight-rules:
+    get:
+      tags: [preflight]
+      operationId: getPreflightRules
+      summary: Read the effective preflight ruleset
+      description: Returns the merged default + DB-override ruleset for the given label class/type/tenant context.
+      parameters:
+        - { name: label_class, in: query, required: false, schema: { type: string } }
+        - { name: label_type, in: query, required: false, schema: { type: string } }
+        - { name: tenant_id, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Effective ruleset.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+                  context:
+                    type: object
+                    properties:
+                      labelClass: { type: string }
+                      labelType: { type: string }
+                      tenantId: { type: string }
+                  source: { type: string, enum: [defaults, db] }
+        "401": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "Required on data routes when ARTWORK_SERVICE_TOKEN is set; otherwise open."
+  parameters:
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    AssetId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Error:
+      description: Error envelope.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
