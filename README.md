@@ -32,6 +32,27 @@ curl -X POST http://localhost:3001/jobs \
   -d '{"document":{"layers":[]},"output":{"format":"pdf-x4"}}'
 ```
 
+## Auth
+
+The data routes — `/jobs`, `/assets`, `/preflight-rules` — support **optional
+bearer-token auth**, gated by the `ARTWORK_SERVICE_TOKEN` env var:
+
+- **unset** (default) — routes are open. Suitable when the service only sits
+  behind a trusted gateway (e.g. synergy) on a private network. A single
+  startup warning is logged so the open posture is visible.
+- **set** — every data-route request must send `Authorization: Bearer <token>`
+  matching it (constant-time compare); anything else gets `401`.
+
+```bash
+export ARTWORK_SERVICE_TOKEN=$(openssl rand -hex 32)
+curl -X POST http://localhost:3001/jobs \
+  -H "Authorization: Bearer $ARTWORK_SERVICE_TOKEN" \
+  -H 'Content-Type: application/json' -d '{ ... }'
+```
+
+`/healthz`, `/source` (AGPL source offer), and `/.well-known/synergy-node.json`
+are always public.
+
 ## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
