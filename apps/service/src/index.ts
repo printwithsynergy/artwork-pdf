@@ -18,6 +18,7 @@
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { optionalBearerAuth } from "./auth.js";
 import { getBoss } from "./db/boss.js";
 import { runMigrations } from "./db/migrate.js";
 import { assetsRouter } from "./routes/assets.js";
@@ -29,6 +30,16 @@ import { synergyNodeRouter } from "./routes/synergy-node.js";
 import { startWorker } from "./worker.js";
 
 const app = new Hono();
+
+// Guard the data routes with optional bearer auth (no-op unless
+// ARTWORK_SERVICE_TOKEN is configured). healthz / source / well-known
+// stay public — synergy and platform poll them unauthenticated. Both the
+// bare base (e.g. POST /assets) and sub-paths (GET /assets/:id) are
+// covered — Hono's `/x/*` wildcard does not match the bare `/x`.
+for (const base of ["/assets", "/jobs", "/preflight-rules"]) {
+  app.use(base, optionalBearerAuth);
+  app.use(`${base}/*`, optionalBearerAuth);
+}
 
 app.route("/assets", assetsRouter);
 app.route("/jobs", jobsRouter);
