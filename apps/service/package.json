@@ -22,9 +22,9 @@
     "@artworkpdf/compose": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "drizzle-kit": "^0.28.0",
-    "typescript": "^5.7.0",
-    "vitest": "^4.1.0"
+    "@types/node": "^25.9.3",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   }
 }

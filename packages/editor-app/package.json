@@ -33,13 +33,13 @@
     "react-dom": "^19.0.0",
     "react-konva": "^19.0.0",
     "konva": "^10.3.0",
-    "@printwithsynergy/lens-pdf": "^0.4.0-beta.17"
+    "@printwithsynergy/lens-pdf": "^0.4.0-beta.24"
   },
   "peerDependenciesMeta": {
     "@printwithsynergy/lens-pdf": { "optional": true }
   },
   "devDependencies": {
-    "@printwithsynergy/lens-pdf": "^0.4.0-beta.17",
+    "@printwithsynergy/lens-pdf": "^0.4.0-beta.24",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.170.0",
@@ -47,8 +47,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-konva": "^19.0.0",
-    "typescript": "^5.7.0",
-    "vitest": "^4.1.0"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
   "publishConfig": {
     "access": "public"
