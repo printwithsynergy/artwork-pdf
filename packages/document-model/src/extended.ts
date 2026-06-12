@@ -109,9 +109,15 @@ export type Gradient = {
   type: GradientType;
   stops: GradientStop[];
   transform: {
-    x1?: number; y1?: number; x2?: number; y2?: number;
-    cx?: number; cy?: number; r?: number;
-    fx?: number; fy?: number;
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+    cx?: number;
+    cy?: number;
+    r?: number;
+    fx?: number;
+    fy?: number;
   };
 };
 
@@ -121,10 +127,22 @@ export type Gradient = {
  * blend operator at compose time.
  */
 export type BlendMode =
-  | "normal" | "multiply" | "screen" | "overlay"
-  | "soft-light" | "hard-light" | "color-dodge" | "color-burn"
-  | "darken" | "lighten" | "difference" | "exclusion"
-  | "hue" | "saturation" | "color" | "luminosity";
+  | "normal"
+  | "multiply"
+  | "screen"
+  | "overlay"
+  | "soft-light"
+  | "hard-light"
+  | "color-dodge"
+  | "color-burn"
+  | "darken"
+  | "lighten"
+  | "difference"
+  | "exclusion"
+  | "hue"
+  | "saturation"
+  | "color"
+  | "luminosity";
 
 /** Discriminator for {@link Effect}. */
 export type EffectType =
@@ -143,7 +161,15 @@ export type EffectType =
  * CMYK strings.
  */
 export type Effect =
-  | { type: "dropShadow"; x: number; y: number; blur: number; color: string; opacity: number; spread?: number }
+  | {
+      type: "dropShadow";
+      x: number;
+      y: number;
+      blur: number;
+      color: string;
+      opacity: number;
+      spread?: number;
+    }
   | { type: "innerShadow"; x: number; y: number; blur: number; color: string; opacity: number }
   | { type: "outerGlow"; blur: number; color: string; opacity: number; spread?: number }
   | { type: "innerGlow"; blur: number; color: string; opacity: number }
@@ -220,7 +246,18 @@ export type StrokeConfig = {
 export type TypographyConfig = {
   fontFamily: string;
   fontSize: number;
-  fontWeight?: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+  fontWeight?:
+    | "normal"
+    | "bold"
+    | "100"
+    | "200"
+    | "300"
+    | "400"
+    | "500"
+    | "600"
+    | "700"
+    | "800"
+    | "900";
   fontStyle?: "normal" | "italic";
   textAlign?: "left" | "center" | "right" | "justify";
   lineHeight?: number;
@@ -536,18 +573,42 @@ export const GOOGLE_FONTS_CURATION = [
   { name: "Playfair Display", category: "serif", weights: [400, 500, 600, 700, 800, 900] },
   { name: "Merriweather", category: "serif", weights: [300, 400, 700, 900] },
   { name: "Lato", category: "sans-serif", weights: [100, 300, 400, 700, 900] },
-  { name: "Montserrat", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+  {
+    name: "Montserrat",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
   { name: "Oswald", category: "sans-serif", weights: [200, 300, 400, 500, 600, 700] },
-  { name: "Raleway", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+  {
+    name: "Raleway",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
   { name: "Source Sans Pro", category: "sans-serif", weights: [200, 300, 400, 600, 700, 900] },
-  { name: "Poppins", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+  {
+    name: "Poppins",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
   { name: "Bebas Neue", category: "display", weights: [400] },
   { name: "Abril Fatface", category: "display", weights: [400] },
   { name: "Cinzel", category: "serif", weights: [400, 500, 600, 700, 800, 900] },
   { name: "Lora", category: "serif", weights: [400, 500, 600, 700] },
-  { name: "Work Sans", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
-  { name: "Fira Sans", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
-  { name: "Barlow", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
+  {
+    name: "Work Sans",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
+  {
+    name: "Fira Sans",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
+  {
+    name: "Barlow",
+    category: "sans-serif",
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+  },
   { name: "IBM Plex Sans", category: "sans-serif", weights: [100, 200, 300, 400, 500, 600, 700] },
   { name: "Libre Baskerville", category: "serif", weights: [400, 700] },
 ] as const;

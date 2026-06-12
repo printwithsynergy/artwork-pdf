@@ -296,6 +296,7 @@ function SmartSpotMatchRow({
   const rowContents = (
     <>
       <span style={{ flex: 1, fontSize: "0.8125rem" }}>{match.spot.name}</span>
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: read-only ΔE badge — aria-label is the SR text, no interactive role applies */}
       <span
         aria-label={`${formatDeltaE(match.deltaE)} — ${quality}`}
         style={{

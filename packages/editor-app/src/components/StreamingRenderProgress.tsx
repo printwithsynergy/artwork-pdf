@@ -172,6 +172,7 @@ export function StreamingRenderProgress({
             const bg = done ? "#080" : active ? "#06a" : "#ccc";
             return (
               <li
+                // biome-ignore lint/suspicious/noArrayIndexKey: the index IS the page number — dots never reorder
                 key={i}
                 title={`Page ${i + 1}: ${done ? "done" : active ? "rendering" : "pending"}`}
                 style={{

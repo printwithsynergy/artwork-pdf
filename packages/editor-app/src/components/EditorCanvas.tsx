@@ -847,6 +847,7 @@ function ObjNode({
               const cy = cell.yMm * PT_PER_MM + row * rowSpacing + dotR;
               return (
                 <Ellipse
+                  // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positional-only and never reorder
                   key={`${ci}-${di}`}
                   x={cx}
                   y={cy}
@@ -923,11 +924,11 @@ export function EditorCanvas({
 
   const [fillColor, setFillColor] = useState(BRAND);
   const [strokeColor, setStrokeColor] = useState("transparent");
-  const [strokeWidth, setStrokeWidth] = useState(1);
-  const [opacity, setOpacity] = useState(1);
+  const [strokeWidth, _setStrokeWidth] = useState(1);
+  const [opacity, _setOpacity] = useState(1);
 
   const [exportStatus, setExportStatus] = useState<ExportStatus>("idle");
-  const [exportJobId, setExportJobId] = useState<string | null>(null);
+  const [_exportJobId, setExportJobId] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Pro mode state — dieline modal + per-ink visibility filter for separations.
@@ -943,19 +944,19 @@ export function EditorCanvas({
   // Used by the multi-page wrapper in EditorApp to mirror the active page
   // back into its `pages` array; no-op when the host doesn't pass callbacks.
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire on objects only
   useEffect(() => {
     onObjectsChange?.(objects);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on objects only
   }, [objects]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire on pageSize only
   useEffect(() => {
     onPageSizeChange?.(pageSize);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on pageSize only
   }, [pageSize]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fire on bleedMm only
   useEffect(() => {
     onBleedMmChange?.(bleedMm);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: fire on bleedMm only
   }, [bleedMm]);
 
   // ── recompute page + dieline when bleed changes ────────────────────────────
@@ -1991,7 +1992,7 @@ export function EditorCanvas({
             onUpdateSelected={updateSelected}
             propertiesHooks={{
               onEditText: () => {
-                if (!selected || selected.type !== "text") return;
+                if (selected?.type !== "text") return;
                 const stage = stageRef.current;
                 if (!stage) return;
                 const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;
@@ -2103,7 +2104,7 @@ export function EditorCanvas({
           onUpdateSelected={updateSelected}
           propertiesHooks={{
             onEditText: () => {
-              if (!selected || selected.type !== "text") return;
+              if (selected?.type !== "text") return;
               const stage = stageRef.current;
               if (!stage) return;
               const node = stage.findOne(`#${selected.id}`) as Konva.Text | undefined;

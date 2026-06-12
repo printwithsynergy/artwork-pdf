@@ -292,6 +292,7 @@ function AnnotationMarker({
 
   if (annotation.kind === "area") {
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: SVG <g> hotspot — role/tabIndex ride in via interactiveProps and a keyboard handler is wired
       <g
         data-testid={`annotation-${annotation.id}`}
         style={{ pointerEvents: "auto", cursor }}
@@ -316,6 +317,7 @@ function AnnotationMarker({
 
   const isTextKind = annotation.kind === "text";
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: SVG <g> hotspot — role/tabIndex ride in via interactiveProps and a keyboard handler is wired
     <g
       data-testid={`annotation-${annotation.id}`}
       style={{ pointerEvents: "auto", cursor }}

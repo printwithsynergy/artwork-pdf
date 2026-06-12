@@ -129,6 +129,7 @@ export function LayersPanel({
                 {label(o)}
               </span>
               {locked ? (
+                // biome-ignore lint/a11y/useAriaPropsSupportedByRole: decorative lock glyph — title carries the tooltip, aria-label the SR text
                 <span
                   aria-label="Locked"
                   title="Locked"
@@ -193,6 +194,7 @@ function RowIcon({
   danger?: boolean;
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: nested inside an interactive row — a native <button> may not nest in this position
     <span
       role="button"
       tabIndex={0}

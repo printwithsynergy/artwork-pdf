@@ -338,6 +338,7 @@ function DiffSection({
           // keeps React's reconciliation correct without exposing
           // the internal ids in the rendered output.
           <li
+            // biome-ignore lint/suspicious/noArrayIndexKey: entries are plain strings that may repeat; list is replaced wholesale per version
             key={`${label}-${i}-${entry}`}
             style={{ padding: "0.125rem 0.5rem", fontSize: "0.8125rem" }}
           >

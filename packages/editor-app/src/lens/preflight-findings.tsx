@@ -98,6 +98,7 @@ export function preflightFindingsPlugin(opts: {
               <li style={{ padding: "0.75rem", color: MUTED }}>No issues.</li>
             )}
             {report.issues.map((issue, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: issues carry no stable id; list is replaced wholesale per report
               <li key={`${issue.checkName}-${i}`} style={{ borderBottom: `1px solid ${BORDER}` }}>
                 <button
                   type="button"
