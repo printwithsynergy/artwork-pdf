@@ -210,6 +210,7 @@ export function MobileToolDrawer(props: MobileToolDrawerProps) {
   return (
     <>
       {/* Backdrop */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop hotspot — Escape/keyboard handling is wired and the drawer itself owns focus */}
       <div
         role="presentation"
         onClick={onClose}

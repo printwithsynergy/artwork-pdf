@@ -9,6 +9,7 @@ type Props = {
 
 export function ModeToggle({ mode, onChange }: Props) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a button-toggle group is semantically role="group", not a <fieldset> (no form controls inside, no <legend>)
     <div
       role="group"
       aria-label="Editor mode"

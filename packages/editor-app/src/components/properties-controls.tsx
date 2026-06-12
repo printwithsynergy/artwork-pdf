@@ -59,13 +59,7 @@ const INPUT_STYLE: CSSProperties = {
   flex: 1,
 };
 
-export function LabeledRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+export function LabeledRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div style={ROW_STYLE}>
       <span style={LABEL_STYLE}>{label}</span>
@@ -247,9 +241,9 @@ export function ToggleGroup<T extends string>({
   ariaLabel?: string;
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a button-toggle group is semantically role="group", not a <fieldset> (no form controls inside, no <legend>)
     <div
       style={{ display: "inline-flex", border: `1px solid ${BORDER}`, borderRadius: 3, flex: 1 }}
-      // biome-ignore lint/a11y/useSemanticElements: a button-toggle group is semantically role="group", not a <fieldset> (no form controls inside, no <legend>).
       role="group"
       {...(ariaLabel !== undefined ? { "aria-label": ariaLabel } : {})}
     >

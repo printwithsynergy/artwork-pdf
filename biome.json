@@ -1,13 +1,18 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "organizeImports": { "enabled": true },
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noConsole": "off",
-        "noConsoleLog": "off"
+        "noConsole": "off"
       }
     }
   },
@@ -24,6 +29,14 @@
     }
   },
   "files": {
-    "ignore": ["dist", ".next", "node_modules", "*.tsbuildinfo", "pnpm-lock.yaml"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.next",
+      "!**/node_modules",
+      "!**/*.tsbuildinfo",
+      "!pnpm-lock.yaml",
+      "!**/*.svg"
+    ]
   }
 }

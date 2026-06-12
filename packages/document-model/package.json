@@ -14,7 +14,10 @@
     "./schema/v2": "./dist/schema/document-model.v2.schema.json",
     "./schema/v3": "./dist/schema/document-model.v3.schema.json"
   },
-  "files": ["dist", "scripts"],
+  "files": [
+    "dist",
+    "scripts"
+  ],
   "scripts": {
     "build": "tsc && pnpm run schema:emit",
     "typecheck": "tsc --noEmit",

@@ -40,10 +40,7 @@ describe("CompilePdfClient.spotSearch", () => {
     let captured: string | null = null;
     const fetcher = makeFetcher((url) => {
       captured = url;
-      return new Response(
-        JSON.stringify({ results: [], total: 0, limit: 50 }),
-        { status: 200 },
-      );
+      return new Response(JSON.stringify({ results: [], total: 0, limit: 50 }), { status: 200 });
     });
     const client = new CompilePdfClient({ baseUrl: BASE, fetch: fetcher });
     await client.spotSearch({});

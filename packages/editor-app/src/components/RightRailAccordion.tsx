@@ -90,6 +90,7 @@ export function RightRailAccordion({
   // type changes. Keeps the rail in sync with the canvas without
   // stealing focus from a section the user manually opened mid-edit
   // (only fires on type changes, not every field tweak).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the section id on purpose — re-opening on every object identity change would steal focus mid-edit
   useEffect(() => {
     if (propertiesSection) setOpenId(propertiesSection.id);
   }, [propertiesSection?.id]);
@@ -250,6 +251,7 @@ function Section({
         <span>{label}</span>
         <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>{open ? "−" : "+"}</span>
       </button>
+      {/* biome-ignore lint/a11y/useSemanticElements: accordion panel keeps div+role="region" — switching to a semantic section element would change the styling contract */}
       <div
         id={panelId}
         role="region"

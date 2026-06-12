@@ -161,9 +161,11 @@ function FluteHatch({
         const t = (i + 0.5) / lines;
         if (isVerticalHatch) {
           const x = t * widthPx;
+          // biome-ignore lint/suspicious/noArrayIndexKey: hatch lines are positional-only and never reorder
           return <line key={i} x1={x} y1={0} x2={x} y2={heightPx} stroke="#06a" strokeWidth={1} />;
         }
         const y = t * heightPx;
+        // biome-ignore lint/suspicious/noArrayIndexKey: hatch lines are positional-only and never reorder
         return <line key={i} x1={0} y1={y} x2={widthPx} y2={y} stroke="#06a" strokeWidth={1} />;
       })}
     </svg>

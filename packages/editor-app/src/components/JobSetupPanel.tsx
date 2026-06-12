@@ -180,6 +180,7 @@ export function JobSetupPanel({ value, onChange, onClose }: JobSetupPanelProps) 
   }, [onClose]);
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Escape closes via the document-level keydown listener above
     <div
       role="dialog"
       aria-label="Job setup — print context"

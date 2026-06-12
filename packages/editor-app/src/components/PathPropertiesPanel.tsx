@@ -50,6 +50,7 @@ export function PathPropertiesPanel({ value, onChange }: PathPropertiesPanelProp
             fontSize: "0.72rem",
           }}
         >
+          {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: decorative read-only swatch — aria-label is the SR text, no interactive role applies */}
           <span
             aria-label="Stroke colour (read-only)"
             style={{

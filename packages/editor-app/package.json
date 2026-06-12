@@ -16,7 +16,11 @@
       "import": "./dist/lens/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -36,10 +40,13 @@
     "@printwithsynergy/lens-pdf": "^0.4.0-beta.24"
   },
   "peerDependenciesMeta": {
-    "@printwithsynergy/lens-pdf": { "optional": true }
+    "@printwithsynergy/lens-pdf": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@printwithsynergy/lens-pdf": "^0.4.0-beta.24",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.184.1",

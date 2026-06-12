@@ -98,7 +98,11 @@ export class CodexClient {
     if (!this.baseUrl) {
       throw new Error("CodexClient is not configured (CODEX_API_BASE_URL unset)");
     }
-    const bytes = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes);
+    // Copy into a fresh Uint8Array<ArrayBuffer>: BlobPart (TS 6 lib types)
+    // rejects Uint8Array<ArrayBufferLike>, which a caller-supplied view may be.
+    const bytes = new Uint8Array(
+      pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes),
+    );
     const form = new FormData();
     // codex's POST /v1/extract requires the multipart field named `pdf`.
     form.append("pdf", new Blob([bytes], { type: "application/pdf" }), "artwork.pdf");

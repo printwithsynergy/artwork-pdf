@@ -3,7 +3,7 @@
 //   1. No file imports from the platform package (AGPL boundary)
 //   2. Every file carries an SPDX-License-Identifier header
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, extname, basename } from "node:path";
+import { join, extname } from "node:path";
 
 const SOURCE_DIRS = ["apps", "packages", "scripts"];
 const SOURCE_EXTS = new Set([".ts", ".tsx", ".mts", ".cts", ".mjs"]);
