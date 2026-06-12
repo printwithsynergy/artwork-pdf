@@ -33,7 +33,7 @@
     "three": "^0.184.0"
   },
   "peerDependencies": {
-    "react": "^19.0.0",
+    "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-konva": "^19.0.0",
     "konva": "^10.3.0",
@@ -47,11 +47,11 @@
   "devDependencies": {
     "@printwithsynergy/lens-pdf": "^0.4.0-beta.24",
     "@types/node": "^25.9.3",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.184.1",
     "konva": "^10.3.0",
-    "react": "^19.0.0",
+    "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-konva": "^19.0.0",
     "typescript": "^6.0.3",
