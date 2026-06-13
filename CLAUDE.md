@@ -46,6 +46,7 @@ Specifically:
   type signatures verbatim.
 
 This policy was rolled out as a per-area pass across `artwork-pdf` —
-see [`docs/comment-pass.md`](docs/comment-pass.md) for the completed
-tracker and the per-PR recipe (kept as a reference for future
-similar passes). Future edits should preserve the policy.
+see the archived [`comment-pass.md`](https://github.com/printwithsynergy/pdf-rd/blob/main/archive/artwork-pdf/docs/comment-pass.md)
+(in the `pdf-rd` repo) for the completed tracker and the per-PR recipe
+(kept as a reference for future similar passes). Future edits should
+preserve the policy.
