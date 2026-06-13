@@ -3,7 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Node: >=22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org)
 
-WYSIWYG label & packaging artwork editor for the Print With Synergy stack. Full flexo support: spot/Pantone, white/varnish/dieline/technical separations, flexo distortion compensation, variable data, structural dielines (CF2/DDES/ARD). PDF/X-4 output via pdf-lib + Ghostscript.
+WYSIWYG label & packaging artwork editor for the Print With Synergy stack. Full flexo support: spot/Pantone, white/varnish/dieline/technical separations, flexo distortion compensation, variable data, structural dielines (CF2/DDES/ARD). PDF/X-4–targeted output via pdf-lib.
 
 Workflow: **create → lint → trap → step-and-repeat → RIP**
 
