@@ -18,14 +18,21 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGES_DIR = join(ROOT, "packages");
 
-/** Map a built entry (dist/*.js|.d.ts) to its TypeScript source under src/. */
+/**
+ * Map a built entry (dist/*.js|.d.ts) to its TypeScript source under src/.
+ * Falls back to `.tsx` when the `.ts` file doesn't exist so React barrels
+ * aren't silently dropped.
+ */
 function entryToSource(pkgDir, entry) {
   const rel = entry
     .replace(/^\.\//, "")
     .replace(/^dist\//, "src/")
     .replace(/\.d\.ts$/, ".ts")
     .replace(/\.js$/, ".ts");
-  return join(pkgDir, rel);
+  const ts = join(pkgDir, rel);
+  if (existsSync(ts)) return ts;
+  const tsx = ts.replace(/\.ts$/, ".tsx");
+  return existsSync(tsx) ? tsx : ts;
 }
 
 /** Resolve a relative module specifier from a source file to a .ts file. */
@@ -73,6 +80,7 @@ async function collectExports(file, seen = new Set()) {
   return names;
 }
 
+/** Enumerate packages, collect their public symbols, and write SYMBOLS.md. */
 async function main() {
   const pkgDirs = (await readdir(PACKAGES_DIR, { withFileTypes: true }))
     .filter((e) => e.isDirectory())
@@ -91,7 +99,9 @@ async function main() {
 
     for (const [subpath, target] of Object.entries(subpaths)) {
       const entry =
-        typeof target === "string" ? target : (target.import ?? target.types ?? target.default);
+        typeof target === "string"
+          ? target
+          : (target.import ?? target.types ?? target.require ?? target.default);
       if (!entry) continue;
       const label = subpath === "." ? pkg.name : `${pkg.name}${subpath.slice(1)}`;
 
