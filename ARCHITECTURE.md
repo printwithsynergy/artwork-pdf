@@ -7,9 +7,10 @@ by the synergy engine in a `create → lint → trap → step-and-repeat → RIP
 
 It sits on top of two shared PWS packages:
 
-- **`pws/compile-pdf`** (Python / FastAPI) — every PDF → PDF transform
-  (compose, marks, trap, impose, rewrite). artwork-pdf calls it over
-  HTTP via `apps/service/src/compile-pdf-client.ts`.
+- **`pws/compile-pdf`** (Python / FastAPI) — the marks, trap, impose, and
+  rewrite PDF → PDF transforms. artwork-pdf composes the document
+  **in-process** via `@artworkpdf/compose` and calls compile-pdf over HTTP
+  (`apps/service/src/compile-pdf-client.ts`) for the remaining transforms.
 - **`pws/lens-pdf`** — host-agnostic React PDF viewer used after a
   successful render. artwork-pdf ships two first-party lens plugins
   from `@printwithsynergy/artwork-pdf-editor/lens`: a dieline overlay
@@ -32,7 +33,7 @@ artwork-pdf/
                        consumers (compile-pdf).
     dieline-parser/    CF2/DDES/ARD structural dieline import
     flexo-distortion/  Flexo distortion compensation
-    synergy-client/    Typed HTTP client for @synergy/client
+    synergy-client/    @printwithsynergy/artwork-pdf — client for the artworkPDF synergy node
 ```
 
 `@printwithsynergy/artwork-pdf-editor` is published to npm so any host (the marketing
@@ -50,7 +51,7 @@ their own logo, CTAs, and feature-flag set — no iframe needed. See the
                     │ HTTP POST per producer
                     ▼
    pws/compile-pdf (FastAPI; PDF → PDF transforms)
-     /v1/compose/apply → /v1/marks/apply → /v1/trap/apply → /v1/impose/apply
+     /v1/marks/apply → /v1/trap/apply → /v1/impose/apply  (compose is in-process)
                     │ uses
                     ▼
    codex-pdf (Python; read-only geometry / color / OCG primitives)
@@ -95,7 +96,7 @@ Enforced by `scripts/check-license-boundary.ts` in CI.
 
 ## Stack
 
-- Hono (service), Next.js 15 (editor), react-konva (canvas)
+- Hono (service), Next.js 16 (editor), react-konva (canvas)
 - pdf-lib (PDF composition), Ghostscript (PDF/X-4 + ICC conformance)
 - pg-boss (job queue), Drizzle ORM, Postgres (RLS)
 - Biome (lint/format), Turbo (build), pnpm workspaces
