@@ -21,6 +21,7 @@ import { Hono } from "hono";
 import { optionalBearerAuth } from "./auth.js";
 import { getBoss } from "./db/boss.js";
 import { runMigrations } from "./db/migrate.js";
+import { internalError, notFound } from "./problemDetails.js";
 import { assetsRouter } from "./routes/assets.js";
 import { contractRouter } from "./routes/contract.js";
 import { healthzRouter, readyzRouter } from "./routes/healthz.js";
@@ -51,6 +52,15 @@ app.route("/readyz", readyzRouter);
 app.route("/v1", contractRouter);
 app.route("/source", sourceRouter);
 app.route("/.well-known", synergyNodeRouter);
+
+// RFC 7807 error envelopes (org convention) — an unmatched route and any
+// unhandled throw emit `application/problem+json` instead of Hono's default
+// text/JSON, so a single client error-handler works across the stack.
+app.notFound((c) => notFound(c, "Route not found."));
+app.onError((err, c) => {
+  console.error("[artwork] unhandled error", err);
+  return internalError(c, err instanceof Error ? err.message : "Internal error.");
+});
 
 const port = Number(process.env.PORT ?? 3001);
 

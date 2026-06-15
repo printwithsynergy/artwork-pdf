@@ -37,9 +37,13 @@ describe("optionalBearerAuth", () => {
       process.env.ARTWORK_SERVICE_TOKEN = "s3cret-token";
     });
 
-    it("rejects a request with no Authorization header", async () => {
+    it("rejects a request with no Authorization header (RFC 7807)", async () => {
       const res = await appWith().request("/guarded");
       expect(res.status).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/problem+json");
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.status).toBe(401);
+      expect(body.title).toBe("Unauthorized");
     });
 
     it("rejects a wrong token", async () => {
