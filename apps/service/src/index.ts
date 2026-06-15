@@ -58,8 +58,10 @@ app.route("/.well-known", synergyNodeRouter);
 // text/JSON, so a single client error-handler works across the stack.
 app.notFound((c) => notFound(c, "Route not found."));
 app.onError((err, c) => {
+  // Log the full error server-side; return a generic detail to the client so an
+  // unhandled error can't leak internal implementation details / stack traces.
   console.error("[artwork] unhandled error", err);
-  return internalError(c, err instanceof Error ? err.message : "Internal error.");
+  return internalError(c);
 });
 
 const port = Number(process.env.PORT ?? 3001);
