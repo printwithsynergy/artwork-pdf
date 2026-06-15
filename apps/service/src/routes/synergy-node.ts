@@ -32,7 +32,13 @@ const DESCRIPTOR = {
       tier: "CPU",
     },
   ],
-  http: { jobs: "/jobs", healthz: "/healthz", source: "/source" },
+  http: {
+    jobs: "/jobs",
+    healthz: "/healthz",
+    readyz: "/readyz",
+    contract: "/v1/contract",
+    source: "/source",
+  },
 };
 
 synergyNodeRouter.get("/synergy-node.json", (c) => c.json(DESCRIPTOR));

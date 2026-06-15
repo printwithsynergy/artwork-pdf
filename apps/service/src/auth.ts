@@ -5,7 +5,10 @@ import { createMiddleware } from "hono/factory";
 /**
  * Optional bearer-token auth for the service's data routes.
  *
- * Gated by the `ARTWORK_SERVICE_TOKEN` env var:
+ * Gated by the `ARTWORK_SERVICE_TOKEN` env var (or `ARTWORK_AUTH_TOKEN`
+ * as an alias — synergy's gateway sends the credential under that name,
+ * so accepting both lets an operator use one consistent var name across
+ * the seam; `ARTWORK_SERVICE_TOKEN` wins when both are set):
  *
  * - **set** — every guarded request must present
  *   `Authorization: Bearer <token>` matching it (constant-time compare);
@@ -16,10 +19,10 @@ import { createMiddleware } from "hono/factory";
  *   behind synergy on a private network. A single warning is logged at
  *   first use so the open posture is visible in the logs.
  *
- * Liveness (`/healthz`), AGPL source (`/source`), and the synergy
- * capability descriptor (`/.well-known/...`) are intentionally left
- * unguarded — they expose no tenant data and synergy/platform poll them
- * unauthenticated.
+ * Liveness (`/healthz`), readiness (`/readyz`), the contract descriptor
+ * (`/v1/contract`), AGPL source (`/source`), and the synergy capability
+ * descriptor (`/.well-known/...`) are intentionally left unguarded —
+ * they expose no tenant data and synergy/platform poll them unauthenticated.
  */
 
 let warnedOpen = false;
@@ -31,13 +34,14 @@ function timingSafeEq(a: string, b: string): boolean {
 }
 
 export const optionalBearerAuth = createMiddleware(async (c, next) => {
-  const expected = process.env.ARTWORK_SERVICE_TOKEN;
+  const expected = process.env.ARTWORK_SERVICE_TOKEN ?? process.env.ARTWORK_AUTH_TOKEN;
   if (!expected) {
     if (!warnedOpen) {
       warnedOpen = true;
       console.warn(
-        "[auth] ARTWORK_SERVICE_TOKEN is unset — data routes are unauthenticated. " +
-          "Set it to require a bearer token when the service is publicly reachable.",
+        "[auth] ARTWORK_SERVICE_TOKEN (or ARTWORK_AUTH_TOKEN) is unset — data routes " +
+          "are unauthenticated. Set it to require a bearer token when the service is " +
+          "publicly reachable.",
       );
     }
     return next();
