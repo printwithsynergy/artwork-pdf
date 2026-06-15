@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { timingSafeEqual } from "node:crypto";
 import { createMiddleware } from "hono/factory";
+import { unauthorized } from "./problemDetails.js";
 
 /**
  * Optional bearer-token auth for the service's data routes.
@@ -49,7 +50,7 @@ export const optionalBearerAuth = createMiddleware(async (c, next) => {
 
   const presented = (c.req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!presented || !timingSafeEq(presented, expected)) {
-    return c.json({ error: "unauthorized" }, 401);
+    return unauthorized(c, "A valid bearer token is required for this route.");
   }
   return next();
 });
