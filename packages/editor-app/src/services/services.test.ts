@@ -68,10 +68,10 @@ describe("defaultEditorServices", () => {
     expect(s.corrections).toBe(corrections);
   });
 
-  it("the corrections stub echoes the document with an empty hash sentinel", async () => {
+  it("the corrections stub echoes the document with a structured none: hash sentinel", async () => {
     const s = defaultEditorServices();
     const out = await s.corrections?.correct({ document: { version: "3" }, operations: [] });
-    expect(out?.contentHash).toBe("");
+    expect(out?.contentHash).toBe("none:");
     expect(out?.document).toEqual({ version: "3" });
   });
 

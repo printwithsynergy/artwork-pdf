@@ -61,8 +61,12 @@ correctRouter.post("/", async (c) => {
   if (body === null || typeof body !== "object") {
     return badRequest(c, "Request body must be a JSON object.");
   }
-  if (body.document === null || typeof body.document !== "object") {
-    return badRequest(c, "Field 'document' is required and must be an object.");
+  if (
+    body.document === null ||
+    typeof body.document !== "object" ||
+    Array.isArray(body.document)
+  ) {
+    return badRequest(c, "Field 'document' is required and must be a JSON object.");
   }
   if (!Array.isArray(body.operations)) {
     return badRequest(c, "Field 'operations' is required and must be an array.");

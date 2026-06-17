@@ -78,6 +78,17 @@ describe("applyCorrections — boundary + structure", () => {
     const { schemaVersion } = applyCorrections(v3Doc(), []);
     expect(schemaVersion).toBe(CORRECTION_SCHEMA_VERSION);
   });
+
+  it("throws invalid_document when the document fails schema coercion", () => {
+    expect(() =>
+      applyCorrections(null as unknown as DocumentModel, []),
+    ).toThrowError(CorrectionError);
+    try {
+      applyCorrections(null as unknown as DocumentModel, []);
+    } catch (err) {
+      expect((err as CorrectionError).code).toBe("invalid_document");
+    }
+  });
 });
 
 describe("applyCorrections — determinism", () => {

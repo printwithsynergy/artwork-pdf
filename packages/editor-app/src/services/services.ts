@@ -296,10 +296,11 @@ export function defaultEditorServices(injected?: Partial<EditorServices>): Edito
     corrections:
       injected?.corrections ??
       markServiceUnwired<CorrectionsService>({
-        // Unwired default: echo the document back unchanged with a stable
-        // empty-hash sentinel. The auto-fix UI self-hides on this stub, so
-        // it should never actually be invoked.
-        correct: async ({ document }) => ({ document, contentHash: "" }),
+        // Unwired default: echo the document back unchanged with a structured
+        // `none:` sentinel hash (matches the `<algo>:<hexdigest>` shape so
+        // consumers don't special-case an empty string). The auto-fix UI
+        // self-hides on this stub, so it should never actually be invoked.
+        correct: async ({ document }) => ({ document, contentHash: "none:" }),
       }),
   };
 }

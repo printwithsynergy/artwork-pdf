@@ -271,7 +271,18 @@ export function applyCorrections(
 ): CorrectionResult {
   // Lift to v3, then deep-clone so the caller's object is never touched.
   // structuredClone is available on Node 22 (the engine's runtime floor).
-  const doc: DocumentV3 = structuredClone(ensureV3(document));
+  // Wrap schema/coercion failures as a structured `invalid_document` so the
+  // HTTP boundary surfaces a 422 with a `code`, not a generic 500.
+  let doc: DocumentV3;
+  try {
+    doc = structuredClone(ensureV3(document));
+  } catch (err) {
+    throw new CorrectionError(
+      "invalid_document",
+      err instanceof Error ? err.message : "document failed schema coercion",
+      "document",
+    );
+  }
 
   const applied: CorrectionApplied[] = [];
   operations.forEach((rawOp, i) => {
