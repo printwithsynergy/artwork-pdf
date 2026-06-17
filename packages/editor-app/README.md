@@ -115,6 +115,55 @@ The marketing demo at artworkpdf.com is a stock install of this
 exact mount — every panel that's clickable in the live demo works
 purely in-browser.
 
+## Embeddable editor — host-injected services + capability self-hide
+
+`EmbeddableEditor` is the drop-in entry point modeled on lens-pdf's
+host-injection story. The **host injects services**; the library never
+hardcodes a backend route. Any tool whose backing service isn't wired
+**self-hides** — no broken buttons, no dead panels.
+
+```tsx
+import { EmbeddableEditor } from "@printwithsynergy/artwork-pdf-editor";
+
+<EmbeddableEditor
+  initialPhase="editor"
+  services={{
+    // Wire only what your backend supports; the rest self-hide.
+    preflightRules: { getRules: () => myClient.preflightRules() },
+    spotSearch:     { search:   (o) => myClient.spotSearch(o) },
+    // ai / separations / notifications / telemetry omitted → those
+    // tools (AI panels, inks palette, notify panels) self-hide.
+  }}
+/>;
+```
+
+`EditorServices` is the protocol family (`PreflightRulesService`,
+`SpotSearchService`, `SeparationsService`, `AiAssistService`,
+`NotificationService`, `TelemetryService`). Each is optional; omitted
+services fall through to an unwired no-op stub. With `autoHideUnwired`
+(default `true`), each unwired service flips its tools'
+`EditorConfig.capabilities` flag off, so they hide through the same
+four-gate `showFeature` path the config layer already uses. A host that
+knows a tool works can re-enable it via `config.capabilities`.
+
+Lower-level seam (for hosts composing their own chrome):
+
+- `EditorServicesProvider` — wrap any subtree to inject services.
+- `useEditorService(name)` / `useEditorServices()` — read injected services.
+- `useServiceFallbackMode(service, feature?)` — resolve a tool's mode
+  (`"wired" | "fallback" | "hidden"`); the pure
+  `resolveServiceFallbackMode(...)` backs it for non-React callers.
+- `isServiceUnwired(svc)` / `markServiceUnwired(svc)` — the
+  wired/unwired marker.
+
+**Compile boundary:** services carry *intent* (what the user wants).
+The editor never becomes a policy producer — pass/fail verdicts stay in
+lint-pdf and deterministic PDF writes stay in compile-pdf.
+
+`usePreflight` reads the injected `preflightRules` service first; when
+no service is wired it keeps its legacy `NEXT_PUBLIC_SERVICE_URL` fetch
+so existing mounts are unchanged.
+
 ## Bleed
 
 Bleed defaults to industry-standard 0.125 in (3.175 mm). Override per
