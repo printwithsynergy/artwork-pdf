@@ -15,6 +15,12 @@
  */
 
 export { EditorApp, type EditorAppProps } from "./components/EditorApp";
+export {
+  EmbeddableEditor,
+  type EmbeddableEditorProps,
+  SERVICE_BACKED_FEATURES,
+  capabilitiesForServices,
+} from "./components/EmbeddableEditor";
 export type { CanvasObj } from "./components/EditorCanvas";
 export { TopBar, ArtworkPdfLogo, type TopBarProps, type TopBarButton } from "./components/TopBar";
 export { MobileToolDrawer, type MobileToolDrawerProps } from "./components/MobileToolDrawer";
@@ -472,6 +478,32 @@ export {
   isPanelVisible,
 } from "./lib/editor-config";
 export { markUnwired, isUnwired } from "./lib/unwired";
+export {
+  type AiAssistService,
+  defaultEditorServices,
+  type EditorServiceName,
+  type EditorServices,
+  isServiceUnwired,
+  markServiceUnwired,
+  type NotificationService,
+  type PreflightRulesService,
+  type SeparationsService,
+  type SpotSearchService,
+  type TelemetryService,
+} from "./services/services";
+export {
+  logUnwiredHide,
+  resolveServiceFallbackMode,
+  type ResolveServiceFallbackModeOptions,
+  type ServiceFallbackMode,
+} from "./services/fallback-mode";
+export {
+  EditorServicesProvider,
+  type EditorServicesProviderProps,
+  useEditorService,
+  useEditorServices,
+  useServiceFallbackMode,
+} from "./services/context";
 export {
   primaryButtonStyle,
   secondaryButtonStyle,

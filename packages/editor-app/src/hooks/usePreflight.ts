@@ -7,6 +7,8 @@ import {
   type PreflightReport,
   type PreflightRule,
 } from "../lib/preflight/types";
+import { useEditorService } from "../services/context";
+import { isServiceUnwired } from "../services/services";
 
 type PreflightState =
   | { phase: "idle" }
@@ -19,8 +21,20 @@ const SERVICE_URL = (process.env.NEXT_PUBLIC_SERVICE_URL ?? "http://localhost:30
   "",
 );
 
+/**
+ * Resolve the preflight rule set, preferring the host-injected
+ * {@link import("../services/services").PreflightRulesService}. When no
+ * service is wired the hook keeps its legacy behaviour: demo mode uses
+ * the bundled {@link DEFAULT_PREFLIGHT_RULES}; otherwise it falls back
+ * to the env-configured `apps/service` `/preflight-rules` fetch.
+ *
+ * Injecting the service is the embeddable path — it removes the
+ * hardcoded backend route so a host points the editor at its own
+ * tenant's rule source without the `NEXT_PUBLIC_SERVICE_URL` env.
+ */
 export function usePreflight() {
   const [state, setState] = useState<PreflightState>({ phase: "idle" });
+  const preflightRules = useEditorService("preflightRules");
 
   const run = useCallback(
     async (
@@ -34,11 +48,19 @@ export function usePreflight() {
     ) => {
       setState({ phase: "loading" });
       try {
-        let rules: PreflightRule[];
+        let rules: ReadonlyArray<PreflightRule>;
 
         if (opts?.demoMode) {
           rules = DEFAULT_PREFLIGHT_RULES;
+        } else if (preflightRules && !isServiceUnwired(preflightRules)) {
+          // Host wired a rules service — use it (no hardcoded route).
+          rules = await preflightRules.getRules({
+            ...(opts?.labelClass !== undefined ? { labelClass: opts.labelClass } : {}),
+            ...(opts?.labelType !== undefined ? { labelType: opts.labelType } : {}),
+            ...(opts?.tenantId !== undefined ? { tenantId: opts.tenantId } : {}),
+          });
         } else {
+          // Legacy fallback: env-configured apps/service route.
           const params = new URLSearchParams();
           if (opts?.labelClass) params.set("label_class", opts.labelClass);
           if (opts?.labelType) params.set("label_type", opts.labelType);
@@ -48,7 +70,7 @@ export function usePreflight() {
           rules = body.rules;
         }
 
-        const { issues, skippedChecks } = await runClientChecks(file, rules);
+        const { issues, skippedChecks } = await runClientChecks(file, [...rules]);
         const hasBlockingIssues = issues.some((i) => i.severity === "block");
 
         const report: PreflightReport = {
@@ -67,7 +89,7 @@ export function usePreflight() {
         return null;
       }
     },
-    [],
+    [preflightRules],
   );
 
   return { state, run };
