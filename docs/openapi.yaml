@@ -25,6 +25,7 @@ tags:
   - name: jobs
   - name: assets
   - name: preflight
+  - name: corrections
   - name: meta
 security:
   - bearerAuth: []
@@ -270,6 +271,77 @@ paths:
                       tenantId: { type: string }
                   source: { type: string, enum: [defaults, db] }
         "401": { $ref: "#/components/responses/Error" }
+  /v1/correct:
+    post:
+      tags: [corrections]
+      operationId: correctDocument
+      summary: Apply deterministic intent corrections to a document
+      description: |
+        Synchronous, deterministic document-correction surface — the lane synergy
+        drives for auto-fix. Applies an ordered list of explicit, validated intent
+        operations (set bleed, normalize an ink name, force overprint/knockout,
+        drop a stray separation, toggle a layer, set the color profile) to a
+        DocumentModel (v2 or v3) and returns the corrected v3 document plus a
+        deterministic `sha256:<hex>` content address. Identical inputs always yield
+        an identical document + hash.
+
+        This is the intent half of the artwork ↔ compile boundary: it mutates the
+        authoring model only — it never writes a PDF and never emits a pass/fail
+        policy verdict.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [document, operations]
+              properties:
+                document:
+                  type: object
+                  additionalProperties: true
+                  description: The DocumentModel to correct (v2 or v3; v2 is lifted to v3).
+                operations:
+                  type: array
+                  description: Ordered correction operations; applied as a left fold.
+                  items:
+                    type: object
+                    required: [op]
+                    properties:
+                      op:
+                        type: string
+                        enum:
+                          - set.page.bleed
+                          - set.layer.visibility
+                          - set.layer.locked
+                          - set.separation.overprint
+                          - set.separation.knockout
+                          - rename.separation
+                          - remove.separation
+                          - set.print.colorProfile
+                    additionalProperties: true
+      responses:
+        "200":
+          description: The corrected document, per-op audit trail, and content hash.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document: { type: object, additionalProperties: true }
+                  applied:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        op: { type: string }
+                        changed: { type: boolean }
+                        sites: { type: integer }
+                  contentHash: { type: string, example: "sha256:..." }
+                  schemaVersion: { type: string }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
 components:
   securitySchemes:
     bearerAuth:
@@ -296,3 +368,21 @@ components:
             type: object
             properties:
               error: { type: string }
+    Problem:
+      description: RFC 7807 Problem Details error envelope.
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              type: { type: string, format: uri }
+              title: { type: string }
+              status: { type: integer }
+              detail: { type: string }
+              instance: { type: string }
+              code:
+                type: string
+                description: Machine-readable failure code (correction errors).
+              pointer:
+                type: string
+                description: JSON-pointer-style path to the offending operation/field.

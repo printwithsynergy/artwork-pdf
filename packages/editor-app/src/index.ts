@@ -480,6 +480,7 @@ export {
 export { markUnwired, isUnwired } from "./lib/unwired";
 export {
   type AiAssistService,
+  type CorrectionsService,
   defaultEditorServices,
   type EditorServiceName,
   type EditorServices,

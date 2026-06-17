@@ -24,6 +24,7 @@ import { runMigrations } from "./db/migrate.js";
 import { internalError, notFound } from "./problemDetails.js";
 import { assetsRouter } from "./routes/assets.js";
 import { contractRouter } from "./routes/contract.js";
+import { correctRouter } from "./routes/correct.js";
 import { healthzRouter, readyzRouter } from "./routes/healthz.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { preflightRulesRouter } from "./routes/preflight-rules.js";
@@ -38,8 +39,10 @@ const app = new Hono();
 // source / well-known stay public — synergy and platform poll them
 // unauthenticated. Both the bare base (e.g. POST /assets) and sub-paths
 // (GET /assets/:id) are covered — Hono's `/x/*` wildcard does not match
-// the bare `/x`.
-for (const base of ["/assets", "/jobs", "/preflight-rules"]) {
+// the bare `/x`. `/v1/correct` accepts tenant document content, so it is
+// guarded; `/v1/contract` (mounted via `contractRouter` at `/v1`) is the
+// only `/v1/*` path that stays public.
+for (const base of ["/assets", "/jobs", "/preflight-rules", "/v1/correct"]) {
   app.use(base, optionalBearerAuth);
   app.use(`${base}/*`, optionalBearerAuth);
 }
@@ -50,6 +53,7 @@ app.route("/preflight-rules", preflightRulesRouter);
 app.route("/healthz", healthzRouter);
 app.route("/readyz", readyzRouter);
 app.route("/v1", contractRouter);
+app.route("/v1/correct", correctRouter);
 app.route("/source", sourceRouter);
 app.route("/.well-known", synergyNodeRouter);
 

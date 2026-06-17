@@ -17,9 +17,12 @@
 // - {@link "./producer-plans"} — `MarksPlan`, `TrapPolicy`,
 //   `ImposeTemplate` wire shapes for the compose → marks → trap →
 //   impose pipeline.
+// - {@link "./corrections"} — the deterministic `applyCorrections`
+//   intent-edit engine behind the headless synergy correction API.
 
 export * from "./preflight.js";
 export * from "./extended.js";
 export * from "./v3.js";
 export * from "./migrate.js";
 export * from "./producer-plans.js";
+export * from "./corrections.js";

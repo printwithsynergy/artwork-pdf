@@ -15,6 +15,22 @@ describe("GET /v1/contract", () => {
     expect(caps.find((c) => c.type === "artwork.render")?.outputFormat).toBe("pdf-x4");
     const endpoints = body.endpoints as Record<string, string>;
     expect(endpoints.result).toBe("GET /jobs/:id/result");
+    expect(endpoints.correct).toBe("POST /v1/correct");
+  });
+
+  it("advertises the deterministic-correction surface", async () => {
+    const res = await contractRouter.request("/contract");
+    const body = (await res.json()) as Record<string, unknown>;
+    const correction = body.correction as {
+      endpoint: string;
+      schemaVersion: string;
+      operations: string[];
+    };
+    expect(correction.endpoint).toBe("POST /v1/correct");
+    expect(typeof correction.schemaVersion).toBe("string");
+    expect(correction.operations).toContain("set.page.bleed");
+    const caps = body.capabilities as Array<{ type: string }>;
+    expect(caps.map((cap) => cap.type)).toContain("artwork.correct");
   });
 });
 

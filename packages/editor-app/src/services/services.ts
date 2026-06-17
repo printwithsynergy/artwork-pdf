@@ -130,6 +130,42 @@ export interface TelemetryService {
 }
 
 /**
+ * Deterministic-correction source. Backs the editor's auto-fix flow: the
+ * editor expresses *intent* (an ordered list of named correction
+ * operations — set bleed, normalize an ink name, force black overprint, …)
+ * and the host applies them deterministically, returning the corrected
+ * document. In a wired host this is artwork apps/service's `POST
+ * /v1/correct` (or a synergy `artwork.correct` node); hosts that don't run
+ * a corrector leave the no-op default and the auto-fix UI self-hides.
+ *
+ * **Compile boundary (load-bearing):** corrections mutate the *authoring*
+ * document model — they are intent edits, not policy verdicts and not a
+ * PDF write. The pass/fail decision stays in lint-pdf; the PDF bytes stay
+ * in compile-pdf. This service is the transport for an intent edit, never
+ * a producer.
+ *
+ * The `operations` / `document` payloads are intentionally structural
+ * (`unknown` / `Record`) so editor-app keeps no hard dependency on
+ * `@artworkpdf/document-model`'s `CorrectionOp` union — a host passes the
+ * service's calls straight through to the typed `/v1/correct` endpoint,
+ * mirroring lens-pdf's structural `MinimalCodexClient` approach.
+ *
+ * @public
+ */
+export interface CorrectionsService {
+  /**
+   * Apply an ordered list of correction operations to a document and
+   * resolve the corrected document plus its deterministic content hash.
+   * Implementations must be deterministic — identical inputs resolve to
+   * an identical `contentHash`.
+   */
+  correct(args: {
+    document: unknown;
+    operations: ReadonlyArray<Record<string, unknown>>;
+  }): Promise<{ document: unknown; contentHash: string }>;
+}
+
+/**
  * Aggregate service surface a host injects into the embeddable editor.
  *
  * Every field is **optional**: a host wires only the services its
@@ -146,6 +182,7 @@ export interface EditorServices {
   readonly ai?: AiAssistService;
   readonly notifications?: NotificationService;
   readonly telemetry?: TelemetryService;
+  readonly corrections?: CorrectionsService;
 }
 
 /**
@@ -255,6 +292,14 @@ export function defaultEditorServices(injected?: Partial<EditorServices>): Edito
       injected?.telemetry ??
       markServiceUnwired<TelemetryService>({
         track: () => {},
+      }),
+    corrections:
+      injected?.corrections ??
+      markServiceUnwired<CorrectionsService>({
+        // Unwired default: echo the document back unchanged with a stable
+        // empty-hash sentinel. The auto-fix UI self-hides on this stub, so
+        // it should never actually be invoked.
+        correct: async ({ document }) => ({ document, contentHash: "" }),
       }),
   };
 }

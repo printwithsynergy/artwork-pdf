@@ -31,12 +31,18 @@ const DESCRIPTOR = {
       description: "Emit per-separation PNGs",
       tier: "CPU",
     },
+    {
+      type: "artwork.correct",
+      description: "Apply deterministic intent corrections to a document (synchronous)",
+      tier: "CPU",
+    },
   ],
   http: {
     jobs: "/jobs",
     healthz: "/healthz",
     readyz: "/readyz",
     contract: "/v1/contract",
+    correct: "/v1/correct",
     source: "/source",
   },
 };

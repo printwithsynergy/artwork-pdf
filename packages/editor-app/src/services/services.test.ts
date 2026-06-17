@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type AiAssistService,
+  type CorrectionsService,
   defaultEditorServices,
   type EditorServices,
   isServiceUnwired,
@@ -55,6 +56,23 @@ describe("defaultEditorServices", () => {
     expect(isServiceUnwired(s.ai)).toBe(true);
     expect(isServiceUnwired(s.notifications)).toBe(true);
     expect(isServiceUnwired(s.telemetry)).toBe(true);
+    expect(isServiceUnwired(s.corrections)).toBe(true);
+  });
+
+  it("keeps an injected corrections service wired", () => {
+    const corrections: CorrectionsService = {
+      correct: async ({ document }) => ({ document, contentHash: "sha256:abc" }),
+    };
+    const s = defaultEditorServices({ corrections });
+    expect(isServiceUnwired(s.corrections)).toBe(false);
+    expect(s.corrections).toBe(corrections);
+  });
+
+  it("the corrections stub echoes the document with an empty hash sentinel", async () => {
+    const s = defaultEditorServices();
+    const out = await s.corrections?.correct({ document: { version: "3" }, operations: [] });
+    expect(out?.contentHash).toBe("");
+    expect(out?.document).toEqual({ version: "3" });
   });
 
   it("keeps host-injected services wired and stubs the rest", () => {
