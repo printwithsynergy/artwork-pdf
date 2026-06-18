@@ -2,6 +2,19 @@
 
 artworkPDF
 
+> **Roadmap posture — back-burnered (2026-06-18 strategy pivot).** Per
+> [`pdf-rd/STRATEGY_DISCOVERY.md` §3](https://github.com/printwithsynergy/pdf-rd/blob/main/STRATEGY_DISCOVERY.md)
+> + [`pdf-rd/docs/PIVOT_PLAN.md`](https://github.com/printwithsynergy/pdf-rd/blob/main/docs/PIVOT_PLAN.md)
+> (the decision log), artwork is **no longer a marketed company product**. A
+> native editor / document-model is a weak prepress product (vs PACKZ/ArtPro+)
+> but the best web-to-print fit, so artwork is **re-homed to the
+> private/proprietary operator / web-to-print toolkit** as a storefront design
+> surface, with **zero company roadmap priority** — touched only when a paying
+> gig pulls it. This reframes the marketing/roadmap posture only; the docstring
+> policy and all capability/contract docs below stand, and no shipped work is
+> removed. (License changes, if any, are separately gated on the
+> copyleft-dependency audit — not part of this posture note.)
+
 ## Code Review & Blast-Radius Protocol
 - Before edits: run code-review-graph impact tools on changed symbols
 - After edits: ensure tests pass before commit
