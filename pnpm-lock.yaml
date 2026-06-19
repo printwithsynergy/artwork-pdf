@@ -53,8 +53,8 @@ importers:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
       react-konva:
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^19.2.5
+        version: 19.2.5(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     devDependencies:
       '@types/react':
         specifier: ^19.2.17
@@ -186,8 +186,8 @@ importers:
         specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
       react-konva:
-        specifier: ^19.0.0
-        version: 19.2.4(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^19.2.5
+        version: 19.2.5(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -1448,8 +1448,8 @@ packages:
     peerDependencies:
       react: ^19.2.7
 
-  react-konva@19.2.4:
-    resolution: {integrity: sha512-AjRT4CwGprm/DV7fTXAjLCjYgNKZlwL+ghhw1pb1RSL7E0BKOlXeiiUSfF/ajd7OdSJOhkf9iuVUNlFk1PvlzQ==}
+  react-konva@19.2.5:
+    resolution: {integrity: sha512-AdsuDB59GdB86QdenTAqRzr6Tfw3z9x9Opxo4BoqDjdNLsjekF9a1VhN4FlMPvg0qtrMl3d4dNmagaUTGH7fSA==}
     peerDependencies:
       konva: ^8.0.1 || ^7.2.5 || ^9.0.0 || ^10.0.0
       react: ^19.2.0
@@ -2544,7 +2544,7 @@ snapshots:
       react: 19.2.7
       scheduler: 0.27.0
 
-  react-konva@19.2.4(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  react-konva@19.2.5(@types/react@19.2.17)(konva@10.3.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       '@types/react-reconciler': 0.33.0(@types/react@19.2.17)
       its-fine: 2.0.0(@types/react@19.2.17)(react@19.2.7)
