@@ -16,7 +16,7 @@
     "hono": "^4.12.23",
     "@hono/node-server": "^2.0.4",
     "drizzle-orm": "^0.45.2",
-    "pg-boss": "^12.18.2",
+    "pg-boss": "^12.20.0",
     "postgres": "^3.4.5",
     "@artworkpdf/document-model": "workspace:*",
     "@artworkpdf/compose": "workspace:*"
